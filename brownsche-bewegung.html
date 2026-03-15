@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Brownsche Molekularbewegung</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: linear-gradient(135deg, #f8fbff 0%, #eaf4ff 100%); min-height: 100vh; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+  <script type="text/babel">
+    const WATER_COLOR = "#60b8f5";
+    const SUGAR_COLOR = "#f5a623";
+    const WATER_RADIUS_NM = 0.14;
+    const SUGAR_RADIUS_NM = 0.55;
+    const SCALE = 120;
+
+    function lerp(a, b, t) { return a + (b - a) * t; }
+    function randomBetween(a, b) { return a + Math.random() * (b - a); }
+
+    function initParticles(canvasW, canvasH, radiusMode, scaleMode) {
+      const waterR = scaleMode === "realistisch"
+        ? WATER_RADIUS_NM * SCALE
+        : (radiusMode === "klein" ? 6 : radiusMode === "mittel" ? 9 : 13);
+      const sugarR = scaleMode === "realistisch"
+        ? SUGAR_RADIUS_NM * SCALE
+        : waterR * (SUGAR_RADIUS_NM / WATER_RADIUS_NM);
+
+      const cx = canvasW / 2, cy = canvasH / 2;
+      const particles = [];
+      const sugarZone = sugarR * 5;
+      let attempts = 0;
+
+      while (particles.filter(p => p.type === "sugar").length < 18 && attempts < 2000) {
+        attempts++;
+        const angle = Math.random() * Math.PI * 2;
+        const dist = randomBetween(0, sugarZone);
+        const x = cx + Math.cos(angle) * dist;
+        const y = cy + Math.sin(angle) * dist;
+        if (x - sugarR < 0 || x + sugarR > canvasW || y - sugarR < 0 || y + sugarR > canvasH) continue;
+        const overlap = particles.some(p => {
+          const r = p.type === "sugar" ? sugarR : waterR;
+          return Math.hypot(p.x - x, p.y - y) < r + sugarR + 1;
+        });
+        if (!overlap) particles.push({ type: "sugar", x, y });
+      }
+
+      attempts = 0;
+      while (particles.filter(p => p.type === "water").length < 80 && attempts < 5000) {
+        attempts++;
+        const x = randomBetween(waterR, canvasW - waterR);
+        const y = randomBetween(waterR, canvasH - waterR);
+        const distCenter = Math.hypot(x - cx, y - cy);
+        if (distCenter < sugarZone + waterR + 2) continue;
+        const overlap = particles.some(p => {
+          const r = p.type === "sugar" ? sugarR : waterR;
+          return Math.hypot(p.x - x, p.y - y) < r + waterR + 1;
+        });
+        if (!overlap) particles.push({ type: "water", x, y });
+      }
+
+      return { particles, waterR, sugarR };
+    }
+
+    function getSpeed(temp) { return 0.3 + (temp / 100) * 3.2; }
+
+    function stepParticles(particles, waterR, sugarR, speed, canvasW, canvasH) {
+      return particles.map(p => {
+        const r = p.type === "sugar" ? sugarR : waterR;
+        const angle = Math.random() * Math.PI * 2;
+        const factor = p.type === "sugar" ? 0.3 : 1.0;
+        let nx = p.x + Math.cos(angle) * speed * factor;
+        let ny = p.y + Math.sin(angle) * speed * factor;
+        if (nx - r < 0) nx = r;
+        if (nx + r > canvasW) nx = canvasW - r;
+        if (ny - r < 0) ny = r;
+        if (ny + r > canvasH) ny = canvasH - r;
+        return { ...p, x: nx, y: ny };
+      });
+    }
+
+    function MacroView({ progress, width, height }) {
+      const canvasRef = React.useRef(null);
+      React.useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, width, height);
+        ctx.fillStyle = "#d6eeff";
+        ctx.fillRect(0, 0, width, height);
+        ctx.strokeStyle = "#b0d8f8";
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 8; i++) {
+          ctx.beginPath();
+          ctx.moveTo(0, 30 + i * (height / 8));
+          ctx.bezierCurveTo(width * 0.3, 20 + i * (height / 8) + Math.sin(progress * 0.05 + i) * 6,
+            width * 0.7, 40 + i * (height / 8) + Math.cos(progress * 0.04 + i) * 6,
+            width, 30 + i * (height / 8));
+          ctx.stroke();
+        }
+        const cubeSize = lerp(80, 4, Math.min(progress / 100, 1));
+        const cx = width / 2, cy = height / 2;
+        if (cubeSize > 5) {
+          ctx.fillStyle = "#fff8e7";
+          ctx.strokeStyle = "#e8c97a";
+          ctx.lineWidth = 2;
+          ctx.beginPath();
+          ctx.rect(cx - cubeSize / 2, cy - cubeSize / 2, cubeSize, cubeSize);
+          ctx.fill();
+          ctx.stroke();
+          if (cubeSize > 20) {
+            ctx.strokeStyle = "#e8c97a44";
+            ctx.lineWidth = 1;
+            for (let i = 1; i < 4; i++) {
+              ctx.beginPath();
+              ctx.moveTo(cx - cubeSize / 2 + (cubeSize / 4) * i, cy - cubeSize / 2);
+              ctx.lineTo(cx - cubeSize / 2 + (cubeSize / 4) * i, cy + cubeSize / 2);
+              ctx.stroke();
+              ctx.beginPath();
+              ctx.moveTo(cx - cubeSize / 2, cy - cubeSize / 2 + (cubeSize / 4) * i);
+              ctx.lineTo(cx + cubeSize / 2, cy - cubeSize / 2 + (cubeSize / 4) * i);
+              ctx.stroke();
+            }
+          }
+        }
+        const numDissolved = Math.floor(progress * 0.5);
+        for (let i = 0; i < numDissolved; i++) {
+          const angle = (i / 30) * Math.PI * 2 + i * 2.4;
+          const dist = 20 + (i % 15) * 8 + progress * 0.3;
+          const px = cx + Math.cos(angle) * dist;
+          const py = cy + Math.sin(angle) * dist;
+          if (px < 4 || px > width - 4 || py < 4 || py > height - 4) continue;
+          const alpha = Math.max(0, 1 - dist / (width * 0.55));
+          ctx.globalAlpha = alpha * 0.8;
+          ctx.fillStyle = SUGAR_COLOR;
+          ctx.beginPath();
+          ctx.arc(px, py, 3, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        ctx.globalAlpha = 1;
+      }, [progress, width, height]);
+      return React.createElement("canvas", { ref: canvasRef, width, height, style: { borderRadius: 12, display: "block" } });
+    }
+
+    const erklaerung = [
+      {
+        emoji: "🔬",
+        frage: "Was ist Brownsche Bewegung?",
+        text: "Wenn du sehr kleine Teilchen unter dem Mikroskop beobachtest, tanzen sie wild durcheinander – obwohl niemand rührt! Das nennt man Brownsche Bewegung. Die Ursache: Unsichtbare Wasserteilchen stoßen von allen Seiten gegen die größeren Teilchen und verschieben sie dabei zufällig."
+      },
+      {
+        emoji: "🍬",
+        frage: "Warum löst sich Zucker auf?",
+        text: "Zucker besteht aus vielen kleinen Zuckerteilchen (Saccharose), die fest zusammenhalten. Im Wasser stoßen die Wasserteilchen so oft und so kräftig gegen die Zuckerteilchen, dass diese sich langsam vom Würfel lösen und sich im Wasser verteilen – ganz ohne Rühren!"
+      },
+      {
+        emoji: "🌡️",
+        frage: "Was hat Temperatur damit zu tun?",
+        text: "Wärme bedeutet: Die Teilchen bewegen sich schneller! Bei höherer Temperatur stoßen die Wasserteilchen häufiger und stärker gegen die Zuckerteilchen. Deshalb löst sich Zucker in warmem Wasser viel schneller auf als in kaltem. Probier es aus: Stell den Temperaturregler auf 100°C!"
+      },
+      {
+        emoji: "⚛️",
+        frage: "Was zeigt das Teilchenmodell?",
+        text: "Das Teilchenmodell stellt Moleküle als kleine Kugeln dar. Blaue Kugeln sind Wassermoleküle (H₂O), orangene sind Zuckermoleküle (Saccharose). Im realistischen Maßstab siehst du: Zuckerteilchen sind fast 4× größer als Wasserteilchen. Weil die Wasserteilchen so klein und beweglich sind, können sie überall hin – und nehmen die Zuckerteilchen mit."
+      }
+    ];
+
+    function App() {
+      const [running, setRunning] = React.useState(false);
+      const [temperature, setTemperature] = React.useState(25);
+      const [radiusMode, setRadiusMode] = React.useState("mittel");
+      const [scaleMode, setScaleMode] = React.useState("vereinfacht");
+      const [particles, setParticles] = React.useState([]);
+      const [waterR, setWaterR] = React.useState(9);
+      const [sugarR, setSugarR] = React.useState(35);
+      const [macroProgress, setMacroProgress] = React.useState(0);
+      const [openSection, setOpenSection] = React.useState(null);
+      const animRef = React.useRef(null);
+      const stateRef = React.useRef({ particles: [], waterR: 9, sugarR: 35 });
+      const microCanvasRef = React.useRef(null);
+      const CANVAS_W = 340, CANVAS_H = 300;
+
+      const reset = React.useCallback(() => {
+        const { particles: p, waterR: wr, sugarR: sr } = initParticles(CANVAS_W, CANVAS_H, radiusMode, scaleMode);
+        setParticles(p);
+        setWaterR(wr);
+        setSugarR(sr);
+        stateRef.current = { particles: p, waterR: wr, sugarR: sr };
+        setMacroProgress(0);
+        setRunning(false);
+      }, [radiusMode, scaleMode]);
+
+      React.useEffect(() => { reset(); }, [reset]);
+
+      React.useEffect(() => {
+        const canvas = microCanvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext("2d");
+        ctx.clearRect(0, 0, CANVAS_W, CANVAS_H);
+        ctx.fillStyle = "#f0f8ff";
+        ctx.fillRect(0, 0, CANVAS_W, CANVAS_H);
+        particles.forEach(p => {
+          const r = p.type === "sugar" ? sugarR : waterR;
+          ctx.beginPath();
+          ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+          ctx.fillStyle = p.type === "sugar" ? SUGAR_COLOR : WATER_COLOR;
+          ctx.globalAlpha = 0.85;
+          ctx.fill();
+          ctx.globalAlpha = 1;
+          ctx.strokeStyle = p.type === "sugar" ? "#c8830a" : "#2a8fd4";
+          ctx.lineWidth = 1;
+          ctx.stroke();
+        });
+      }, [particles, waterR, sugarR]);
+
+      React.useEffect(() => {
+        if (!running) { cancelAnimationFrame(animRef.current); return; }
+        let last = performance.now();
+        const loop = (now) => {
+          const dt = Math.min(now - last, 50);
+          last = now;
+          const speed = getSpeed(temperature) * (dt / 16);
+          const { particles: cur, waterR: wr, sugarR: sr } = stateRef.current;
+          const next = stepParticles(cur, wr, sr, speed, CANVAS_W, CANVAS_H);
+          stateRef.current.particles = next;
+          setParticles([...next]);
+          setMacroProgress(p => Math.min(p + speed * 0.15, 100));
+          animRef.current = requestAnimationFrame(loop);
+        };
+        animRef.current = requestAnimationFrame(loop);
+        return () => cancelAnimationFrame(animRef.current);
+      }, [running, temperature]);
+
+      const tempColor = temperature < 20 ? "#60b8f5" : temperature < 50 ? "#f5a623" : "#e74c3c";
+      const tempLabel = temperature < 20 ? "kalt" : temperature < 50 ? "warm" : "heiß";
+
+      return (
+        <div style={{ fontFamily: "Georgia, serif", background: "linear-gradient(135deg, #f8fbff 0%, #eaf4ff 100%)", minHeight: "100vh", padding: "24px 16px", display: "flex", flexDirection: "column", alignItems: "center" }}>
+          <h1 style={{ fontSize: 22, fontWeight: "bold", color: "#1a3a5c", marginBottom: 4, textAlign: "center", letterSpacing: 0.5 }}>
+            Brownsche Molekularbewegung
+          </h1>
+          <p style={{ color: "#5a7a9a", fontSize: 13, marginBottom: 20, textAlign: "center" }}>
+            Zucker löst sich in Wasser auf – makroskopisch und im Teilchenmodell
+          </p>
+
+          <div style={{ display: "flex", gap: 16, flexWrap: "wrap", justifyContent: "center", marginBottom: 20 }}>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 12, boxShadow: "0 2px 16px #b0d0ee44" }}>
+              <div style={{ fontSize: 12, fontWeight: "bold", color: "#1a3a5c", marginBottom: 6, textAlign: "center" }}>🔭 Makroskopisch</div>
+              <MacroView progress={macroProgress} width={CANVAS_W} height={CANVAS_H} />
+              <div style={{ fontSize: 11, color: "#7a9abc", textAlign: "center", marginTop: 4 }}>Zuckerwürfel löst sich auf ({Math.round(macroProgress)}%)</div>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 16, padding: 12, boxShadow: "0 2px 16px #b0d0ee44" }}>
+              <div style={{ fontSize: 12, fontWeight: "bold", color: "#1a3a5c", marginBottom: 6, textAlign: "center" }}>🔬 Teilchenmodell</div>
+              <canvas ref={microCanvasRef} width={CANVAS_W} height={CANVAS_H} style={{ borderRadius: 12, display: "block" }} />
+              <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 6 }}>
+                <span style={{ fontSize: 11, color: "#5a7a9a", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 12, height: 12, borderRadius: "50%", background: WATER_COLOR, display: "inline-block", border: "1px solid #2a8fd4" }} /> Wasserteilchen
+                </span>
+                <span style={{ fontSize: 11, color: "#5a7a9a", display: "flex", alignItems: "center", gap: 4 }}>
+                  <span style={{ width: 12, height: 12, borderRadius: "50%", background: SUGAR_COLOR, display: "inline-block", border: "1px solid #c8830a" }} /> Zuckerteilchen
+                </span>
+              </div>
+              <div style={{ fontSize: 11, color: "#aaa", textAlign: "center", marginTop: 2 }}>
+                Maßstab: {scaleMode} | Wasser: {waterR.toFixed(1)}px · Zucker: {sugarR.toFixed(1)}px
+              </div>
+            </div>
+          </div>
+
+          <div style={{ background: "#fff", borderRadius: 16, padding: "16px 24px", boxShadow: "0 2px 16px #b0d0ee44", width: "100%", maxWidth: 720, display: "flex", flexWrap: "wrap", gap: 16, alignItems: "flex-end", justifyContent: "center", marginBottom: 16 }}>
+            <div style={{ flex: "1 1 180px" }}>
+              <label style={{ fontSize: 12, fontWeight: "bold", color: "#1a3a5c", display: "block", marginBottom: 4 }}>
+                🌡️ Temperatur: <span style={{ color: tempColor }}>{temperature}°C ({tempLabel})</span>
+              </label>
+              <input type="range" min={0} max={100} value={temperature} onChange={e => setTemperature(Number(e.target.value))} style={{ width: "100%", accentColor: tempColor }} />
+              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 10, color: "#aaa" }}>
+                <span>0°C</span><span>50°C</span><span>100°C</span>
+              </div>
+            </div>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={{ fontSize: 12, fontWeight: "bold", color: "#1a3a5c", display: "block", marginBottom: 6 }}>⭕ Teilchengröße</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["klein", "mittel", "groß"].map(m => (
+                  <button key={m} onClick={() => setRadiusMode(m)} style={{ flex: 1, padding: "5px 0", borderRadius: 8, border: "none", cursor: "pointer", background: radiusMode === m ? "#1a3a5c" : "#e8f0f8", color: radiusMode === m ? "#fff" : "#1a3a5c", fontWeight: radiusMode === m ? "bold" : "normal", fontSize: 12 }}>{m}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: "1 1 160px" }}>
+              <label style={{ fontSize: 12, fontWeight: "bold", color: "#1a3a5c", display: "block", marginBottom: 6 }}>📏 Maßstab</label>
+              <div style={{ display: "flex", gap: 6 }}>
+                {["vereinfacht", "realistisch"].map(m => (
+                  <button key={m} onClick={() => setScaleMode(m)} style={{ flex: 1, padding: "5px 0", borderRadius: 8, border: "none", cursor: "pointer", background: scaleMode === m ? "#1a3a5c" : "#e8f0f8", color: scaleMode === m ? "#fff" : "#1a3a5c", fontWeight: scaleMode === m ? "bold" : "normal", fontSize: 11 }}>{m}</button>
+                ))}
+              </div>
+            </div>
+            <div style={{ flex: "1 1 160px", display: "flex", gap: 8 }}>
+              <button onClick={() => setRunning(r => !r)} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", background: running ? "#e74c3c" : "#27ae60", color: "#fff", fontWeight: "bold", fontSize: 13 }}>
+                {running ? "⏸ Pause" : "▶ Start"}
+              </button>
+              <button onClick={reset} style={{ flex: 1, padding: "8px 0", borderRadius: 10, border: "none", cursor: "pointer", background: "#e8f0f8", color: "#1a3a5c", fontWeight: "bold", fontSize: 13 }}>
+                🔄 Reset
+              </button>
+            </div>
+          </div>
+
+          <div style={{ width: "100%", maxWidth: 720 }}>
+            <div style={{ fontSize: 13, fontWeight: "bold", color: "#1a3a5c", marginBottom: 8 }}>
+              📖 Erklärungen – klicke auf eine Frage!
+            </div>
+            <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
+              {erklaerung.map((item, i) => {
+                const isOpen = openSection === i;
+                return (
+                  <div key={i} style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 10px #b0d0ee33", overflow: "hidden", border: isOpen ? "1.5px solid #60b8f5" : "1.5px solid transparent" }}>
+                    <button onClick={() => setOpenSection(isOpen ? null : i)} style={{ width: "100%", background: "none", border: "none", padding: "12px 16px", display: "flex", justifyContent: "space-between", alignItems: "center", cursor: "pointer", textAlign: "left" }}>
+                      <span style={{ fontSize: 13, fontWeight: "bold", color: "#1a3a5c" }}>{item.emoji} {item.frage}</span>
+                      <span style={{ fontSize: 16, color: "#60b8f5", display: "inline-block", transform: isOpen ? "rotate(180deg)" : "rotate(0deg)" }}>▼</span>
+                    </button>
+                    {isOpen && (
+                      <div style={{ padding: "0 16px 14px 16px", fontSize: 13, color: "#3a5a7a", lineHeight: 1.7, borderTop: "1px solid #e8f0f8" }}>
+                        {item.text}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(React.createElement(App));
+  </script>
+</body>
+</html>
