@@ -1,5 +1,61 @@
-# Simulations
-Html Dateien als Lernstationen/Animationen zur Schülernutzung
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Meine Simulationen</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 60px auto;
+      padding: 0 20px;
+      background-color: #f5f5f5;
+      color: #333;
+    }
+    h1 {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+    .card-container {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      flex-wrap: wrap;
+    }
+    .card {
+      background: white;
+      border-radius: 12px;
+      padding: 30px;
+      width: 250px;
+      text-align: center;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      text-decoration: none;
+      color: #333;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 6px 16px rgba(0,0,0,0.15);
+    }
+    .card h2 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+  </style>
+</head>
+<body>
 
-<a href="brownsche-bewegung.html">Link</a>
-<a href="vdw-simulation.html">Link</a>
+  <h1>Meine Simulationen</h1>
+
+  <div class="card-container">
+    <a class="card" href="brownsche-Bewegung.html">
+      <h2>🔬 Brownsche Bewegung</h2>
+    </a>
+    <a class="card" href="vdw-Simulation.html">
+      <h2>⚗️ Van-der-Waals-Simulation</h2>
+    </a>
+  </div>
+
+</body>
+</html>
