@@ -1,0 +1,665 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Alkane & IUPAC-Nomenklatur – Klasse 10</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.2/babel.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;800&family=Source+Sans+3:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { background: #f0f4f8; font-family: 'Source Sans 3', 'Segoe UI', sans-serif; }
+    input, button, select { font-family: inherit; }
+    ::-webkit-scrollbar { height: 6px; width: 6px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+  </style>
+</head>
+<body>
+  <div id="root"></div>
+
+  <script type="text/babel">
+    const { useState, useCallback, useEffect } = React;
+
+    // ─── IUPAC LOGIK ────────────────────────────────────────────────────────────
+
+    const HAUPTKETTEN = {
+      1:"meth",2:"eth",3:"prop",4:"but",5:"pent",
+      6:"hex",7:"hept",8:"oct",9:"non",10:"dec"
+    };
+    const NK_NAME = { 1:"methyl", 2:"ethyl", 3:"propyl" };
+    const MULT    = { 1:"", 2:"di", 3:"tri", 4:"tetra" };
+
+    function iupacName(hkLen, nk) {
+      if (!nk.length) return HAUPTKETTEN[hkLen] + "an";
+      const gr = {};
+      nk.forEach(({pos,len}) => { (gr[len] = gr[len]||[]).push(pos); });
+      const parts = Object.entries(gr)
+        .map(([len,pos]) => ({ name:NK_NAME[+len], teil:pos.sort((a,b)=>a-b).join(",") + "-" + MULT[pos.length] + NK_NAME[+len] }))
+        .sort((a,b) => a.name.localeCompare(b.name));
+      return parts.map(p=>p.teil).join("-") + "-" + HAUPTKETTEN[hkLen] + "an";
+    }
+
+    function normalisiereNK(hkLen, nk) {
+      const orig  = nk.map(n=>({...n}));
+      const spigl = nk.map(n=>({pos: hkLen+1-n.pos, len:n.len}));
+      const sO = orig.reduce((s,n)=>s+n.pos,0);
+      const sS = spigl.reduce((s,n)=>s+n.pos,0);
+      if (sS < sO) return spigl;
+      if (sO < sS) return orig;
+      const so = [...orig].map(n=>n.pos).sort((a,b)=>a-b);
+      const ss = [...spigl].map(n=>n.pos).sort((a,b)=>a-b);
+      for (let i=0;i<so.length;i++) {
+        if (so[i]<ss[i]) return orig;
+        if (ss[i]<so[i]) return spigl;
+      }
+      return orig;
+    }
+
+    function generiereAlkan(sw) {
+      let hkLen, anz, lens;
+      if (sw==="leicht")      { hkLen=4+Math.floor(Math.random()*4); anz=1; lens=[1]; }
+      else if (sw==="mittel") { hkLen=5+Math.floor(Math.random()*4); anz=1+Math.floor(Math.random()*2); lens=Array.from({length:anz},()=>1+Math.floor(Math.random()*2)); }
+      else                    { hkLen=6+Math.floor(Math.random()*4); anz=2+Math.floor(Math.random()*3); lens=Array.from({length:anz},()=>1+Math.floor(Math.random()*3)); }
+      let nk=[]; let v=0;
+      while (nk.length<anz && v++<200) {
+        const pos=2+Math.floor(Math.random()*(hkLen-2));
+        if (nk.filter(n=>n.pos===pos).length<1) nk.push({pos,len:lens[nk.length]});
+      }
+      nk = normalisiereNK(hkLen, nk);
+      return { hkLen, nk, name: iupacName(hkLen, nk) };
+    }
+
+    function vergleicheNK(a,b) {
+      const sa=[...a].sort((x,y)=>x.pos-y.pos||x.len-y.len);
+      const sb=[...b].sort((x,y)=>x.pos-y.pos||x.len-y.len);
+      if (sa.length!==sb.length) return false;
+      return sa.every((n,i)=>n.pos===sb[i].pos&&n.len===sb[i].len);
+    }
+
+    // ─── LEWIS-FORMEL RENDERER ───────────────────────────────────────────────────
+
+    function buildLewisLayout(hkLen, nk, S) {
+      const STEP   = 64*S;
+      const NKSTEP = 56*S;
+      const CY     = 110*S;
+      const hkX = i => 70*S + i*STEP;
+
+      const nkSorted = [...nk].map((n,i)=>({...n,origIdx:i})).sort((a,b)=>a.pos-b.pos);
+      const nkDirs   = {};
+      const posCount = {};
+      nkSorted.forEach(n => {
+        const p=n.pos; posCount[p]=(posCount[p]||0);
+        nkDirs[n.origIdx] = posCount[p]%2===0 ? -1 : 1;
+        posCount[p]++;
+      });
+
+      const nkDirsForHK = {};
+      nk.forEach((n,ni) => { (nkDirsForHK[n.pos]=nkDirsForHK[n.pos]||[]).push(nkDirs[ni]); });
+
+      const allPts=[];
+      for(let i=0;i<hkLen;i++) allPts.push({x:hkX(i),y:CY});
+      nk.forEach((n,ni)=>{
+        const dir=nkDirs[ni];
+        for(let k=1;k<=n.len;k++) allPts.push({x:hkX(n.pos-1),y:CY+dir*k*NKSTEP});
+      });
+
+      return { STEP, NKSTEP, CY, hkX, nkDirs, nkDirsForHK, allPts };
+    }
+
+    function LewisFormel({ hkLen, nk, highlight={}, showNums=false, scale=1, onAtomClick=null, activeAtom=null }) {
+      const S = scale;
+      const HLEN=20*S, HGAP=7*S, BOND_W=2.2*S, CR=15*S;
+      const fontSize=13*S, fontSizeH=11*S;
+
+      const HK_COL = highlight.hauptkette || "#1e3a5f";
+      const NK_COL = highlight.nebenkette  || "#b45309";
+      const H_COL  = "#9ca3af";
+      const NUM_COL= "#057a55";
+
+      const { STEP, NKSTEP, CY, hkX, nkDirs, nkDirsForHK, allPts } = buildLewisLayout(hkLen, nk, S);
+
+      const xs=allPts.map(p=>p.x), ys=allPts.map(p=>p.y);
+      const pad=56*S;
+      const minX=Math.min(...xs)-pad, maxX=Math.max(...xs)+pad;
+      const minY=Math.min(...ys)-pad, maxY=Math.max(...ys)+pad;
+      const W=maxX-minX, H=maxY-minY;
+      const tx=x=>x-minX, ty=y=>y-minY;
+
+      function hLine(cx,cy,dx,dy,key) {
+        const x1=tx(cx)+dx*HGAP, y1=ty(cy)+dy*HGAP;
+        const x2=tx(cx)+dx*(HGAP+HLEN), y2=ty(cy)+dy*(HGAP+HLEN);
+        const lx=tx(cx)+dx*(HGAP+HLEN+8*S), ly=ty(cy)+dy*(HGAP+HLEN+8*S);
+        return [
+          <line key={"l"+key} x1={x1} y1={y1} x2={x2} y2={y2} stroke={H_COL} strokeWidth={1.4*S}/>,
+          <text key={"t"+key} x={lx} y={ly+fontSizeH*0.38} textAnchor="middle" fontSize={fontSizeH} fill={H_COL} fontFamily="Georgia,serif">H</text>
+        ];
+      }
+
+      function hStricheHK(idx) {
+        const cx=hkX(idx), cy=CY;
+        const dirsHere=nkDirsForHK[idx+1]||[];
+        const nkCount=dirsHere.length;
+        const isFirst=idx===0, isLast=idx===hkLen-1;
+        const hCount = isFirst||isLast ? 3-nkCount : 2-nkCount;
+        const available=[];
+        if (!dirsHere.includes(-1)) available.push({dx:0,dy:-1});
+        if (!dirsHere.includes(1))  available.push({dx:0,dy:1});
+        if (isFirst)  available.push({dx:-1,dy:0});
+        if (isLast)   available.push({dx:1,dy:0});
+        const result=[];
+        for(let i=0;i<Math.min(hCount,available.length);i++){
+          result.push(...hLine(cx,cy,available[i].dx,available[i].dy,"hk"+idx+"-"+i));
+        }
+        return result;
+      }
+
+      function hStricheNK(cx,cy,chainIdx,chainLen,dir,ni) {
+        const isEnd=chainIdx===chainLen-1;
+        const hCount=isEnd?3:2;
+        const fromDir=-dir;
+        const dirs=[{dx:-1,dy:0},{dx:1,dy:0}];
+        if(isEnd) dirs.push({dx:0,dy:fromDir===1?-1:1});
+        const result=[];
+        for(let i=0;i<Math.min(hCount,dirs.length);i++){
+          result.push(...hLine(cx,cy,dirs[i].dx,dirs[i].dy,"nk"+ni+"-"+chainIdx+"-"+i));
+        }
+        return result;
+      }
+
+      const isClickable = pos => !!onAtomClick && pos>=2 && pos<=hkLen-1;
+
+      return (
+        <svg width={W} height={H} style={{display:"block",margin:"0 auto",overflow:"visible"}}>
+          {Array.from({length:hkLen-1},(_,i)=>(
+            <line key={"hkb"+i} x1={tx(hkX(i))} y1={ty(CY)} x2={tx(hkX(i+1))} y2={ty(CY)}
+              stroke={HK_COL} strokeWidth={BOND_W} strokeLinecap="round"/>
+          ))}
+
+          {nk.map((n,ni)=>{
+            const dir=nkDirs[ni], bx=hkX(n.pos-1);
+            return Array.from({length:n.len},(_,k)=>(
+              <line key={"nkb"+ni+"-"+k}
+                x1={tx(bx)} y1={ty(CY+dir*k*NKSTEP)}
+                x2={tx(bx)} y2={ty(CY+dir*(k+1)*NKSTEP)}
+                stroke={NK_COL} strokeWidth={BOND_W*0.85} strokeLinecap="round"/>
+            ));
+          })}
+
+          {Array.from({length:hkLen},(_,i)=>hStricheHK(i))}
+
+          {nk.map((n,ni)=>{
+            const dir=nkDirs[ni], bx=hkX(n.pos-1);
+            return Array.from({length:n.len},(_,k)=>
+              hStricheNK(bx, CY+dir*(k+1)*NKSTEP, k, n.len, dir, ni)
+            );
+          })}
+
+          {Array.from({length:hkLen},(_,i)=>{
+            const cx=hkX(i), pos=i+1;
+            const clickable=isClickable(pos);
+            const isActive=activeAtom===pos;
+            const hasNK=nk.some(n=>n.pos===pos);
+            return (
+              <g key={"hkc"+i} onClick={()=>clickable&&onAtomClick(pos)}
+                style={clickable?{cursor:"pointer"}:{}}>
+                {clickable&&!isActive&&<circle cx={tx(cx)} cy={ty(CY)} r={CR+8*S}
+                  fill="rgba(59,130,246,.07)" stroke="#93c5fd"
+                  strokeWidth={1.2*S} strokeDasharray="3 3"/>}
+                {isActive&&<circle cx={tx(cx)} cy={ty(CY)} r={CR+9*S}
+                  fill="rgba(59,130,246,.18)" stroke="#2563eb"
+                  strokeWidth={2*S}/>}
+                <circle cx={tx(cx)} cy={ty(CY)} r={CR}
+                  fill={isActive?"#dbeafe":hasNK&&clickable?"#fef3c7":"#fff"}
+                  stroke={isActive?"#2563eb":clickable?"#3b82f6":HK_COL}
+                  strokeWidth={isActive?2.5*S:2*S}/>
+                <text x={tx(cx)} y={ty(CY)+fontSize*0.38}
+                  textAnchor="middle" fontSize={fontSize}
+                  fill={isActive?"#1d4ed8":clickable?"#2563eb":HK_COL}
+                  fontWeight="700" fontFamily="Georgia,serif">C</text>
+                {showNums&&<text x={tx(cx)} y={ty(CY)+28*S}
+                  textAnchor="middle" fontSize={10*S} fill={NUM_COL} fontWeight="700">{pos}</text>}
+              </g>
+            );
+          })}
+
+          {nk.map((n,ni)=>{
+            const dir=nkDirs[ni], bx=hkX(n.pos-1);
+            return Array.from({length:n.len},(_,k)=>{
+              const cy=CY+dir*(k+1)*NKSTEP;
+              return (
+                <g key={"nkc"+ni+"-"+k}>
+                  {hStricheNK(bx,cy,k,n.len,dir,ni)}
+                  <circle cx={tx(bx)} cy={ty(cy)} r={CR*0.88}
+                    fill="#fff" stroke={NK_COL} strokeWidth={1.8*S}/>
+                  <text x={tx(bx)} y={ty(cy)+fontSize*0.38}
+                    textAnchor="middle" fontSize={fontSize}
+                    fill={NK_COL} fontWeight="700" fontFamily="Georgia,serif">C</text>
+                </g>
+              );
+            });
+          })}
+        </svg>
+      );
+    }
+
+    // ─── REITER 1: REGELÜBERSICHT ───────────────────────────────────────────────
+
+    const REGELN = [
+      {id:1,farbe:"#1a56db",label:"Hauptkette",    text:"Finde die längste durchgehende C-Kette – sie gibt den Stammnamen (meth-, eth-, prop-, but-, pent-, hex-…)."},
+      {id:2,farbe:"#b45309",label:"Nebenketten",   text:"Alle Verzweigungen sind Alkylgruppen (Methyl, Ethyl, Propyl). Sie werden als Präfix vor den Stammnamen gestellt."},
+      {id:3,farbe:"#057a55",label:"Nummerierung",  text:"Nummeriere die Hauptkette so, dass die Nebenketten die niedrigsten Lokanten (Nummern) erhalten."},
+      {id:4,farbe:"#9333ea",label:"Alphabetisch",  text:"Mehrere verschiedene Substituenten werden alphabetisch geordnet (Ethyl vor Methyl). Multiplikatoren zählen dabei nicht."},
+      {id:5,farbe:"#dc2626",label:"Multiplikatoren",text:"Gleiche Substituenten: di- (2×), tri- (3×), tetra- (4×). Lokanten mit Komma trennen, z.B. 2,3-dimethyl."},
+    ];
+
+    const BEISPIEL = { hkLen:6, nk:[{pos:2,len:1},{pos:4,len:2}] };
+
+    function RegelReiter() {
+      const [hl,setHl]=useState(true);
+      const [showNums,setShowNums]=useState(true);
+      return (
+        <div style={{maxWidth:780,margin:"0 auto"}}>
+          <h2 style={{fontFamily:"'Playfair Display',serif",fontSize:22,color:"#1e3a5f",marginBottom:6}}>IUPAC-Benennungsregeln für Alkane</h2>
+          <p style={{color:"#6b7280",marginBottom:20,fontSize:14}}>Die fünf wichtigsten Schritte – farblich dem Beispiel unten zugeordnet.</p>
+          <div style={{display:"flex",flexDirection:"column",gap:10,marginBottom:26}}>
+            {REGELN.map(r=>(
+              <div key={r.id} style={{display:"flex",gap:14,background:"#f8fafc",borderRadius:10,padding:"11px 16px",borderLeft:"4px solid "+r.farbe}}>
+                <div style={{minWidth:26,height:26,borderRadius:"50%",background:r.farbe,color:"#fff",display:"flex",alignItems:"center",justifyContent:"center",fontWeight:700,fontSize:13,flexShrink:0}}>{r.id}</div>
+                <div>
+                  <div style={{fontWeight:700,color:r.farbe,fontSize:14,marginBottom:2}}>{r.label}</div>
+                  <div style={{color:"#374151",fontSize:13.5,lineHeight:1.5}}>{r.text}</div>
+                </div>
+              </div>
+            ))}
+          </div>
+          <div style={{background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:14,padding:"20px 24px"}}>
+            <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:14,flexWrap:"wrap",gap:8}}>
+              <span style={{fontWeight:700,color:"#1e3a5f",fontSize:15}}>
+                Beispiel: <span style={{color:"#9333ea"}}>4</span>-<span style={{color:"#b45309"}}>ethyl</span>-<span style={{color:"#9333ea"}}>2</span>-<span style={{color:"#b45309"}}>methyl</span><span style={{color:"#1a56db"}}>hexan</span>
+              </span>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>setShowNums(v=>!v)} style={{fontSize:12,padding:"4px 12px",borderRadius:6,border:"1px solid #d1d5db",background:showNums?"#dcfce7":"#f3f4f6",color:"#374151",cursor:"pointer"}}>
+                  {showNums?"Nummern aus":"Nummern an"}
+                </button>
+                <button onClick={()=>setHl(v=>!v)} style={{fontSize:12,padding:"4px 12px",borderRadius:6,border:"1px solid #d1d5db",background:hl?"#e0f2fe":"#f3f4f6",color:"#374151",cursor:"pointer"}}>
+                  {hl?"Farben aus":"Farben an"}
+                </button>
+              </div>
+            </div>
+            <div style={{overflowX:"auto",paddingBottom:8}}>
+              <LewisFormel hkLen={BEISPIEL.hkLen} nk={BEISPIEL.nk} scale={0.88} showNums={showNums}
+                highlight={hl?{hauptkette:"#1a56db",nebenkette:"#b45309"}:{hauptkette:"#374151",nebenkette:"#374151"}}/>
+            </div>
+            {hl&&(
+              <div style={{display:"flex",gap:16,marginTop:8,flexWrap:"wrap",justifyContent:"center"}}>
+                {[["#1a56db","Hauptkette (6C → hex)"],["#b45309","Nebenketten (methyl, ethyl)"],["#057a55","Nummerierung"]].map(([c,l])=>(
+                  <div key={c} style={{display:"flex",alignItems:"center",gap:6,fontSize:12.5,color:"#374151"}}>
+                    <span style={{width:12,height:12,borderRadius:"50%",background:c,display:"inline-block"}}/>
+                    {l}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      );
+    }
+
+    // ─── REITER 2: BENENNEN ─────────────────────────────────────────────────────
+
+    function BenennenReiter({onPunkte}) {
+      const [sw,setSw]=useState("leicht");
+      const [alkan,setAlkan]=useState(()=>generiereAlkan("leicht"));
+      const [eingabe,setEingabe]=useState("");
+      const [status,setStatus]=useState(null);
+      const [loesung,setLoesung]=useState(false);
+      const [versuche,setVersuche]=useState(0);
+      const [showNums,setShowNums]=useState(false);
+
+      const neues=useCallback(()=>{ setAlkan(generiereAlkan(sw));setEingabe("");setStatus(null);setLoesung(false);setVersuche(0); },[sw]);
+      useEffect(()=>{neues();},[sw]);
+
+      const pruefen=()=>{
+        const ok=eingabe.trim().toLowerCase().replace(/\s/g,"")===alkan.name;
+        setStatus(ok?"richtig":"falsch");
+        setVersuche(v=>v+1);
+        if(ok) onPunkte("benennen",versuche===0?3:1);
+      };
+
+      return (
+        <div style={{maxWidth:860,margin:"0 auto"}}>
+          <div style={{display:"flex",gap:10,marginBottom:16,alignItems:"center",flexWrap:"wrap"}}>
+            <span style={{fontWeight:600,color:"#374151",fontSize:14}}>Schwierigkeit:</span>
+            {["leicht","mittel","schwer"].map(s=>(
+              <button key={s} onClick={()=>setSw(s)} style={{padding:"5px 16px",borderRadius:20,border:"1.5px solid",borderColor:sw===s?"#1a56db":"#d1d5db",background:sw===s?"#1a56db":"#fff",color:sw===s?"#fff":"#374151",fontWeight:600,fontSize:13,cursor:"pointer"}}>
+                {s.charAt(0).toUpperCase()+s.slice(1)}
+              </button>
+            ))}
+            <button onClick={neues} style={{marginLeft:"auto",padding:"6px 16px",borderRadius:20,border:"none",background:"#f3f4f6",color:"#374151",fontWeight:600,fontSize:13,cursor:"pointer"}}>🔀 Neu</button>
+            <button onClick={()=>setShowNums(v=>!v)} style={{padding:"5px 14px",borderRadius:20,border:"1px solid #d1d5db",background:showNums?"#dcfce7":"#fff",color:"#374151",fontSize:13,cursor:"pointer"}}>
+              {showNums?"Nummern aus":"Nummern an"}
+            </button>
+          </div>
+          <div style={{background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:14,padding:"20px",marginBottom:16}}>
+            <p style={{color:"#6b7280",fontSize:13,marginBottom:10}}>Wie heißt dieses Alkan nach IUPAC?</p>
+            <div style={{overflowX:"auto",paddingBottom:8}}>
+              <LewisFormel hkLen={alkan.hkLen} nk={alkan.nk} scale={0.82} showNums={showNums}
+                highlight={{hauptkette:"#1e3a5f",nebenkette:"#92400e"}}/>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:10,marginBottom:12}}>
+            <input value={eingabe} onChange={e=>{setEingabe(e.target.value);setStatus(null);}}
+              onKeyDown={e=>e.key==="Enter"&&eingabe&&pruefen()}
+              placeholder="z.B. 2-methylpropan"
+              style={{flex:1,padding:"10px 16px",borderRadius:10,border:"2px solid "+(status==="richtig"?"#057a55":status==="falsch"?"#dc2626":"#d1d5db"),fontSize:15,fontFamily:"monospace",outline:"none"}}/>
+            <button onClick={pruefen} disabled={!eingabe} style={{padding:"10px 22px",borderRadius:10,border:"none",background:eingabe?"#1a56db":"#e5e7eb",color:eingabe?"#fff":"#9ca3af",fontWeight:700,fontSize:14,cursor:eingabe?"pointer":"default"}}>Prüfen</button>
+          </div>
+          {status&&(
+            <div style={{padding:"11px 16px",borderRadius:10,marginBottom:10,background:status==="richtig"?"#ecfdf5":"#fef2f2",border:"1.5px solid "+(status==="richtig"?"#6ee7b7":"#fca5a5"),color:status==="richtig"?"#065f46":"#991b1b",fontWeight:600,fontSize:14}}>
+              {status==="richtig"?"✅ Richtig! Gut gemacht!":"❌ Leider falsch. Versuche es nochmal oder schau dir die Lösung an."}
+            </div>
+          )}
+          <button onClick={()=>setLoesung(v=>!v)} style={{fontSize:13,padding:"6px 16px",borderRadius:8,border:"1px solid #d1d5db",background:"#f9fafb",color:"#6b7280",cursor:"pointer"}}>
+            {loesung?"Lösung verbergen":"Lösung anzeigen"}
+          </button>
+          {loesung&&(
+            <div style={{marginTop:8,padding:"10px 16px",background:"#fffbeb",borderRadius:8,border:"1px solid #fcd34d",fontFamily:"monospace",fontSize:16,color:"#92400e",fontWeight:600}}>
+              {alkan.name}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── REITER 3: BAUEN ────────────────────────────────────────────────────────
+
+    const NK_OPTIONEN = [
+      {len:1, label:"–CH₃ · Methylgruppe"},
+      {len:2, label:"–CH₂–CH₃ · Ethylgruppe"},
+      {len:3, label:"–CH₂–CH₂–CH₃ · Propylgruppe"},
+    ];
+
+    function BauenReiter({onPunkte}) {
+      const [aufgabe,setAufgabe]=useState(()=>generiereAlkan("mittel"));
+      const [hkLen,setHkLen]=useState(5);
+      const [nk,setNk]=useState([]);
+      const [status,setStatus]=useState(null);
+      const [showTipp,setShowTipp]=useState(false);
+      const [activeAtom,setActiveAtom]=useState(null);
+      const [showNums,setShowNums]=useState(true);
+
+      const neueAufgabe=()=>{
+        setAufgabe(generiereAlkan("mittel"));
+        setHkLen(5);setNk([]);setStatus(null);setShowTipp(false);setActiveAtom(null);
+      };
+
+      const handleAtomClick=(pos)=>{
+        setActiveAtom(prev=>prev===pos?null:pos);
+        setStatus(null);
+      };
+
+      const handleSelectNK=(pos,len)=>{
+        const existing=nk.findIndex(n=>n.pos===pos);
+        if(existing>=0){
+          if(nk[existing].len===len){
+            setNk(prev=>prev.filter((_,i)=>i!==existing));
+          } else {
+            setNk(prev=>prev.map((n,i)=>i===existing?{pos,len}:n));
+          }
+        } else {
+          setNk(prev=>[...prev,{pos,len}]);
+        }
+        setActiveAtom(null);
+        setStatus(null);
+      };
+
+      const removeNK=idx=>{ setNk(prev=>prev.filter((_,i)=>i!==idx));setStatus(null); };
+
+      const pruefen=()=>{
+        const nU=normalisiereNK(hkLen,nk), nZ=normalisiereNK(aufgabe.hkLen,aufgabe.nk);
+        const ok=hkLen===aufgabe.hkLen&&vergleicheNK(nU,nZ);
+        setStatus(ok?"richtig":"falsch");
+        if(ok) onPunkte("bauen",2);
+      };
+
+      const userName=iupacName(hkLen,normalisiereNK(hkLen,nk));
+
+      useEffect(()=>{
+        if(!activeAtom) return;
+        const close=()=>setActiveAtom(null);
+        window.addEventListener("click",close);
+        return ()=>window.removeEventListener("click",close);
+      },[activeAtom]);
+
+      return (
+        <div style={{maxWidth:960,margin:"0 auto"}}>
+          <div style={{background:"#eff6ff",border:"1.5px solid #bfdbfe",borderRadius:12,padding:"14px 20px",marginBottom:18,display:"flex",alignItems:"center",gap:16,flexWrap:"wrap"}}>
+            <div style={{flex:1}}>
+              <div style={{fontSize:13,color:"#1e40af",fontWeight:600,marginBottom:4}}>🧪 Baue dieses Alkan:</div>
+              <div style={{fontFamily:"monospace",fontSize:22,fontWeight:700,color:"#1e3a5f"}}>{aufgabe.name}</div>
+            </div>
+            <button onClick={neueAufgabe} style={{padding:"7px 18px",borderRadius:8,border:"none",background:"#1a56db",color:"#fff",cursor:"pointer",fontWeight:600,fontSize:13}}>Neue Aufgabe</button>
+          </div>
+
+          <div style={{display:"flex",gap:18,flexWrap:"wrap"}}>
+            <div style={{flex:"0 0 210px",display:"flex",flexDirection:"column",gap:12}}>
+
+              <div style={{background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:12,padding:14}}>
+                <div style={{fontWeight:700,color:"#1e3a5f",fontSize:13,marginBottom:8}}>Hauptkette</div>
+                <div style={{display:"flex",alignItems:"center",gap:8}}>
+                  <button onClick={()=>{if(hkLen>3){setHkLen(h=>h-1);setNk(p=>p.filter(n=>n.pos<=hkLen-2));setStatus(null);setActiveAtom(null);}}}
+                    style={{width:28,height:28,borderRadius:6,border:"1px solid #d1d5db",background:"#f3f4f6",fontWeight:700,fontSize:16,cursor:"pointer",color:"#374151",lineHeight:1}}>−</button>
+                  <span style={{fontFamily:"monospace",fontSize:20,fontWeight:700,color:"#1a56db",minWidth:24,textAlign:"center"}}>{hkLen}</span>
+                  <button onClick={()=>{if(hkLen<10){setHkLen(h=>h+1);setStatus(null);setActiveAtom(null);}}}
+                    style={{width:28,height:28,borderRadius:6,border:"1px solid #d1d5db",background:"#f3f4f6",fontWeight:700,fontSize:16,cursor:"pointer",color:"#374151",lineHeight:1}}>+</button>
+                  <span style={{fontSize:12,color:"#9ca3af"}}>C-Atome</span>
+                </div>
+              </div>
+
+              <div style={{background:"#f0f9ff",border:"1px solid #bae6fd",borderRadius:10,padding:"10px 12px",fontSize:12.5,color:"#0369a1",lineHeight:1.5}}>
+                👆 Klicke auf ein <strong>blaues C-Atom</strong> (C2 – C{hkLen-1}), um eine Nebenkette anzuhängen oder zu entfernen.
+              </div>
+
+              {nk.length>0&&(
+                <div style={{background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:12,padding:14}}>
+                  <div style={{fontWeight:700,color:"#1e3a5f",fontSize:13,marginBottom:8}}>Platzierte Gruppen</div>
+                  {nk.map((n,i)=>(
+                    <div key={i} style={{display:"flex",alignItems:"center",gap:8,marginBottom:6,background:"#fef3c7",borderRadius:6,padding:"5px 10px"}}>
+                      <span style={{fontSize:12,color:"#92400e",fontWeight:600,flex:1}}>C{n.pos}: {NK_NAME[n.len]}</span>
+                      <button onClick={()=>removeNK(i)} style={{fontSize:13,color:"#dc2626",background:"none",border:"none",cursor:"pointer",lineHeight:1}}>✕</button>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              <button onClick={pruefen} style={{padding:"10px",borderRadius:10,border:"none",background:"#1a56db",color:"#fff",fontWeight:700,fontSize:14,cursor:"pointer"}}>✓ Prüfen</button>
+
+              {status&&(
+                <div style={{padding:"10px 14px",borderRadius:8,background:status==="richtig"?"#ecfdf5":"#fef2f2",border:"1.5px solid "+(status==="richtig"?"#6ee7b7":"#fca5a5"),color:status==="richtig"?"#065f46":"#991b1b",fontWeight:600,fontSize:13}}>
+                  {status==="richtig"?"✅ Perfekt! Molekül stimmt!":"❌ Noch nicht ganz. Prüfe Hauptkette und Positionen."}
+                </div>
+              )}
+
+              <button onClick={()=>setShowTipp(v=>!v)} style={{fontSize:12,color:"#6b7280",background:"none",border:"none",cursor:"pointer",textDecoration:"underline",textAlign:"left"}}>
+                {showTipp?"Tipp ausblenden":"Tipp anzeigen"}
+              </button>
+              {showTipp&&(
+                <div style={{fontSize:12.5,color:"#374151",background:"#f0fdf4",padding:"8px 12px",borderRadius:8,border:"1px solid #86efac"}}>
+                  💡 Hauptkette: <strong>{aufgabe.hkLen} C-Atome</strong>. Nebenketten: <strong>{aufgabe.nk.length}</strong>
+                </div>
+              )}
+            </div>
+
+            <div style={{flex:"1 1 400px",background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:14,padding:16,minHeight:280,position:"relative"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",marginBottom:10,flexWrap:"wrap",gap:8}}>
+                <div>
+                  <div style={{fontSize:13,fontWeight:700,color:"#374151"}}>👁 Deine Strukturformel</div>
+                  <div style={{fontFamily:"monospace",fontSize:13,color:"#1a56db",marginTop:2}}>{userName}</div>
+                </div>
+                <button onClick={()=>setShowNums(v=>!v)} style={{fontSize:12,padding:"4px 12px",borderRadius:6,border:"1px solid #d1d5db",background:showNums?"#dcfce7":"#f3f4f6",color:"#374151",cursor:"pointer"}}>
+                  {showNums?"Nummern aus":"Nummern an"}
+                </button>
+              </div>
+
+              <div style={{overflowX:"auto",paddingBottom:10,position:"relative"}} onClick={e=>e.stopPropagation()}>
+                <LewisFormel
+                  hkLen={hkLen}
+                  nk={normalisiereNK(hkLen,nk)}
+                  scale={0.82}
+                  showNums={showNums}
+                  highlight={{hauptkette:"#1e3a5f",nebenkette:"#b45309"}}
+                  onAtomClick={handleAtomClick}
+                  activeAtom={activeAtom}
+                />
+
+                {activeAtom!==null && activeAtom>=2 && activeAtom<=hkLen-1 && (()=>{
+                  const S=0.82;
+                  const STEP=64*S;
+                  const hkX=i=>70*S+i*STEP;
+                  const CY=110*S;
+                  const pad=56*S;
+                  const xs=Array.from({length:hkLen},(_,i)=>hkX(i));
+                  const minX=Math.min(...xs)-pad;
+                  const atomX=hkX(activeAtom-1)-minX;
+                  const atomY=CY-pad;
+                  const currentNK=nk.find(n=>n.pos===activeAtom);
+                  return (
+                    <div style={{
+                      position:"absolute",
+                      left:Math.max(0,atomX-60),
+                      top:atomY+28*S+10,
+                      zIndex:100,
+                      background:"#fff",
+                      border:"2px solid #3b82f6",
+                      borderRadius:10,
+                      boxShadow:"0 8px 24px rgba(0,0,0,.15)",
+                      minWidth:210,
+                      overflow:"hidden"
+                    }}>
+                      <div style={{padding:"8px 12px",background:"#eff6ff",borderBottom:"1px solid #bfdbfe",fontSize:12,fontWeight:700,color:"#1e40af"}}>
+                        C{activeAtom} – Nebenkette wählen
+                      </div>
+                      <div onClick={()=>{ setNk(p=>p.filter(n=>n.pos!==activeAtom)); setActiveAtom(null); setStatus(null); }}
+                        style={{padding:"9px 14px",cursor:"pointer",fontSize:13,color:"#6b7280",fontWeight:600,
+                          background:!currentNK?"#f0fdf4":"#fff",
+                          borderBottom:"1px solid #f3f4f6",
+                          display:"flex",alignItems:"center",gap:8}}>
+                        {!currentNK&&<span style={{color:"#057a55"}}>✓</span>}
+                        <span>Keine Nebenkette</span>
+                      </div>
+                      {NK_OPTIONEN.map(opt=>(
+                        <div key={opt.len}
+                          onClick={()=>handleSelectNK(activeAtom,opt.len)}
+                          style={{padding:"9px 14px",cursor:"pointer",fontSize:13,
+                            background:currentNK&&currentNK.len===opt.len?"#fef3c7":"#fff",
+                            color:currentNK&&currentNK.len===opt.len?"#92400e":"#374151",
+                            fontWeight:currentNK&&currentNK.len===opt.len?700:500,
+                            borderBottom:"1px solid #f3f4f6",
+                            display:"flex",alignItems:"center",gap:8}}>
+                          {currentNK&&currentNK.len===opt.len&&<span style={{color:"#d97706"}}>✓</span>}
+                          <div>
+                            <div style={{fontFamily:"monospace",fontSize:13}}>{opt.label.split("·")[0].trim()}</div>
+                            <div style={{fontSize:11,color:"#9ca3af",marginTop:1}}>{opt.label.split("·")[1] ? opt.label.split("·")[1].trim() : ""}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })()}
+              </div>
+            </div>
+          </div>
+        </div>
+      );
+    }
+
+    // ─── REITER 4: FORTSCHRITT ──────────────────────────────────────────────────
+
+    function FortschrittReiter({punkte}) {
+      const total=punkte.benennen.reduce((a,b)=>a+b,0)+punkte.bauen.reduce((a,b)=>a+b,0);
+      const rB=punkte.benennen.filter(p=>p>0).length;
+      const rBau=punkte.bauen.filter(p=>p>0).length;
+      const Card=({title,icon,anzahl,richtig,pkt,color})=>(
+        <div style={{flex:"1 1 200px",background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:14,padding:22}}>
+          <div style={{fontSize:28,marginBottom:8}}>{icon}</div>
+          <div style={{fontSize:16,fontWeight:700,color:"#1e3a5f",marginBottom:12}}>{title}</div>
+          <div style={{display:"flex",flexDirection:"column",gap:7}}>
+            <div style={{fontSize:13,color:"#6b7280"}}>Aufgaben: <strong style={{color:"#374151"}}>{anzahl}</strong></div>
+            <div style={{fontSize:13,color:"#6b7280"}}>Richtig: <strong style={{color:"#057a55"}}>{richtig}</strong></div>
+            <div style={{fontSize:13,color:"#6b7280"}}>Punkte: <strong style={{color:color}}>{pkt}</strong></div>
+            {anzahl>0&&(
+              <div>
+                <div style={{height:8,background:"#f3f4f6",borderRadius:4,overflow:"hidden",marginTop:4}}>
+                  <div style={{height:"100%",width:Math.round(richtig/anzahl*100)+"%",background:color,borderRadius:4,transition:"width .4s"}}/>
+                </div>
+                <div style={{fontSize:11,color:"#9ca3af"}}>{Math.round(richtig/anzahl*100)}% richtig</div>
+              </div>
+            )}
+          </div>
+        </div>
+      );
+      return (
+        <div style={{maxWidth:680,margin:"0 auto"}}>
+          <div style={{background:"linear-gradient(135deg,#1e3a5f 0%,#1a56db 100%)",borderRadius:16,padding:"24px 28px",marginBottom:24,color:"#fff",display:"flex",alignItems:"center",gap:18}}>
+            <div style={{fontSize:48}}>🏆</div>
+            <div>
+              <div style={{fontSize:13,opacity:.8,marginBottom:2}}>Gesamtpunkte</div>
+              <div style={{fontSize:42,fontWeight:800,fontFamily:"'Playfair Display',serif"}}>{total}</div>
+            </div>
+          </div>
+          <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+            <Card title="Benennen" icon="🔬" anzahl={punkte.benennen.length} richtig={rB}   pkt={punkte.benennen.reduce((a,b)=>a+b,0)} color="#1a56db"/>
+            <Card title="Bauen"    icon="🧱" anzahl={punkte.bauen.length}    richtig={rBau} pkt={punkte.bauen.reduce((a,b)=>a+b,0)}    color="#b45309"/>
+          </div>
+          {total===0&&<div style={{textAlign:"center",marginTop:32,color:"#9ca3af",fontSize:14}}>Noch keine Aufgaben gelöst. Starte mit dem Benennen oder Bauen! 🚀</div>}
+          {total>0&&(
+            <div style={{marginTop:20,padding:"14px 18px",background:"#f0fdf4",borderRadius:10,border:"1px solid #86efac",fontSize:14,color:"#065f46"}}>
+              {total>=20?"🌟 Hervorragend! Du beherrschst die IUPAC-Nomenklatur sehr gut!":total>=10?"👍 Gute Arbeit! Weiter so!":"💪 Gut gestartet! Übe weiter, um mehr Punkte zu sammeln."}
+            </div>
+          )}
+        </div>
+      );
+    }
+
+    // ─── HAUPT-APP ───────────────────────────────────────────────────────────────
+
+    function AlkanApp() {
+      const [tab,setTab]=useState(0);
+      const [punkte,setPunkte]=useState({benennen:[],bauen:[]});
+      const addPunkte=useCallback((typ,p)=>{setPunkte(prev=>({...prev,[typ]:[...prev[typ],p]}));},[]);
+      const TABS=[{label:"📖 Regeln"},{label:"🔬 Benennen"},{label:"🧱 Bauen"},{label:"🏆 Fortschritt"}];
+      return (
+        <div style={{minHeight:"100vh",background:"#f0f4f8",fontFamily:"'Source Sans 3','Segoe UI',sans-serif"}}>
+          <div style={{background:"linear-gradient(135deg,#1e3a5f 0%,#1a56db 100%)",padding:"18px 24px 0",boxShadow:"0 2px 12px rgba(30,58,95,.15)"}}>
+            <div style={{maxWidth:980,margin:"0 auto"}}>
+              <div style={{color:"#fff",marginBottom:16}}>
+                <div style={{fontSize:11,letterSpacing:2,textTransform:"uppercase",opacity:.7,marginBottom:2}}>Chemie · Klasse 10</div>
+                <div style={{fontSize:22,fontFamily:"'Playfair Display',serif",fontWeight:700}}>Alkane & IUPAC-Nomenklatur</div>
+              </div>
+              <div style={{display:"flex",gap:4,flexWrap:"wrap"}}>
+                {TABS.map((t,i)=>(
+                  <button key={i} onClick={()=>setTab(i)} style={{padding:"9px 18px",borderRadius:"8px 8px 0 0",border:"none",background:tab===i?"#f0f4f8":"rgba(255,255,255,.12)",color:tab===i?"#1e3a5f":"rgba(255,255,255,.85)",fontWeight:tab===i?700:500,fontSize:13.5,cursor:"pointer"}}>
+                    {t.label}
+                  </button>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div style={{maxWidth:980,margin:"0 auto",padding:"28px 16px"}}>
+            {tab===0&&<RegelReiter/>}
+            {tab===1&&<BenennenReiter onPunkte={addPunkte}/>}
+            {tab===2&&<BauenReiter onPunkte={addPunkte}/>}
+            {tab===3&&<FortschrittReiter punkte={punkte}/>}
+          </div>
+        </div>
+      );
+    }
+
+    const root = ReactDOM.createRoot(document.getElementById("root"));
+    root.render(<AlkanApp />);
+  </script>
+</body>
+</html>
