@@ -1,0 +1,1119 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Papierchromatographie – Klasse 6</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=Caveat:wght@500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0f1117; --surface:#181c27; --card:#1e2333; --border:#2e3450;
+  --text:#e8eaf0; --muted:#6b7394;
+  --blue:#4a9eff; --yellow:#f5c842; --red:#ff5c5c;
+  --blue-bg:rgba(74,158,255,.1); --yellow-bg:rgba(245,200,66,.1); --red-bg:rgba(255,92,92,.1);
+  --water:#3ab5d8; --fiber:#c9a355;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Syne',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* HEADER */
+header{display:flex;align-items:center;gap:18px;padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:100}
+.logo{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--blue),var(--yellow));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+header h1{font-size:1rem;font-weight:800}
+header p{font-size:.7rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:1px}
+.tabs{margin-left:auto;display:flex;gap:2px;background:var(--bg);border-radius:10px;padding:3px}
+.tab-btn{background:none;border:none;color:var(--muted);padding:7px 15px;border-radius:8px;font-family:'Syne',sans-serif;font-size:.78rem;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap}
+.tab-btn:hover{color:var(--text)}
+.tab-btn.active{background:var(--card);color:var(--text)}
+
+/* PAGES */
+.page{display:none;padding:20px 28px;max-width:1240px;margin:0 auto}
+.page.active{display:block}
+
+/* CARDS */
+.card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:16px}
+.card-title{font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:12px}
+
+/* EXPERIMENT LAYOUT */
+.exp-layout{display:grid;grid-template-columns:248px 1fr 288px;gap:16px;align-items:start}
+
+/* DYE PANELS */
+.dye-panel{border-radius:12px;padding:13px;margin-bottom:9px;border:1.5px solid}
+.dye-panel.blue  {background:var(--blue-bg);  border-color:rgba(74,158,255,.3)}
+.dye-panel.yellow{background:var(--yellow-bg);border-color:rgba(245,200,66,.3)}
+.dye-panel.red   {background:var(--red-bg);   border-color:rgba(255,92,92,.3)}
+.dye-header{display:flex;align-items:center;gap:8px;margin-bottom:11px}
+.dye-dot{width:11px;height:11px;border-radius:50%;flex-shrink:0}
+.dye-name{font-size:.85rem;font-weight:800}
+.dye-rf{margin-left:auto;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);background:rgba(0,0,0,.3);padding:2px 7px;border-radius:5px}
+.slider-row{margin-bottom:7px}
+.slider-label{display:flex;justify-content:space-between;align-items:center;font-size:.7rem;color:var(--muted);margin-bottom:3px;font-family:'DM Mono',monospace}
+.slider-label strong{color:var(--text);font-size:.75rem}
+.range-ends{display:flex;justify-content:space-between;font-size:.6rem;color:var(--muted);font-family:'DM Mono',monospace;margin-top:2px}
+input[type=range]{width:100%;height:5px;border-radius:3px;cursor:pointer;background:rgba(255,255,255,.1);outline:none;border:none;-webkit-appearance:none}
+input[type=range].blue  {accent-color:var(--blue)}
+input[type=range].yellow{accent-color:var(--yellow)}
+input[type=range].red   {accent-color:var(--red)}
+input[type=range].paper {accent-color:#c9a355}
+
+/* STRIP */
+.strip-wrap{display:flex;flex-direction:column;align-items:center}
+canvas#strip{border-radius:8px 8px 0 0;box-shadow:0 8px 36px rgba(0,0,0,.5);display:block}
+.trough{width:180px;height:36px;background:linear-gradient(180deg,rgba(58,181,216,.12),rgba(58,181,216,.42));border:1.5px solid rgba(58,181,216,.4);border-top:none;border-radius:0 0 10px 10px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.62rem;color:var(--water);letter-spacing:1px}
+.rf-legend{display:flex;flex-direction:column;gap:5px;margin-top:10px;width:100%;max-width:290px;margin-left:auto;margin-right:auto}
+.rf-row{display:flex;align-items:center;gap:7px;font-size:.73rem;font-family:'DM Mono',monospace}
+.rf-bar-bg{flex:1;height:5px;background:rgba(255,255,255,.08);border-radius:3px;overflow:hidden}
+.rf-bar{height:100%;border-radius:3px;transition:width .35s cubic-bezier(.4,0,.2,1)}
+.observe{background:linear-gradient(135deg,rgba(74,158,255,.06),rgba(245,200,66,.04));border:1px solid rgba(74,158,255,.2);border-radius:11px;padding:13px;margin-top:10px}
+.observe-title{font-size:.63rem;font-family:'DM Mono',monospace;text-transform:uppercase;letter-spacing:1.5px;color:var(--blue);margin-bottom:6px}
+#observeText{font-size:.78rem;line-height:1.6;color:var(--muted)}
+
+/* TASKS */
+.task-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:14px;margin-bottom:9px;position:relative;cursor:pointer;transition:border-color .2s}
+.task-card:hover{border-color:rgba(74,158,255,.4)}
+.task-card.open{border-color:rgba(74,158,255,.55)}
+.task-num{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--muted);margin-bottom:4px;letter-spacing:1px}
+.task-q{font-size:.8rem;font-weight:700;line-height:1.45;padding-right:22px}
+.task-body{font-size:.76rem;line-height:1.65;color:var(--muted);margin-top:9px;display:none;border-top:1px solid var(--border);padding-top:9px}
+.task-card.open .task-body{display:block}
+.task-hint{background:rgba(74,158,255,.08);border-left:3px solid var(--blue);border-radius:0 7px 7px 0;padding:7px 11px;margin-top:7px;font-size:.73rem;color:var(--text);font-style:italic}
+.task-chevron{position:absolute;right:13px;top:13px;color:var(--muted);font-size:.8rem;transition:transform .2s}
+.task-card.open .task-chevron{transform:rotate(180deg)}
+
+/* THEORY */
+.theory-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.t-card{background:var(--card);border:1px solid var(--border);border-radius:14px;padding:18px}
+.t-card h3{font-family:'Caveat',cursive;font-size:1.25rem;color:var(--blue);margin-bottom:9px}
+.t-card p,.t-card li{font-size:.82rem;line-height:1.7;color:rgba(232,234,240,.75)}
+.t-card li{margin-left:15px;margin-bottom:3px}
+.callout{background:rgba(245,200,66,.08);border-left:3px solid var(--yellow);border-radius:0 8px 8px 0;padding:9px 12px;margin-top:9px;font-size:.77rem;color:rgba(245,200,66,.9);font-style:italic}
+.formula{font-family:'DM Mono',monospace;font-size:.8rem;background:rgba(255,255,255,.05);padding:9px 13px;border-radius:8px;margin-top:8px;color:var(--text)}
+
+/* QUIZ */
+.quiz-card{background:var(--card);border:1px solid var(--border);border-radius:13px;padding:18px;margin-bottom:11px}
+.q-num{font-family:'DM Mono',monospace;font-size:.63rem;color:var(--muted);margin-bottom:5px;letter-spacing:1px}
+.q-text{font-size:.88rem;font-weight:700;margin-bottom:11px}
+.q-opts{display:flex;flex-direction:column;gap:6px}
+.q-opt{background:rgba(255,255,255,.04);border:1.5px solid var(--border);border-radius:9px;padding:9px 13px;font-size:.8rem;cursor:pointer;transition:all .15s;font-family:'Syne',sans-serif;text-align:left;color:var(--text);font-weight:600}
+.q-opt:hover:not(.locked){background:rgba(255,255,255,.08);border-color:rgba(255,255,255,.2)}
+.q-opt.ok {background:rgba(74,200,120,.12);border-color:rgba(74,200,120,.5);color:#4ac878}
+.q-opt.bad{background:rgba(255,92,92,.10);border-color:rgba(255,92,92,.4); color:#ff5c5c}
+.q-opt.reveal{background:rgba(74,200,120,.06);border-color:rgba(74,200,120,.3)}
+.q-fb{font-size:.77rem;margin-top:9px;padding:8px 12px;border-radius:8px;display:none;line-height:1.55}
+.q-fb.show{display:block}
+.q-fb.ok {background:rgba(74,200,120,.1); color:#4ac878}
+.q-fb.bad{background:rgba(255,92,92,.08);color:#ff9090}
+.score-box{text-align:center;padding:26px;border-radius:13px;background:var(--card);border:1px solid var(--border);display:none;margin-bottom:14px}
+.score-box .big{font-family:'Caveat',cursive;font-size:2rem;color:var(--yellow);margin-bottom:5px}
+.score-box p{font-size:.83rem;color:var(--muted)}
+.btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;border:none;border-radius:9px;font-family:'Syne',sans-serif;font-weight:700;font-size:.8rem;cursor:pointer;transition:all .18s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,.06);color:var(--text);border:1px solid var(--border)}
+.btn-ghost:hover{background:rgba(255,255,255,.1)}
+.btn-row{display:flex;gap:9px;flex-wrap:wrap}
+
+/* MICRO PAGE LAYOUT */
+.mikro-layout{display:grid;grid-template-columns:1fr 300px;gap:16px;align-items:start}
+
+@media(max-width:960px){.exp-layout,.mikro-layout{grid-template-columns:1fr}.theory-grid{grid-template-columns:1fr}header{padding:11px 14px}.page{padding:14px}}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">🧪</div>
+  <div>
+    <h1>Papierchromatographie</h1>
+    <p>Interaktive Simulation · Chemie Klasse 6</p>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('exp',this)">Experiment</button>
+    <button class="tab-btn" onclick="switchTab('mikro',this)">Mikroansicht</button>
+    <button class="tab-btn" onclick="switchTab('theorie',this)">Theorie</button>
+    <button class="tab-btn" onclick="switchTab('quiz',this)">Quiz</button>
+  </div>
+</header>
+
+<!-- ══════════ EXPERIMENT ══════════ -->
+<div id="page-exp" class="page active">
+  <div class="exp-layout">
+
+    <!-- LEFT: per-dye sliders -->
+    <div>
+      <div class="card-title" style="margin-bottom:9px">⚙ Parameter je Farbstoff</div>
+
+      <div class="dye-panel blue">
+        <div class="dye-header">
+          <div class="dye-dot" style="background:var(--blue)"></div>
+          <span class="dye-name" style="color:var(--blue)">Blau</span>
+          <span class="dye-rf" id="rfBlue">Rf = –</span>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Adsorption</span><strong id="vAdsBlue">1</strong></div>
+          <input type="range" class="blue" id="adsBlue" min="1" max="5" value="1" step="1" oninput="onParam()">
+          <div class="range-ends"><span>gering</span><span>stark</span></div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Teilchengröße</span><strong id="vSzBlue">1</strong></div>
+          <input type="range" class="blue" id="szBlue" min="1" max="5" value="1" step="1" oninput="onParam()">
+          <div class="range-ends"><span>klein</span><span>groß</span></div>
+        </div>
+      </div>
+
+      <div class="dye-panel yellow">
+        <div class="dye-header">
+          <div class="dye-dot" style="background:var(--yellow)"></div>
+          <span class="dye-name" style="color:var(--yellow)">Gelb</span>
+          <span class="dye-rf" id="rfYellow">Rf = –</span>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Adsorption</span><strong id="vAdsYellow">3</strong></div>
+          <input type="range" class="yellow" id="adsYellow" min="1" max="5" value="3" step="1" oninput="onParam()">
+          <div class="range-ends"><span>gering</span><span>stark</span></div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Teilchengröße</span><strong id="vSzYellow">3</strong></div>
+          <input type="range" class="yellow" id="szYellow" min="1" max="5" value="3" step="1" oninput="onParam()">
+          <div class="range-ends"><span>klein</span><span>groß</span></div>
+        </div>
+      </div>
+
+      <div class="dye-panel red">
+        <div class="dye-header">
+          <div class="dye-dot" style="background:var(--red)"></div>
+          <span class="dye-name" style="color:var(--red)">Rot</span>
+          <span class="dye-rf" id="rfRed">Rf = –</span>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Adsorption</span><strong id="vAdsRed">5</strong></div>
+          <input type="range" class="red" id="adsRed" min="1" max="5" value="5" step="1" oninput="onParam()">
+          <div class="range-ends"><span>gering</span><span>stark</span></div>
+        </div>
+        <div class="slider-row">
+          <div class="slider-label"><span>Teilchengröße</span><strong id="vSzRed">5</strong></div>
+          <input type="range" class="red" id="szRed" min="1" max="5" value="5" step="1" oninput="onParam()">
+          <div class="range-ends"><span>klein</span><span>groß</span></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:2px">
+        <div class="card-title">Filterpapier-Struktur</div>
+        <input type="range" class="paper" id="paperStr" min="1" max="5" value="3" step="1" oninput="onParam()" style="width:100%;margin-bottom:3px">
+        <div class="range-ends" style="font-size:.6rem;color:var(--muted);font-family:'DM Mono',monospace"><span>fein</span><span>grob</span></div>
+        <div style="text-align:center;font-family:'DM Mono',monospace;font-size:.68rem;color:#c9a355;margin-top:4px" id="paperLabel">mittel</div>
+      </div>
+    </div>
+
+    <!-- MIDDLE: strip canvas -->
+    <div>
+      <div class="card" style="padding:18px">
+        <div class="card-title">Chromatographiestreifen</div>
+        <div class="strip-wrap">
+          <canvas id="strip" width="180" height="430"></canvas>
+          <div class="trough">~ WASSER ~</div>
+        </div>
+        <div class="rf-legend" id="rfLegend"></div>
+      </div>
+      <div class="observe">
+        <div class="observe-title">👁 Beobachtung</div>
+        <div id="observeText">Verändere die Regler – die Banden reagieren sofort.</div>
+      </div>
+    </div>
+
+    <!-- RIGHT: discovery tasks -->
+    <div>
+      <div class="card-title" style="margin-bottom:9px">🔍 Entdeckungsaufgaben</div>
+
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE 01</div>
+        <div class="task-q">Was passiert, wenn alle drei Farbstoffe gleiche Parameter haben?</div>
+        <div class="task-body">
+          Stelle Adsorption und Größe aller drei Farbstoffe auf denselben Wert. Was passiert mit den Banden?
+          <div class="task-hint">💡 Achte auf die Rf-Werte. Können die Farben noch getrennt werden?</div>
+          Erkläre: Was muss sich zwischen den Stoffen unterscheiden, damit Chromatographie sie trennen kann?
+        </div>
+      </div>
+
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE 02</div>
+        <div class="task-q">Welcher Zusammenhang besteht zwischen Adsorption und Wanderweite?</div>
+        <div class="task-body">
+          Verändere nur die Adsorption von <strong style="color:var(--blue)">Blau</strong> (1→5), Gelb und Rot bleiben gleich.
+          <div class="task-hint">💡 Wie verändert sich der Rf-Wert in der blauen Karte?</div>
+          Formuliere eine Regel: „Je größer die Adsorption, desto …"
+        </div>
+      </div>
+
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE 03</div>
+        <div class="task-q">Wie wirkt Teilchengröße – unabhängig von der Adsorption?</div>
+        <div class="task-body">
+          Setze alle Adsorptionen auf 2. Verändere dann nur die Teilchengrößen.
+          <div class="task-hint">💡 Denke an ein Sieb: Welche Teilchen passen leichter durch enge Faserlücken?</div>
+        </div>
+      </div>
+
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE 04</div>
+        <div class="task-q">Was bewirkt groberes Filterpapier?</div>
+        <div class="task-body">
+          Stelle eine gute Trennung ein, dann schiebe den Papierregler von fein nach grob.
+          <div class="task-hint">💡 Beobachte die Breite der Banden. Was passiert mit der Trennschärfe?</div>
+        </div>
+      </div>
+
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE 05 ★</div>
+        <div class="task-q">Finde die bestmögliche Trennung aller drei Farbstoffe!</div>
+        <div class="task-body">
+          Ziel: Rf-Werte möglichst gleichmäßig verteilt (z.B. ~0,2 / ~0,5 / ~0,8), keine Überlappungen.
+          <div class="task-hint">💡 Notiere deine optimalen Einstellungen – das ist dein Experiment-Protokoll!</div>
+          Welcher Parameter hat den größten Einfluss auf den Rf-Wert?
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ MIKROANSICHT ══════════ -->
+<div id="page-mikro" class="page">
+  <div class="mikro-layout">
+
+    <!-- MAIN MICRO CANVAS -->
+    <div>
+      <div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;gap:14px;margin-bottom:12px;flex-wrap:wrap">
+          <div class="card-title" style="margin-bottom:0">Querschnitt – Filterpapier mit Fließrichtung (Teilchenmodell)</div>
+          <div style="display:flex;align-items:center;gap:8px;background:rgba(201,163,85,.1);border:1px solid rgba(201,163,85,.3);border-radius:9px;padding:6px 12px;flex:1;min-width:200px;max-width:320px">
+            <span style="font-size:.65rem;color:#c9a355;font-family:'DM Mono',monospace;white-space:nowrap">&#128196; Papierstruktur</span>
+            <input type="range" class="paper" id="microPaper" min="1" max="5" value="3" step="1"
+              oninput="syncMicroPaper(this.value)" style="flex:1">
+            <span style="font-size:.65rem;font-family:'DM Mono',monospace;color:#c9a355;white-space:nowrap" id="microPaperLabel">mittel</span>
+          </div>
+        </div>
+
+        <!-- MICRO CANVAS: vertical strip, water flows bottom→top -->
+        <div style="display:flex;gap:0;align-items:stretch">
+          <!-- Y-axis label -->
+          <div style="display:flex;flex-direction:column;justify-content:space-between;padding:6px 0;margin-right:8px;width:54px;text-align:right;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--muted)">
+            <span>oben<br>(fern)</span>
+            <span style="color:var(--blue)">↑ Fließ-<br>richtung</span>
+            <span>unten<br>(Wasser)</span>
+          </div>
+          <canvas id="micro" width="560" height="520" style="border-radius:10px;border:1px solid var(--border);display:block;flex:1"></canvas>
+        </div>
+
+        <!-- Bottom trough label -->
+        <div style="margin-left:62px;margin-top:0">
+          <div style="height:28px;background:linear-gradient(180deg,rgba(58,181,216,.1),rgba(58,181,216,.35));border:1px solid rgba(58,181,216,.35);border-top:none;border-radius:0 0 8px 8px;display:flex;align-items:center;justify-content:center;font-family:'DM Mono',monospace;font-size:.6rem;color:var(--water);letter-spacing:1px">~ WASSER (Lösungsmittel) ~</div>
+        </div>
+      </div>
+
+      <!-- LEGEND BAR -->
+      <div class="observe">
+        <div class="observe-title">Legende</div>
+        <div style="display:flex;flex-wrap:wrap;gap:14px;font-size:.75rem;color:var(--muted);line-height:1.7">
+          <span>🟫 Braune Balken = Papierfasern</span>
+          <span>🔵 Transparente Kreise = Wasser</span>
+          <span>⬆ Pfeile = Fließrichtung</span>
+          <span>Farbige Kreise/Zacken = Farbstoffteilchen</span>
+          <span style="color:var(--text)">Gestrichelt = Adsorptionsbindung an Faser</span>
+          <span style="color:var(--text)">Horizontale Linie = Lauffront des Farbstoffs</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- RIGHT: micro tasks -->
+    <div>
+      <div class="card-title" style="margin-bottom:9px">🔍 Aufgaben Mikroansicht</div>
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE M1</div>
+        <div class="task-q">Wo genau befinden sich die Farbstoffteilchen – und warum?</div>
+        <div class="task-body">
+          Stelle <strong style="color:var(--blue)">Blau</strong> auf Adsorption 1, <strong style="color:var(--red)">Rot</strong> auf 5. Beobachte: Wo auf dem Streifen (oben/unten) sammeln sich rote und blaue Teilchen?
+          <div class="task-hint">💡 Die Position der Teilchen entspricht dem Rf-Wert: weit oben = Rf nahe 1, unten = Rf nahe 0.</div>
+        </div>
+      </div>
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE M2</div>
+        <div class="task-q">Was verrät die Form der Teilchen über ihre Haftfähigkeit?</div>
+        <div class="task-body">
+          Vergleiche die Teilchenform bei Adsorption 1 und 5 für denselben Farbstoff.
+          <div class="task-hint">💡 Zähle die Zacken! Mehr Zacken = mehr Kontaktfläche = stärkere Adsorption = kürzere Wanderstrecke.</div>
+          Erkläre: Warum können rau geformte Teilchen schlechter mit dem Wasser wandern?
+        </div>
+      </div>
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE M3</div>
+        <div class="task-q">Was bedeuten die gestrichelten Linien zwischen Teilchen und Faser?</div>
+        <div class="task-body">
+          Bei welchen Adsorptionswerten erscheinen die Bindungslinien? Welche Farbstoffe zeigen sie, welche nicht?
+          <div class="task-hint">💡 Eine gestrichelte Linie = ein Kontaktpunkt. Je mehr Linien, desto stärker „klebt" das Teilchen.</div>
+        </div>
+      </div>
+      <div class="task-card" onclick="toggleTask(this)">
+        <div class="task-chevron">▾</div>
+        <div class="task-num">AUFGABE M4</div>
+        <div class="task-q">Was ändert sich bei grobem Filterpapier im Querschnitt?</div>
+        <div class="task-body">
+          Stelle Papierstruktur auf fein (1), dann auf grob (5). Was passiert mit den Fasern und den Kanälen dazwischen?
+          <div class="task-hint">💡 Breite Kanäle = weniger Kontakt mit Fasern = schwächere Adsorption = alle wandern weiter.</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ THEORIE ══════════ -->
+<div id="page-theorie" class="page">
+  <div class="theory-grid">
+    <div class="t-card">
+      <h3>Was ist Papierchromatographie?</h3>
+      <p>Chromatographie ist ein <strong>Trennverfahren</strong> für Stoffgemische. Das Lösungsmittel (Wasser) steigt durch das Filterpapier nach oben und nimmt die Farbstoffe mit – je nach Haftfähigkeit unterschiedlich weit.</p>
+      <div class="callout">Schwarze Tinte ist kein reiner Stoff – sie ist ein <strong>Gemisch aus Farbstoffen</strong>, die die Chromatographie sichtbar macht!</div>
+    </div>
+    <div class="t-card">
+      <h3>Adsorption – die Haftfähigkeit</h3>
+      <p>Adsorption = Haftung eines Teilchens an der Faseroberfläche. Raue, zackige Teilchen haben mehr Kontaktfläche → haften stärker → wandern weniger weit.</p>
+      <ul>
+        <li>Glatte Teilchen → geringe Haftung → wandern weit (hoher Rf)</li>
+        <li>Zackige Teilchen → hohe Haftung → wandern kaum (niedriger Rf)</li>
+      </ul>
+      <div class="callout">Mehr Zacken = mehr Kontaktfläche = stärkere Adsorption</div>
+    </div>
+    <div class="t-card">
+      <h3>Teilchengröße &amp; Papierstruktur</h3>
+      <p>Die Fasern bilden ein <strong>Kanalnetz</strong>. Große Teilchen kommen durch enge Kanäle schlechter hindurch (Siebeffekt).</p>
+      <ul>
+        <li>Feines Papier → enge Kanäle → langsame, scharfe Trennung</li>
+        <li>Grobes Papier → weite Kanäle → schneller, aber unschärfer</li>
+      </ul>
+    </div>
+    <div class="t-card">
+      <h3>Der Rf-Wert</h3>
+      <div class="formula">Rf = Wanderstrecke Stoff ÷ Wanderstrecke Wasser</div>
+      <p style="margin-top:8px">Rf nahe 1 → Stoff wandert fast so weit wie das Wasser<br>Rf nahe 0 → Stoff bleibt fast am Startpunkt</p>
+      <div class="callout">Der Rf-Wert ist wie ein Fingerabdruck – jeder Stoff hat bei gleichen Bedingungen immer denselben Rf-Wert.</div>
+    </div>
+    <div class="t-card" style="grid-column:1/-1">
+      <h3>Zusammenfassung</h3>
+      <p>Drei Faktoren bestimmen die Wanderstrecke: <strong>Adsorption</strong> (hohe Haftfähigkeit = kürzere Strecke), <strong>Teilchengröße</strong> (größere Teilchen = kürzere Strecke durch Siebeffekt), <strong>Papierstruktur</strong> (grobes Papier = unschärfere Trennung). Nur wenn sich Stoffe in mindestens einem Faktor unterscheiden, kann die Chromatographie sie trennen.</div>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════ QUIZ ══════════ -->
+<div id="page-quiz" class="page">
+  <div style="max-width:660px;margin:0 auto">
+    <div style="font-family:'Caveat',cursive;font-size:1.85rem;color:var(--yellow);margin-bottom:3px">Wissenstest</div>
+    <p style="font-size:.76rem;color:var(--muted);font-family:'DM Mono',monospace;margin-bottom:18px">Klicke auf eine Antwort – du erhältst sofort Rückmeldung.</p>
+    <div id="quizWrap"></div>
+    <div class="score-box" id="scoreBox">
+      <div class="big" id="scoreBig"></div>
+      <p id="scoreMsg"></p>
+    </div>
+    <div class="btn-row">
+      <button class="btn btn-primary" id="btnCheck" onclick="checkQuiz()">Auswerten</button>
+      <button class="btn btn-ghost" onclick="resetQuiz()">↺ Neu versuchen</button>
+    </div>
+  </div>
+</div>
+
+<!-- ══════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════ -->
+<script>
+// ─── DYES ────────────────────────────────
+const DYES = [
+  { id:'Blue',   name:'Blau',  color:'#4a9eff', hex:'4a9eff' },
+  { id:'Yellow', name:'Gelb',  color:'#f5c842', hex:'f5c842' },
+  { id:'Red',    name:'Rot',   color:'#ff5c5c', hex:'ff5c5c' },
+];
+const PAPER_LABELS = ['sehr fein','fein','mittel','grob','sehr grob'];
+
+// ─── RF CALC ─────────────────────────────
+function computeRf(ads, sz, paper) {
+  const a = 1 - (ads - 1) * 0.17;
+  const s = 1 - (sz  - 1) * 0.10;
+  const p = 1 + (paper - 3) * 0.03;
+  return Math.max(0.04, Math.min(0.96, a * s * p));
+}
+
+// ─── GET PARAMS ──────────────────────────
+function getP() {
+  return {
+    ads:   DYES.map(d => +document.getElementById('ads'+d.id).value),
+    sz:    DYES.map(d => +document.getElementById('sz'+d.id).value),
+    paper: +document.getElementById('paperStr').value,
+  };
+}
+
+// ─── MAIN UPDATE ─────────────────────────
+function onParam() {
+  const p = getP();
+  DYES.forEach((d, i) => {
+    document.getElementById('vAds'+d.id).textContent = p.ads[i];
+    document.getElementById('vSz'+d.id).textContent  = p.sz[i];
+    const rf = computeRf(p.ads[i], p.sz[i], p.paper);
+    document.getElementById('rf'+d.id).textContent = 'Rf\u00a0' + rf.toFixed(2);
+  });
+  document.getElementById('paperLabel').textContent = PAPER_LABELS[p.paper - 1];
+  drawStrip(p);
+  drawRfLegend(p);
+  updateObserve(p);
+  if (document.getElementById('page-mikro').classList.contains('active')) drawMicro(p);
+}
+
+// ─── STRIP CANVAS ────────────────────────
+function drawStrip(p) {
+  const cv = document.getElementById('strip');
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Paper background
+  const pg = ctx.createLinearGradient(0, 0, W, 0);
+  pg.addColorStop(0, '#ede0c0'); pg.addColorStop(.5, '#fdf5e0'); pg.addColorStop(1, '#e8d8b0');
+  ctx.fillStyle = pg; ctx.fillRect(0, 0, W, H);
+
+  // Fiber texture
+  const lines = 6 + p.paper * 4;
+  ctx.save(); ctx.globalAlpha = 0.05 + p.paper * 0.015;
+  for (let i = 0; i < lines; i++) {
+    const y = (i / lines) * H;
+    ctx.strokeStyle = '#8b6914'; ctx.lineWidth = .7;
+    ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y + Math.sin(i * 1.3) * 1.5); ctx.stroke();
+  }
+  ctx.restore();
+
+  // Water tint
+  const wg = ctx.createLinearGradient(0, 0, 0, H);
+  wg.addColorStop(0, 'rgba(58,181,216,.05)'); wg.addColorStop(1, 'rgba(58,181,216,.18)');
+  ctx.fillStyle = wg; ctx.fillRect(0, 0, W, H);
+
+  const startY = H - 50;
+
+  // Start line
+  ctx.save();
+  ctx.strokeStyle = 'rgba(0,0,0,.22)'; ctx.lineWidth = 1; ctx.setLineDash([3, 3]);
+  ctx.beginPath(); ctx.moveTo(6, startY); ctx.lineTo(W - 6, startY); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = 'rgba(0,0,0,.28)'; ctx.font = '8px DM Mono'; ctx.fillText('Start', 5, startY - 4);
+  ctx.restore();
+
+  const rfs = DYES.map((d, i) => computeRf(p.ads[i], p.sz[i], p.paper));
+  const usableH = startY - 14;
+
+  // Overlap markers
+  for (let i = 0; i < rfs.length - 1; i++) for (let j = i + 1; j < rfs.length; j++) {
+    if (Math.abs(rfs[i] - rfs[j]) < 0.07) {
+      const y = startY - ((rfs[i] + rfs[j]) / 2) * usableH;
+      ctx.save(); ctx.strokeStyle = 'rgba(255,240,80,.5)'; ctx.lineWidth = 1; ctx.setLineDash([2, 2]);
+      ctx.beginPath(); ctx.moveTo(0, y); ctx.lineTo(W, y); ctx.stroke(); ctx.restore();
+    }
+  }
+
+  // Dye bands
+  DYES.forEach((d, i) => {
+    const rf = rfs[i];
+    const centerY = startY - rf * usableH;
+    const halfW = 3.5 + (1 - (p.ads[i] - 1) / 4) * 11 + p.paper * 1.2;
+
+    const grad = ctx.createLinearGradient(0, centerY - halfW, 0, centerY + halfW);
+    grad.addColorStop(0,    d.color + '00');
+    grad.addColorStop(0.25, d.color + '99');
+    grad.addColorStop(0.5,  d.color + 'ee');
+    grad.addColorStop(0.75, d.color + '99');
+    grad.addColorStop(1,    d.color + '00');
+    ctx.save();
+    ctx.globalAlpha = .9;
+    ctx.fillStyle = grad;
+    ctx.fillRect(3, centerY - halfW, W - 6, halfW * 2);
+    // Sharp leading edge
+    ctx.globalAlpha = .6;
+    ctx.strokeStyle = d.color; ctx.lineWidth = 1.5; ctx.setLineDash([]);
+    ctx.beginPath(); ctx.moveTo(3, centerY - halfW + 1); ctx.lineTo(W - 3, centerY - halfW + 1); ctx.stroke();
+    ctx.restore();
+
+    // Rf tick
+    ctx.save();
+    ctx.fillStyle = d.color; ctx.font = 'bold 8px DM Mono'; ctx.textAlign = 'right';
+    ctx.fillText(rf.toFixed(2), W - 2, centerY + 3);
+    ctx.restore();
+  });
+}
+
+// ─── RF LEGEND BARS ──────────────────────
+function drawRfLegend(p) {
+  document.getElementById('rfLegend').innerHTML = DYES.map((d, i) => {
+    const rf = computeRf(p.ads[i], p.sz[i], p.paper);
+    return `<div class="rf-row">
+      <span style="color:${d.color};font-weight:800;width:34px">${d.name}</span>
+      <div class="rf-bar-bg"><div class="rf-bar" style="width:${rf*100}%;background:${d.color}"></div></div>
+      <span style="color:var(--muted);font-family:'DM Mono',monospace;font-size:.68rem;width:40px;text-align:right">Rf ${rf.toFixed(2)}</span>
+    </div>`;
+  }).join('');
+}
+
+// ─── OBSERVE TEXT ────────────────────────
+function updateObserve(p) {
+  const rfs = DYES.map((d, i) => computeRf(p.ads[i], p.sz[i], p.paper));
+  const maxRf = Math.max(...rfs), minRf = Math.min(...rfs), spread = maxRf - minRf;
+  const maxDye = DYES[rfs.indexOf(maxRf)], minDye = DYES[rfs.indexOf(minRf)];
+  const overlaps = [];
+  for (let i = 0; i < rfs.length - 1; i++) for (let j = i + 1; j < rfs.length; j++)
+    if (Math.abs(rfs[i] - rfs[j]) < 0.07) overlaps.push(DYES[i].name + ' & ' + DYES[j].name);
+
+  let msg;
+  if (spread < 0.06) msg = '⚠️ Alle Banden liegen fast übereinander – keine Trennung möglich!';
+  else if (overlaps.length) msg = '⚠️ ' + overlaps.join(', ') + ' überlappen sich. Ändere Adsorption oder Größe.';
+  else if (spread > 0.55) msg = '✅ Sehr gute Trennung! ' + maxDye.name + ' (Rf ' + maxRf.toFixed(2) + ') am weitesten, ' + minDye.name + ' (Rf ' + minRf.toFixed(2) + ') am kürzesten.';
+  else msg = maxDye.name + ' wandert am weitesten (Rf ' + maxRf.toFixed(2) + '), ' + minDye.name + ' am wenigsten (Rf ' + minRf.toFixed(2) + '). Spreizung: ' + (spread * 100).toFixed(0) + '%.';
+  document.getElementById('observeText').textContent = msg;
+}
+
+// ═══════════════════════════════════════════
+//  MICRO VIEW — rebuilt from scratch
+//  Layout: vertical strip (bottom = water, top = far end)
+//  Fibers run HORIZONTALLY across the strip width
+//  Water + particles flow UPWARD through gaps between fibers
+//  Each dye has its own Lauffront (horizontal line at Rf position)
+//  Particles cluster around their Lauffront
+//  Particle shape (smooth→spiky) encodes adsorption
+//  Bond lines appear when adsorption >= 3
+// ═══════════════════════════════════════════
+function drawMicro(p) {
+  const cv = document.getElementById('micro');
+  if (!cv) return;
+  const ctx = cv.getContext('2d');
+  const W = cv.width, H = cv.height;
+  ctx.clearRect(0, 0, W, H);
+
+  // Dark background
+  ctx.fillStyle = '#0d1018';
+  ctx.fillRect(0, 0, W, H);
+
+  const rfs = DYES.map((d, i) => computeRf(p.ads[i], p.sz[i], p.paper));
+  const paper = p.paper;
+
+  // ── DIMENSIONS ──
+  // Bottom of canvas = water entry; Top = far end of strip
+  // We draw 5 horizontal fiber bands across the width
+  // Gaps between fibers = channels where liquid flows upward
+  const FIBER_COUNT   = 2 + paper;             // 3–7 fibers
+  // Fibers tall enough to make pores clearly visible
+  const FIBER_H       = Math.max(26, Math.floor((H - 30) / (FIBER_COUNT * 1.85)));
+  const GAP_H         = Math.max(30, Math.floor(FIBER_H * (1.05 - paper * 0.04)));
+  const TOTAL_H       = FIBER_COUNT * FIBER_H + (FIBER_COUNT - 1) * GAP_H;
+  const STRIP_TOP     = Math.max(8, Math.floor((H - TOTAL_H) / 2));
+
+  // Helper: Y-coordinate in canvas for a given 0–1 fraction (0=bottom, 1=top)
+  const fracToY = frac => STRIP_TOP + TOTAL_H - frac * TOTAL_H;
+
+  // ── DRAW FIBERS (horizontal bands) ──────
+  for (let f = 0; f < FIBER_COUNT; f++) {
+    const fy = STRIP_TOP + f * (FIBER_H + GAP_H);
+    drawHorizFiber(ctx, 0, fy, W, FIBER_H, paper, f);
+  }
+
+  // ── DRAW WATER FLOW ARROWS IN GAPS ──────
+  for (let f = 0; f < FIBER_COUNT - 1; f++) {
+    const gapTop = STRIP_TOP + f * (FIBER_H + GAP_H) + FIBER_H;
+    const gapMid = gapTop + GAP_H * 0.5;
+    drawGapWater(ctx, gapTop, GAP_H, W);
+    drawFlowArrows(ctx, gapMid, W);
+  }
+
+  // ── DRAW DYE LAUFFRONTEN + PARTICLES ────
+  DYES.forEach((dye, di) => {
+    const rf  = rfs[di];
+    const ads = p.ads[di];
+    const sz  = p.sz[di];
+
+    // Lauffront Y position
+    const frontY = fracToY(rf);
+
+    // === LAUFFRONT LINE ===
+    drawLauffront(ctx, frontY, dye, di);
+
+    // === PARTICLES ===
+    // Y-position is derived DIRECTLY from the Lauffront (frontY) with only a
+    // tiny ±3 px jitter. This keeps all particles visually on their Lauffront
+    // regardless of which gap they sit in.
+    const pRadius   = 4 + sz * 1.8;
+    // How many particles to spread across the strip width
+    const pCount    = 5;
+    const xStep     = (W - 40) / (pCount - 1);
+
+    for (let n = 0; n < pCount; n++) {
+      // Deterministic, small X jitter (±4 px only)
+      const seed = di * 113 + n * 37;
+      const xRaw = 20 + n * xStep + ((seed % 9) - 4);
+      const px   = Math.max(pRadius + 6, Math.min(W - pRadius - 6, xRaw));
+
+      // ── Y: clamp frontY to the nearest gap, add tiny jitter (±3 px) ──
+      // Find which gap the frontY falls in (or the closest one)
+      let bestGapMidY = frontY;  // fallback
+      let bestDist    = Infinity;
+      for (let f2 = 0; f2 < FIBER_COUNT - 1; f2++) {
+        const gTop  = STRIP_TOP + f2 * (FIBER_H + GAP_H) + FIBER_H;
+        const gBot  = gTop + GAP_H;
+        const gMid  = gTop + GAP_H * 0.5;
+        const dist  = Math.abs(frontY - gMid);
+        if (dist < bestDist) { bestDist = dist; bestGapMidY = gMid; }
+      }
+      // Clamp so particle never exits the canvas vertically
+      const jitterY = ((seed % 7) - 3);   // −3 … +3 px
+      const py = Math.max(pRadius + 4, Math.min(H - pRadius - 4, bestGapMidY + jitterY));
+
+      // Adsorbed particles sit slightly closer to the fiber above them
+      const isAdsorbed = ads >= 3;
+      const finalPy    = isAdsorbed ? py - 4 : py;
+
+      drawDyeParticle(ctx, px, finalPy, pRadius, ads, dye);
+
+      // Bond lines upward to the fiber surface (only for adsorbed)
+      if (isAdsorbed) {
+        // Find the fiber bottom edge just above finalPy
+        let fiberBottom = STRIP_TOP; // fallback
+        for (let f2 = 0; f2 < FIBER_COUNT - 1; f2++) {
+          const gTop = STRIP_TOP + f2 * (FIBER_H + GAP_H) + FIBER_H;
+          if (gTop > finalPy - pRadius - 2) { fiberBottom = gTop; break; }
+        }
+        drawBondLines(ctx, px, finalPy - pRadius, fiberBottom, dye.color, ads);
+      }
+    }
+  });
+
+  // ── SCALE BAR (Rf axis, right side) ─────
+  drawRfScale(ctx, W, STRIP_TOP, TOTAL_H, rfs);
+}
+
+// ─── FIBER BAND WITH GAP-PORES ──────────
+// The fiber layer is a SOLID horizontal bar interrupted by vertical
+// gap-columns (pores) that run top-to-bottom through the bar.
+// These gaps are the flow channels water travels through.
+//
+// paper=1 (fein)  → many narrow gaps  → tight pores, slow flow
+// paper=5 (grob)  → few wide gaps     → open pores, fast flow
+//
+// Each gap is coloured with a water-blue tint and contains an
+// upward arrow so the flow direction is unmistakeable.
+function drawHorizFiber(ctx, x, y, w, h, paper, idx) {
+
+  // ── Number and width of pore-gaps ──
+  // Fine: ~14 gaps at ~6 px each  |  Coarse: ~4 gaps at ~28 px each
+  const gapCount = Math.max(2, Math.round(14 - (paper - 1) * 3));   // 14→2
+  const gapW     = 4 + (paper - 1) * 6;                             // 4→28 px
+
+  // Total fiber material width
+  const totalGapW  = gapCount * gapW;
+  const fiberMatW  = w - totalGapW;
+  // Segment width of one fiber piece between gaps
+  const segW = Math.max(4, fiberMatW / (gapCount + 1));
+
+  // Build gap x-positions deterministically (slight jitter per row)
+  const gaps = [];
+  for (let g = 0; g < gapCount; g++) {
+    const seed = idx * 41 + g * 17;
+    const baseX = x + segW + g * (segW + gapW) + ((seed % 7) - 3);
+    const gx    = Math.max(x + 2, Math.min(x + w - gapW - 2, baseX));
+    gaps.push(gx);
+  }
+
+  // ── Draw fiber segments (solid bars between gaps) ──
+  const fg = ctx.createLinearGradient(x, y, x, y + h);
+  fg.addColorStop(0,   '#e0bb58');
+  fg.addColorStop(0.4, '#c9a355');
+  fg.addColorStop(1,   '#9a7230');
+
+  ctx.save();
+
+  // Left edge segment
+  const firstGapX = gaps.length > 0 ? gaps[0] : x + w;
+  if (firstGapX > x) {
+    ctx.fillStyle = fg;
+    ctx.fillRect(x, y, firstGapX - x, h);
+  }
+  // Middle segments between consecutive gaps
+  for (let g = 0; g < gaps.length - 1; g++) {
+    const segStart = gaps[g] + gapW;
+    const segEnd   = gaps[g + 1];
+    if (segEnd > segStart) {
+      ctx.fillStyle = fg;
+      ctx.fillRect(segStart, y, segEnd - segStart, h);
+    }
+  }
+  // Right edge segment
+  if (gaps.length > 0) {
+    const lastEnd = gaps[gaps.length - 1] + gapW;
+    if (lastEnd < x + w) {
+      ctx.fillStyle = fg;
+      ctx.fillRect(lastEnd, y, x + w - lastEnd, h);
+    }
+  }
+
+  // Fiber texture streaks on each segment
+  ctx.globalAlpha = 0.09;
+  ctx.strokeStyle = '#ffe09a';
+  ctx.lineWidth   = 0.5;
+  for (let xi = x; xi < x + w; xi += 6) {
+    // Only draw inside fiber material (skip gap columns)
+    const inGap = gaps.some(gx => xi >= gx && xi < gx + gapW);
+    if (!inGap) {
+      ctx.beginPath();
+      ctx.moveTo(xi, y);
+      ctx.lineTo(xi + 8, y + h);
+      ctx.stroke();
+    }
+  }
+
+  ctx.restore();
+
+  // ── Draw pore-gap channels ──
+  ctx.save();
+  gaps.forEach(gx => {
+    // Water tint fill
+    const wg = ctx.createLinearGradient(gx, y, gx, y + h);
+    wg.addColorStop(0,   'rgba(58,181,216,0.35)');
+    wg.addColorStop(0.5, 'rgba(58,181,216,0.20)');
+    wg.addColorStop(1,   'rgba(58,181,216,0.35)');
+    ctx.fillStyle = wg;
+    ctx.fillRect(gx, y, gapW, h);
+
+    // Gap border lines (left and right wall of the pore)
+    ctx.strokeStyle = 'rgba(210,170,90,0.55)';
+    ctx.lineWidth   = 0.8;
+    ctx.beginPath(); ctx.moveTo(gx,        y); ctx.lineTo(gx,        y + h); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(gx + gapW, y); ctx.lineTo(gx + gapW, y + h); ctx.stroke();
+
+    // Upward flow arrow in the middle of the gap (only if wide enough)
+    if (gapW >= 6) {
+      const cx  = gx + gapW / 2;
+      const cy  = y  + h    / 2;
+      const aw  = Math.min(gapW * 0.32, 5);
+      const ah  = Math.min(h   * 0.38, 9);
+      ctx.fillStyle = 'rgba(58,181,216,0.65)';
+      ctx.beginPath();
+      ctx.moveTo(cx,      cy - ah);
+      ctx.lineTo(cx - aw, cy + ah * 0.5);
+      ctx.lineTo(cx + aw, cy + ah * 0.5);
+      ctx.closePath();
+      ctx.fill();
+    }
+  });
+  ctx.restore();
+
+  // ── Pore-width annotation on first layer only ──
+  if (idx === 0) {
+    ctx.save();
+    ctx.fillStyle = 'rgba(200,163,85,0.6)';
+    ctx.font      = 'bold 7px DM Mono';
+    ctx.textAlign = 'left';
+    ctx.fillText('Pore: ' + gapCount + '×' + gapW + ' px', x + 2, y + h + 11);
+    ctx.restore();
+  }
+}
+
+// ─── WATER IN GAP ────────────────────────
+function drawGapWater(ctx, gapTop, gapH, W) {
+  // Subtle water color in channel
+  ctx.save();
+  ctx.globalAlpha = 0.08;
+  const wg = ctx.createLinearGradient(0, gapTop, 0, gapTop + gapH);
+  wg.addColorStop(0, 'rgba(58,181,216,0)');
+  wg.addColorStop(1, 'rgba(58,181,216,0.6)');
+  ctx.fillStyle = wg;
+  ctx.fillRect(0, gapTop, W, gapH);
+  ctx.restore();
+
+  // Small water molecule dots
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = '#3ab5d8';
+  for (let x = 18; x < W - 18; x += 22) {
+    const jitter = Math.sin(x * 0.2 + gapTop * 0.1) * 3;
+    ctx.beginPath();
+    ctx.arc(x, gapTop + gapH * 0.5 + jitter, 2.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ─── FLOW ARROWS ─────────────────────────
+// Upward arrows (↑) in each gap to show flow direction
+function drawFlowArrows(ctx, midY, W) {
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle   = '#3ab5d8';
+  ctx.strokeStyle = '#3ab5d8';
+  ctx.lineWidth   = 1;
+  // Draw 3–4 arrows per gap, evenly spaced
+  const positions = [W * 0.15, W * 0.38, W * 0.62, W * 0.85];
+  positions.forEach(ax => {
+    const ah = 7; // arrow height
+    ctx.beginPath();
+    ctx.moveTo(ax,       midY - ah);   // tip
+    ctx.lineTo(ax - 3.5, midY + 1);
+    ctx.lineTo(ax + 3.5, midY + 1);
+    ctx.closePath();
+    ctx.fill();
+  });
+  ctx.restore();
+}
+
+// ─── LAUFFRONT LINE ──────────────────────
+function drawLauffront(ctx, frontY, dye, di) {
+  // Dashed horizontal line across the strip at the front position
+  ctx.save();
+  ctx.strokeStyle = dye.color;
+  ctx.lineWidth   = 1.8;
+  ctx.setLineDash([6, 4]);
+  ctx.globalAlpha = 0.75;
+  ctx.beginPath();
+  ctx.moveTo(0, frontY);
+  ctx.lineTo(ctx.canvas.width, frontY);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  // Label on left side
+  ctx.globalAlpha = 1;
+  ctx.fillStyle   = dye.color;
+  ctx.font        = 'bold 9px DM Mono';
+  ctx.textAlign   = 'left';
+  // Offset labels so they don't overlap
+  const labelX = 4 + di * 0;
+  ctx.fillText('← ' + dye.name + ' Lauffront', labelX + 2, frontY - 4);
+  ctx.restore();
+}
+
+// ─── DYE PARTICLE ────────────────────────
+function drawDyeParticle(ctx, cx, cy, r, ads, dye) {
+  ctx.save();
+  if (ads >= 4) { ctx.shadowColor = dye.color; ctx.shadowBlur = 10; }
+
+  ctx.fillStyle   = dye.color;
+  ctx.strokeStyle = 'rgba(255,255,255,.22)';
+  ctx.lineWidth   = 0.8;
+
+  if (ads <= 1) {
+    // Perfectly smooth circle
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  } else if (ads === 2) {
+    // Slightly irregular ellipse-ish
+    ctx.beginPath();
+    ctx.ellipse(cx, cy, r * 1.1, r * 0.9, 0.4, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+  } else {
+    // Spiky polygon — more spikes with higher ads
+    const spikes = 4 + ads * 3;          // 7 – 19 spikes
+    const outerR = r * (1 + ads * 0.14);
+    const innerR = r * (1 - ads * 0.08);
+    ctx.beginPath();
+    for (let s = 0; s < spikes * 2; s++) {
+      const angle = (s / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+      const rad   = s % 2 === 0 ? outerR : innerR;
+      const px    = cx + Math.cos(angle) * rad;
+      const py    = cy + Math.sin(angle) * rad;
+      s === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py);
+    }
+    ctx.closePath();
+    ctx.fill(); ctx.stroke();
+  }
+
+  ctx.shadowBlur = 0;
+
+  // Letter label
+  ctx.fillStyle        = 'rgba(255,255,255,.85)';
+  ctx.font             = `bold ${6 + Math.round(r * 0.55)}px Syne`;
+  ctx.textAlign        = 'center';
+  ctx.textBaseline     = 'middle';
+  ctx.fillText(dye.name[0], cx, cy);
+  ctx.restore();
+}
+
+// ─── BOND LINES ──────────────────────────
+// Dashed vertical lines from particle to fiber surface above
+function drawBondLines(ctx, px, particleTop, fiberY, color, ads) {
+  const bondCount = ads - 2;   // 1–3 bonds
+  ctx.save();
+  ctx.strokeStyle = color;
+  ctx.lineWidth   = 1.1;
+  ctx.setLineDash([2, 2]);
+  ctx.globalAlpha = 0.5;
+  for (let b = 0; b < bondCount; b++) {
+    const ox = px + (b - (bondCount - 1) / 2) * 5;
+    ctx.beginPath();
+    ctx.moveTo(ox, particleTop);
+    ctx.lineTo(ox, fiberY + 2);
+    ctx.stroke();
+  }
+  ctx.restore();
+}
+
+// ─── RF SCALE BAR ────────────────────────
+function drawRfScale(ctx, W, stripTop, totalH, rfs) {
+  const x     = W - 38;
+  const yTop  = stripTop;
+  const yBot  = stripTop + totalH;
+  const barW  = 6;
+
+  // Background bar
+  ctx.save();
+  ctx.globalAlpha = 0.35;
+  ctx.fillStyle   = 'rgba(255,255,255,.08)';
+  ctx.fillRect(x, yTop, barW, totalH);
+  ctx.restore();
+
+  // Tick marks at 0, 0.5, 1.0
+  [0, 0.5, 1.0].forEach(tick => {
+    const ty = yBot - tick * totalH;
+    ctx.save();
+    ctx.strokeStyle = 'rgba(255,255,255,.25)';
+    ctx.lineWidth   = 1;
+    ctx.beginPath(); ctx.moveTo(x - 3, ty); ctx.lineTo(x + barW + 3, ty); ctx.stroke();
+    ctx.fillStyle   = 'rgba(255,255,255,.4)';
+    ctx.font        = '8px DM Mono';
+    ctx.textAlign   = 'right';
+    ctx.fillText(tick.toFixed(1), x - 5, ty + 3);
+    ctx.restore();
+  });
+
+  // Dye dots on scale
+  DYES.forEach((dye, di) => {
+    const ty = yBot - rfs[di] * totalH;
+    ctx.save();
+    ctx.fillStyle   = dye.color;
+    ctx.strokeStyle = '#0d1018';
+    ctx.lineWidth   = 1;
+    ctx.beginPath();
+    ctx.arc(x + barW / 2, ty, 4, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+    ctx.restore();
+  });
+
+  // "Rf" label
+  ctx.save();
+  ctx.fillStyle   = 'rgba(255,255,255,.3)';
+  ctx.font        = 'bold 8px DM Mono';
+  ctx.textAlign   = 'center';
+  ctx.fillText('Rf', x + barW / 2, yTop - 5);
+  ctx.restore();
+}
+
+
+// ─── MICRO PAPER SYNC ────────────────────
+function syncMicroPaper(val) {
+  val = parseInt(val, 10);
+  const LABELS = ['sehr fein', 'fein', 'mittel', 'grob', 'sehr grob'];
+  const lbl = document.getElementById('microPaperLabel');
+  if (lbl) lbl.textContent = LABELS[val - 1];
+  // Mirror to main experiment slider
+  const main = document.getElementById('paperStr');
+  if (main) main.value = val;
+  const mainLbl = document.getElementById('paperLabel');
+  if (mainLbl) mainLbl.textContent = LABELS[val - 1];
+  // Rebuild params and redraw everything
+  const p = getP();
+  drawMicro(p);
+  drawStrip(p);
+  drawRfLegend(p);
+  updateObserve(p);
+}
+
+// ─── TABS ────────────────────────────────
+function switchTab(id, btn) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  btn.classList.add('active');
+  if (id === 'mikro') drawMicro(getP());
+}
+
+function toggleTask(el) { el.classList.toggle('open'); }
+
+// ─── QUIZ DATA ───────────────────────────
+const QS = [
+  { q: 'Was ist der Hauptzweck der Papierchromatographie?',
+    opts: ['Farben herstellen', 'Gemische in ihre Bestandteile trennen', 'Papier einfärben', 'Wasser reinigen'],
+    ok: 1, fb: 'Richtig! Chromatographie ist ein Trennverfahren – es zeigt, aus welchen Stoffen ein Gemisch besteht.' },
+  { q: 'Welcher Farbstoff wandert am weitesten – der mit hoher oder niedriger Adsorption?',
+    opts: ['Mit hoher Adsorption', 'Mit niedriger Adsorption', 'Beide gleich weit', 'Das hängt nur von der Farbe ab'],
+    ok: 1, fb: 'Korrekt! Geringe Haftfähigkeit = weniger „Kleben" am Papier = leichter vom Wasser mitgetragen = höherer Rf-Wert.' },
+  { q: 'Warum haftet ein rau geformtes Teilchen stärker an der Papierfaser?',
+    opts: ['Weil es schwerer ist', 'Weil es mehr Kontaktfläche mit der Faser hat', 'Weil es bunter ist', 'Weil es mehr Wasser aufnimmt'],
+    ok: 1, fb: 'Sehr gut! Mehr Zacken = mehr Berührungspunkte = mehr Kontaktfläche = stärkere Adsorption.' },
+  { q: 'Was bedeutet ein Rf-Wert von 0,8?',
+    opts: ['Der Stoff bleibt am Startpunkt', 'Der Stoff wandert 80% der Wasserstrecke', 'Der Stoff löst sich auf', 'Der Stoff färbt sich blau'],
+    ok: 1, fb: 'Richtig! Rf = Wanderstrecke Stoff ÷ Wanderstrecke Wasser. Rf 0,8 = 80% der Wasserstrecke.' },
+  { q: 'Was passiert, wenn zwei Farbstoffe denselben Rf-Wert haben?',
+    opts: ['Beide werden zerstört', 'Sie können nicht voneinander getrennt werden', 'Einer überholt den anderen', 'Sie wechseln die Farbe'],
+    ok: 1, fb: 'Korrekt! Gleiche Rf-Werte = gleiche Wandergeschwindigkeit = Banden überlagern sich = keine Trennung.' },
+  { q: 'Grobes Filterpapier führt zu …',
+    opts: ['Langsamerer, schärferer Trennung', 'Schnellerer, aber unschärferer Trennung', 'Keiner Veränderung', 'Auflösung des Papiers'],
+    ok: 1, fb: 'Richtig! Größere Faserzwischenräume lassen das Wasser schneller aufsteigen, verringern aber die Trennschärfe.' },
+];
+
+let answers = [];
+
+function renderQuiz() {
+  answers = new Array(QS.length).fill(null);
+  document.getElementById('quizWrap').innerHTML = QS.map((q, qi) => `
+    <div class="quiz-card" id="qc${qi}">
+      <div class="q-num">FRAGE ${qi + 1} / ${QS.length}</div>
+      <div class="q-text">${q.q}</div>
+      <div class="q-opts">${q.opts.map((o, oi) => `<button class="q-opt" id="qo${qi}_${oi}" onclick="pick(${qi},${oi})">${o}</button>`).join('')}</div>
+      <div class="q-fb" id="qf${qi}"></div>
+    </div>`).join('');
+  document.getElementById('scoreBox').style.display = 'none';
+  document.getElementById('btnCheck').style.display = '';
+}
+
+function pick(qi, oi) {
+  const card = document.getElementById('qc' + qi);
+  if (card.dataset.done) return;
+  answers[qi] = oi;
+  card.querySelectorAll('.q-opt').forEach((el, i) => {
+    el.classList.remove('ok', 'bad');
+    if (i === oi) el.classList.add(oi === QS[qi].ok ? 'ok' : 'bad');
+  });
+}
+
+function checkQuiz() {
+  let score = 0;
+  QS.forEach((q, qi) => {
+    const card = document.getElementById('qc' + qi);
+    card.dataset.done = '1';
+    card.querySelectorAll('.q-opt').forEach(el => el.classList.add('locked'));
+    const fb = document.getElementById('qf' + qi), ans = answers[qi];
+    if (ans === null) { fb.textContent = 'Nicht beantwortet.'; fb.className = 'q-fb show bad'; }
+    else if (ans === q.ok) { score++; fb.textContent = '✓ ' + q.fb; fb.className = 'q-fb show ok'; }
+    else { document.getElementById(`qo${qi}_${q.ok}`).classList.add('reveal'); fb.textContent = '✗ ' + q.fb; fb.className = 'q-fb show bad'; }
+  });
+  const pct = Math.round(score / QS.length * 100);
+  const e   = pct === 100 ? '🏆' : pct >= 80 ? '🎉' : pct >= 60 ? '👍' : '📚';
+  document.getElementById('scoreBig').textContent = `${e} ${score} / ${QS.length} richtig (${pct}%)`;
+  document.getElementById('scoreMsg').textContent = pct >= 80 ? 'Ausgezeichnet! Du hast die Chromatographie verstanden.' : pct >= 60 ? 'Gut gemacht – lies die Theorie nochmal durch!' : 'Schau dir die Theorie an und versuche es erneut!';
+  document.getElementById('scoreBox').style.display = 'block';
+  document.getElementById('btnCheck').style.display = 'none';
+}
+
+function resetQuiz() { renderQuiz(); }
+
+// ─── INIT ────────────────────────────────
+onParam();
+renderQuiz();
+</script>
+</body>
+</html>

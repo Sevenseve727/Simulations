@@ -1,0 +1,1330 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Totalreflexion – Lernumgebung Klasse 6</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --deep:    #050e1a;
+    --ocean:   #0a2340;
+    --mid:     #0d3460;
+    --water:   #1565a8;
+    --surface: #1e88e5;
+    --cyan:    #00e5ff;
+    --teal:    #00bcd4;
+    --gold:    #ffd54f;
+    --coral:   #ff6b6b;
+    --green:   #69f0ae;
+    --light:   #e3f2fd;
+    --white:   #ffffff;
+    --glass:   rgba(255,255,255,0.06);
+    --border:  rgba(0,229,255,0.2);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--deep);
+    color: var(--light);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* Animated background */
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 80%, rgba(21,101,168,0.3) 0%, transparent 60%),
+      radial-gradient(ellipse 60% 40% at 80% 20%, rgba(0,229,255,0.08) 0%, transparent 50%),
+      radial-gradient(ellipse 100% 80% at 50% 100%, rgba(13,52,96,0.8) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  /* Bubbles */
+  .bubbles { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+  .bubble {
+    position: absolute; border-radius: 50%;
+    border: 1px solid rgba(0,229,255,0.25);
+    animation: rise linear infinite;
+  }
+  @keyframes rise {
+    from { transform: translateY(110vh) scale(0.8); opacity: 0.6; }
+    to   { transform: translateY(-10vh) scale(1.1); opacity: 0; }
+  }
+
+  /* Header */
+  header {
+    position: relative; z-index: 10;
+    padding: 1.2rem 2rem;
+    display: flex; align-items: center; gap: 1rem;
+    border-bottom: 1px solid var(--border);
+    background: rgba(5,14,26,0.7);
+    backdrop-filter: blur(12px);
+  }
+  .logo {
+    width: 42px; height: 42px;
+    background: linear-gradient(135deg, var(--cyan), var(--surface));
+    border-radius: 12px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.4rem; flex-shrink: 0;
+    box-shadow: 0 0 20px rgba(0,229,255,0.3);
+  }
+  header h1 {
+    font-size: 1.25rem; font-weight: 900;
+    background: linear-gradient(90deg, var(--white), var(--cyan));
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    letter-spacing: -0.02em;
+  }
+  header p { font-size: 0.78rem; color: rgba(255,255,255,0.5); margin-top: 1px; }
+  .badge {
+    margin-left: auto;
+    background: rgba(0,229,255,0.1);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 0.3rem 0.9rem;
+    font-size: 0.75rem; color: var(--cyan);
+    font-weight: 700; letter-spacing: 0.05em;
+    white-space: nowrap;
+  }
+
+  /* Tabs */
+  .tabs {
+    position: relative; z-index: 10;
+    display: flex; gap: 4px;
+    padding: 0.8rem 2rem 0;
+    border-bottom: 1px solid var(--border);
+    background: rgba(5,14,26,0.5);
+    backdrop-filter: blur(8px);
+  }
+  .tab-btn {
+    padding: 0.6rem 1.4rem;
+    border: 1px solid transparent;
+    border-radius: 10px 10px 0 0;
+    background: transparent;
+    color: rgba(255,255,255,0.45);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.25s;
+    display: flex; align-items: center; gap: 0.45rem;
+  }
+  .tab-btn:hover { color: var(--white); background: var(--glass); }
+  .tab-btn.active {
+    color: var(--cyan);
+    background: rgba(0,229,255,0.08);
+    border-color: var(--border);
+    border-bottom-color: transparent;
+  }
+  .tab-icon { font-size: 1rem; }
+
+  /* Content area */
+  .content {
+    position: relative; z-index: 5;
+    padding: 1.5rem 2rem 2rem;
+    max-width: 1200px; margin: 0 auto;
+  }
+  .tab-panel { display: none; }
+  .tab-panel.active { display: block; }
+
+  /* ─── SIMULATION TAB ─── */
+  .sim-layout {
+    display: grid;
+    grid-template-columns: 1fr 300px;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  /* Canvas card */
+  .canvas-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    overflow: hidden;
+    position: relative;
+  }
+  .canvas-label {
+    position: absolute; top: 12px; left: 16px; z-index: 3;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .env-tag {
+    font-size: 0.7rem; font-weight: 800; letter-spacing: 0.08em;
+    padding: 3px 10px; border-radius: 20px;
+  }
+  .env-tag.air  { background: rgba(255,255,255,0.12); color: rgba(255,255,255,0.7); }
+  .env-tag.water { background: rgba(21,101,168,0.5); color: var(--cyan); }
+
+  canvas#simCanvas {
+    display: block; width: 100%;
+    cursor: crosshair;
+    border-radius: 0 0 20px 20px;
+  }
+
+  /* Status pill */
+  #statusPill {
+    position: absolute; top: 12px; right: 16px; z-index: 3;
+    padding: 5px 14px; border-radius: 20px;
+    font-size: 0.78rem; font-weight: 800;
+    letter-spacing: 0.04em;
+    transition: all 0.4s;
+  }
+  .pill-refract { background: rgba(105,240,174,0.2); color: var(--green); border: 1px solid rgba(105,240,174,0.4); }
+  .pill-critical { background: rgba(255,213,79,0.2); color: var(--gold); border: 1px solid rgba(255,213,79,0.4); }
+  .pill-total { background: rgba(255,107,107,0.2); color: var(--coral); border: 1px solid rgba(255,107,107,0.4); }
+
+  /* Controls panel */
+  .controls-panel {
+    display: flex; flex-direction: column; gap: 1rem;
+  }
+
+  .ctrl-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.1rem 1.2rem;
+  }
+  .ctrl-card h3 {
+    font-size: 0.72rem; font-weight: 800;
+    letter-spacing: 0.1em; text-transform: uppercase;
+    color: var(--teal); margin-bottom: 0.9rem;
+  }
+
+  /* Angle slider */
+  .angle-display {
+    display: flex; justify-content: space-between; align-items: baseline;
+    margin-bottom: 0.6rem;
+  }
+  .angle-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 2rem; font-weight: 700;
+    color: var(--white);
+    line-height: 1;
+  }
+  .angle-val span { font-size: 1.1rem; color: var(--cyan); }
+  .angle-label { font-size: 0.72rem; color: rgba(255,255,255,0.4); }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    width: 100%; height: 6px;
+    border-radius: 3px;
+    background: linear-gradient(to right, var(--cyan) var(--pct, 0%), rgba(255,255,255,0.12) var(--pct, 0%));
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: var(--white);
+    border: 3px solid var(--cyan);
+    box-shadow: 0 0 10px rgba(0,229,255,0.5);
+    cursor: grab;
+  }
+  input[type=range]:active::-webkit-slider-thumb { cursor: grabbing; }
+
+  /* Critical angle indicator */
+  .critical-info {
+    margin-top: 0.8rem;
+    padding: 0.6rem 0.8rem;
+    background: rgba(255,213,79,0.08);
+    border: 1px solid rgba(255,213,79,0.2);
+    border-radius: 10px;
+    font-size: 0.78rem;
+  }
+  .critical-info .ci-label { color: rgba(255,255,255,0.5); }
+  .critical-info .ci-val {
+    font-family: 'Space Mono', monospace;
+    color: var(--gold); font-weight: 700;
+  }
+
+  /* Medium selector */
+  .medium-btns {
+    display: flex; flex-direction: column; gap: 0.5rem;
+  }
+  .med-btn {
+    display: flex; align-items: center; gap: 0.7rem;
+    padding: 0.6rem 0.8rem;
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 10px;
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.65);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.85rem; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: left;
+  }
+  .med-btn:hover { border-color: var(--border); color: var(--white); }
+  .med-btn.active {
+    border-color: var(--cyan);
+    background: rgba(0,229,255,0.1);
+    color: var(--white);
+  }
+  .med-icon { font-size: 1.2rem; width: 24px; text-align: center; flex-shrink: 0; }
+  .med-n {
+    margin-left: auto;
+    font-family: 'Space Mono', monospace;
+    font-size: 0.75rem; color: var(--cyan);
+  }
+
+  /* Info readout */
+  .readout-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 0.5rem;
+  }
+  .readout-item {
+    background: rgba(255,255,255,0.04);
+    border-radius: 10px; padding: 0.6rem 0.8rem;
+  }
+  .readout-item .r-label {
+    font-size: 0.68rem; color: rgba(255,255,255,0.4);
+    font-weight: 600; letter-spacing: 0.06em;
+    text-transform: uppercase; margin-bottom: 2px;
+  }
+  .readout-item .r-val {
+    font-family: 'Space Mono', monospace;
+    font-size: 0.95rem; color: var(--white); font-weight: 700;
+  }
+
+  /* Tipp Box */
+  .tipp-box {
+    margin-top: 0.5rem;
+    padding: 0.7rem 0.9rem;
+    border-left: 3px solid var(--cyan);
+    background: rgba(0,229,255,0.06);
+    border-radius: 0 10px 10px 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    color: rgba(255,255,255,0.75);
+    min-height: 3.5rem;
+    transition: all 0.3s;
+  }
+  .tipp-box strong { color: var(--cyan); }
+
+  /* ─── AUFGABEN TAB ─── */
+  .aufgaben-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.2rem;
+  }
+  .aufgabe-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.4rem;
+    position: relative;
+    overflow: hidden;
+    transition: transform 0.25s, box-shadow 0.25s;
+  }
+  .aufgabe-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 40px rgba(0,229,255,0.1);
+  }
+  .aufgabe-card::before {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0; height: 3px;
+  }
+  .aufgabe-card.a1::before { background: linear-gradient(90deg, var(--teal), var(--cyan)); }
+  .aufgabe-card.a2::before { background: linear-gradient(90deg, var(--surface), var(--teal)); }
+  .aufgabe-card.a3::before { background: linear-gradient(90deg, var(--gold), #ff9800); }
+  .aufgabe-card.a4::before { background: linear-gradient(90deg, var(--coral), #ff9800); }
+
+  .aufgabe-num {
+    font-size: 0.68rem; font-weight: 900; letter-spacing: 0.12em;
+    text-transform: uppercase; opacity: 0.5; margin-bottom: 0.4rem;
+  }
+  .aufgabe-card h3 {
+    font-size: 1rem; font-weight: 800; margin-bottom: 0.8rem;
+    color: var(--white);
+  }
+  .einstellung-box {
+    background: rgba(0,0,0,0.2);
+    border-radius: 10px; padding: 0.6rem 0.8rem;
+    margin-bottom: 0.8rem;
+    font-size: 0.78rem;
+  }
+  .einstellung-box .e-title {
+    font-size: 0.65rem; font-weight: 800; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--teal); margin-bottom: 0.35rem;
+  }
+  .einstellung-box code {
+    font-family: 'Space Mono', monospace;
+    color: var(--gold); font-size: 0.8rem;
+  }
+  .aufgabe-text {
+    font-size: 0.83rem; line-height: 1.6;
+    color: rgba(255,255,255,0.75);
+  }
+  .aufgabe-text li { margin-bottom: 0.4rem; padding-left: 0.2rem; }
+  .aufgabe-text li::marker { color: var(--cyan); }
+  .beobachtung {
+    margin-top: 0.8rem;
+    background: rgba(105,240,174,0.06);
+    border: 1px solid rgba(105,240,174,0.2);
+    border-radius: 10px; padding: 0.7rem 0.9rem;
+    font-size: 0.78rem;
+  }
+  .beobachtung .b-head {
+    font-size: 0.65rem; font-weight: 900; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--green); margin-bottom: 0.35rem;
+  }
+  .beobachtung p { color: rgba(255,255,255,0.65); line-height: 1.5; }
+
+  /* Quick-set button */
+  .quick-btn {
+    display: inline-flex; align-items: center; gap: 0.4rem;
+    margin-top: 0.8rem;
+    padding: 0.45rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    background: rgba(0,229,255,0.08);
+    color: var(--cyan);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.78rem; font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quick-btn:hover { background: rgba(0,229,255,0.18); border-color: var(--cyan); }
+
+  /* ─── QUIZ ─── */
+  .quiz-section {
+    margin-top: 1.5rem;
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 1.5rem;
+  }
+  .quiz-section h2 {
+    font-size: 1.1rem; font-weight: 900; margin-bottom: 1.2rem;
+    display: flex; align-items: center; gap: 0.5rem;
+  }
+  .quiz-q { margin-bottom: 1.2rem; }
+  .quiz-q p {
+    font-size: 0.9rem; font-weight: 700; margin-bottom: 0.6rem;
+    color: var(--white);
+  }
+  .quiz-options { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+  .quiz-opt {
+    padding: 0.5rem 1rem;
+    border: 1px solid rgba(255,255,255,0.15);
+    border-radius: 20px;
+    background: rgba(255,255,255,0.04);
+    color: rgba(255,255,255,0.7);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem; font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .quiz-opt:hover { border-color: var(--cyan); color: var(--white); }
+  .quiz-opt.correct { background: rgba(105,240,174,0.15); border-color: var(--green); color: var(--green); }
+  .quiz-opt.wrong { background: rgba(255,107,107,0.15); border-color: var(--coral); color: var(--coral); }
+  .quiz-feedback {
+    margin-top: 0.5rem; padding: 0.5rem 0.8rem;
+    border-radius: 8px; font-size: 0.8rem;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(105,240,174,0.1); color: var(--green); }
+  .quiz-feedback.nope { background: rgba(255,107,107,0.1); color: var(--coral); }
+
+  .quiz-score {
+    margin-top: 1.2rem;
+    text-align: center;
+    padding: 1rem;
+    background: rgba(0,229,255,0.06);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    display: none;
+  }
+  .quiz-score.show { display: block; }
+  .score-num {
+    font-family: 'Space Mono', monospace;
+    font-size: 2.5rem; font-weight: 700;
+    color: var(--cyan);
+  }
+
+  /* ─── THEORIE TAB ─── */
+  .theorie-layout {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 768px) {
+    .theorie-layout { grid-template-columns: 1fr; }
+    .sim-layout { grid-template-columns: 1fr; }
+    .content { padding: 1rem; }
+    .tabs { padding: 0.6rem 1rem 0; }
+    .aufgaben-grid { grid-template-columns: 1fr; }
+  }
+
+  .theorie-card {
+    background: var(--glass);
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 1.4rem;
+  }
+  .theorie-card h3 {
+    font-size: 0.75rem; font-weight: 900; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--teal); margin-bottom: 1rem;
+  }
+  .theorie-card p, .theorie-card li {
+    font-size: 0.87rem; line-height: 1.7;
+    color: rgba(255,255,255,0.75); margin-bottom: 0.5rem;
+  }
+  .theorie-card strong { color: var(--white); }
+  .formula-box {
+    margin: 1rem 0;
+    padding: 1rem;
+    background: rgba(0,0,0,0.3);
+    border-radius: 12px;
+    text-align: center;
+    font-family: 'Space Mono', monospace;
+    font-size: 1.1rem; color: var(--cyan);
+    letter-spacing: 0.05em;
+    border: 1px solid rgba(0,229,255,0.15);
+  }
+  .formula-box .f-sub { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.4rem; }
+  .medium-table {
+    width: 100%; border-collapse: collapse; margin-top: 0.5rem;
+  }
+  .medium-table th, .medium-table td {
+    padding: 0.55rem 0.7rem;
+    font-size: 0.82rem; text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+  }
+  .medium-table th { color: var(--teal); font-weight: 800; font-size: 0.72rem; letter-spacing: 0.06em; text-transform: uppercase; }
+  .medium-table td { color: rgba(255,255,255,0.75); font-family: 'Space Mono', monospace; font-size: 0.8rem; }
+  .medium-table tr:last-child td { border-bottom: none; }
+
+  /* Mini diagram in theory */
+  .mini-diagram {
+    width: 100%; height: 160px;
+    border-radius: 12px;
+    overflow: hidden; margin-top: 0.8rem;
+  }
+
+  /* Span full width */
+  .full-span { grid-column: 1 / -1; }
+</style>
+</head>
+<body>
+
+<!-- Bubbles -->
+<div class="bubbles" id="bubbles"></div>
+
+<!-- Header -->
+<header>
+  <div class="logo">🐟</div>
+  <div>
+    <h1>Totalreflexion & Lichtbrechung</h1>
+    <p>Interaktive Lernumgebung · Physik Klasse 6</p>
+  </div>
+  <div class="badge">🔬 Optik</div>
+</header>
+
+<!-- Tabs -->
+<div class="tabs">
+  <button class="tab-btn active" onclick="switchTab('sim')">
+    <span class="tab-icon">🌊</span> Simulation
+  </button>
+  <button class="tab-btn" onclick="switchTab('aufgaben')">
+    <span class="tab-icon">📋</span> Aufgaben
+  </button>
+  <button class="tab-btn" onclick="switchTab('theorie')">
+    <span class="tab-icon">📖</span> Theorie
+  </button>
+</div>
+
+<!-- ════════════════════════════════════════
+     SIMULATION TAB
+════════════════════════════════════════ -->
+<div class="content">
+<div id="tab-sim" class="tab-panel active">
+  <div class="sim-layout">
+
+    <!-- Canvas -->
+    <div class="canvas-card">
+      <div class="canvas-label">
+        <span class="env-tag air">☁ Luft · n = 1,00</span>
+        <span class="env-tag water" id="waterLabel">💧 Wasser · n = 1,33</span>
+      </div>
+      <div id="statusPill" class="pill-refract">Brechung</div>
+      <canvas id="simCanvas" width="720" height="460"></canvas>
+    </div>
+
+    <!-- Controls -->
+    <div class="controls-panel">
+
+      <!-- Angle -->
+      <div class="ctrl-card">
+        <h3>⚡ Einfallswinkel</h3>
+        <div class="angle-display">
+          <div class="angle-val" id="angleDisplay">30<span>°</span></div>
+          <div class="angle-label">zur Grenzfläche</div>
+        </div>
+        <input type="range" id="angleSlider" min="0" max="89" value="30"
+               oninput="updateAngle(this.value)" style="--pct:33%">
+        <div class="critical-info">
+          <span class="ci-label">Grenzwinkel: </span>
+          <span class="ci-val" id="criticalDisplay">48,8°</span>
+        </div>
+      </div>
+
+      <!-- Medium -->
+      <div class="ctrl-card">
+        <h3>💎 Optisches Medium</h3>
+        <div class="medium-btns">
+          <button class="med-btn active" onclick="setMedium('water')" id="btn-water">
+            <span class="med-icon">💧</span> Wasser
+            <span class="med-n">n = 1,33</span>
+          </button>
+          <button class="med-btn" onclick="setMedium('glass')" id="btn-glass">
+            <span class="med-icon">🪟</span> Glas
+            <span class="med-n">n = 1,52</span>
+          </button>
+          <button class="med-btn" onclick="setMedium('diamond')" id="btn-diamond">
+            <span class="med-icon">💎</span> Diamant
+            <span class="med-n">n = 2,42</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Readout -->
+      <div class="ctrl-card">
+        <h3>📐 Messwerte</h3>
+        <div class="readout-grid">
+          <div class="readout-item">
+            <div class="r-label">Einfallswinkel</div>
+            <div class="r-val" id="r-einfall">30,0°</div>
+          </div>
+          <div class="readout-item">
+            <div class="r-label">Brechungswinkel</div>
+            <div class="r-val" id="r-brech">—</div>
+          </div>
+          <div class="readout-item">
+            <div class="r-label">Reflexionswinkel</div>
+            <div class="r-val" id="r-reflex">30,0°</div>
+          </div>
+          <div class="readout-item">
+            <div class="r-label">Brechzahl n</div>
+            <div class="r-val" id="r-n">1,33</div>
+          </div>
+        </div>
+        <div class="tipp-box" id="tippBox">
+          <strong>💡 Beobachte:</strong> Bei diesem Winkel wird Licht sowohl gebrochen als auch teilweise reflektiert.
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     AUFGABEN TAB
+════════════════════════════════════════ -->
+<div id="tab-aufgaben" class="tab-panel">
+  <div class="aufgaben-grid">
+
+    <!-- Aufgabe 1 -->
+    <div class="aufgabe-card a1">
+      <div class="aufgabe-num">Aufgabe 1 · Einstieg</div>
+      <h3>🐟 Die Fisch-Perspektive</h3>
+      <div class="einstellung-box">
+        <div class="e-title">⚙ Einstellung</div>
+        <code>Medium: Wasser · Winkel: 20°</code>
+      </div>
+      <ul class="aufgabe-text">
+        <li>Stelle den Winkel auf <strong>20°</strong> ein. Was passiert mit dem Lichtstrahl an der Wasseroberfläche?</li>
+        <li>Erhöhe den Winkel langsam bis <strong>40°</strong>. Wie verändert sich der Brechungswinkel?</li>
+        <li>Welchen Teil des Lichtstrahls kann der Fisch von unten sehen?</li>
+      </ul>
+      <div class="beobachtung">
+        <div class="b-head">🔍 Erwartete Beobachtung</div>
+        <p>Das Licht wird <em>gebrochen</em> – der Strahl knickt an der Grenzfläche ab. Der Brechungswinkel ist <strong>kleiner</strong> als der Einfallswinkel (Wasser dichter als Luft).</p>
+      </div>
+      <button class="quick-btn" onclick="quickSet('water', 20)">▶ Diese Einstellung laden</button>
+    </div>
+
+    <!-- Aufgabe 2 -->
+    <div class="aufgabe-card a2">
+      <div class="aufgabe-num">Aufgabe 2 · Grenzfall</div>
+      <h3>⚠️ Der Grenzwinkel</h3>
+      <div class="einstellung-box">
+        <div class="e-title">⚙ Einstellung</div>
+        <code>Medium: Wasser · Winkel: langsam erhöhen</code>
+      </div>
+      <ul class="aufgabe-text">
+        <li>Erhöhe den Winkel schrittweise. Beobachte den Brechungswinkel in der Anzeige.</li>
+        <li>Bei welchem Einfallswinkel verschwindet der gebrochene Strahl?</li>
+        <li>Notiere den <strong>Grenzwinkel</strong> für Wasser. Vergleiche mit dem angezeigten Wert.</li>
+      </ul>
+      <div class="beobachtung">
+        <div class="b-head">🔍 Erwartete Beobachtung</div>
+        <p>Ab ca. <strong>48,8°</strong> wird kein Licht mehr gebrochen – der Brechungswinkel würde 90° erreichen. Dies ist der <em>Grenzwinkel der Totalreflexion</em>.</p>
+      </div>
+      <button class="quick-btn" onclick="quickSet('water', 48)">▶ Diese Einstellung laden</button>
+    </div>
+
+    <!-- Aufgabe 3 -->
+    <div class="aufgabe-card a3">
+      <div class="aufgabe-num">Aufgabe 3 · Totalreflexion</div>
+      <h3>🔴 Kein Entkommen für Licht!</h3>
+      <div class="einstellung-box">
+        <div class="e-title">⚙ Einstellung</div>
+        <code>Medium: Wasser · Winkel: 65°</code>
+      </div>
+      <ul class="aufgabe-text">
+        <li>Stelle den Winkel auf <strong>65°</strong>. Was fällt auf?</li>
+        <li>Vergleiche mit Aufgabe 1: Was ist <em>anders</em> beim Lichtstrahl?</li>
+        <li>Erkläre: Warum kann der Fisch bei diesem Winkel nichts nach außen sehen?</li>
+      </ul>
+      <div class="beobachtung">
+        <div class="b-head">🔍 Erwartete Beobachtung</div>
+        <p>Der Lichtstrahl wird <strong>vollständig reflektiert</strong> – kein Licht verlässt das Wasser mehr. Die Wasseroberfläche wirkt wie ein Spiegel!</p>
+      </div>
+      <button class="quick-btn" onclick="quickSet('water', 65)">▶ Diese Einstellung laden</button>
+    </div>
+
+    <!-- Aufgabe 4 -->
+    <div class="aufgabe-card a4">
+      <div class="aufgabe-num">Aufgabe 4 · Vergleich der Medien</div>
+      <h3>💎 Wasser vs. Diamant</h3>
+      <div class="einstellung-box">
+        <div class="e-title">⚙ Einstellung</div>
+        <code>Winkel: 42° · Medium: wechseln</code>
+      </div>
+      <ul class="aufgabe-text">
+        <li>Stelle den Winkel auf <strong>42°</strong> ein.</li>
+        <li>Wechsle zwischen <em>Wasser</em>, <em>Glas</em> und <em>Diamant</em>.</li>
+        <li>Bei welchem Medium tritt bei 42° Totalreflexion auf? Warum?</li>
+        <li>Welches Medium hat den <em>kleinsten</em> Grenzwinkel?</li>
+      </ul>
+      <div class="beobachtung">
+        <div class="b-head">🔍 Erwartete Beobachtung</div>
+        <p>Diamant (n=2,42) hat den kleinsten Grenzwinkel (~24,4°). Bei 42° zeigt Diamant bereits Totalreflexion, Wasser noch Brechung. Das erklärt das Funkeln von Brillanten!</p>
+      </div>
+      <button class="quick-btn" onclick="quickSet('water', 42)">▶ Wasser, 42° laden</button>
+      <button class="quick-btn" onclick="quickSet('diamond', 42)" style="margin-left:0.3rem">▶ Diamant, 42° laden</button>
+    </div>
+
+  </div>
+
+  <!-- Quiz -->
+  <div class="quiz-section">
+    <h2>🎯 Selbsttest – Wissenscheck</h2>
+
+    <div class="quiz-q" id="q1">
+      <p>1. Ein Lichtstrahl trifft aus dem Wasser auf die Wasseroberfläche. Was passiert, wenn der Winkel größer als der Grenzwinkel ist?</p>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q1',false)">Das Licht wird dunkler</button>
+        <button class="quiz-opt" onclick="answer(this,'q1',true)">Das Licht wird komplett zurückgeworfen</button>
+        <button class="quiz-opt" onclick="answer(this,'q1',false)">Das Licht ändert seine Farbe</button>
+        <button class="quiz-opt" onclick="answer(this,'q1',false)">Das Licht wird schneller</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q1"></div>
+    </div>
+
+    <div class="quiz-q" id="q2">
+      <p>2. Ein Fisch schaut von unten auf die Wasseroberfläche. Was sieht er außerhalb des „Lichtfensters"?</p>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q2',false)">Den Himmel über dem Wasser</button>
+        <button class="quiz-opt" onclick="answer(this,'q2',false)">Nichts – es ist dunkel</button>
+        <button class="quiz-opt" onclick="answer(this,'q2',true)">Die Spiegelung des Meeresbodens</button>
+        <button class="quiz-opt" onclick="answer(this,'q2',false)">Andere Fische von oben</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q2"></div>
+    </div>
+
+    <div class="quiz-q" id="q3">
+      <p>3. Welcher Stoff hat den kleinsten Grenzwinkel – also die stärkste Totalreflexion?</p>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q3',false)">Wasser (n = 1,33)</button>
+        <button class="quiz-opt" onclick="answer(this,'q3',false)">Glas (n = 1,52)</button>
+        <button class="quiz-opt" onclick="answer(this,'q3',true)">Diamant (n = 2,42)</button>
+        <button class="quiz-opt" onclick="answer(this,'q3',false)">Luft (n = 1,00)</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q3"></div>
+    </div>
+
+    <div class="quiz-q" id="q4">
+      <p>4. Wofür wird Totalreflexion in unserem Alltag genutzt?</p>
+      <div class="quiz-options">
+        <button class="quiz-opt" onclick="answer(this,'q4',false)">Für Kühlschränke</button>
+        <button class="quiz-opt" onclick="answer(this,'q4',true)">Für Glasfaserkabel (Internet)</button>
+        <button class="quiz-opt" onclick="answer(this,'q4',false)">Für Wasserfilter</button>
+        <button class="quiz-opt" onclick="answer(this,'q4',false)">Für Lautsprecher</button>
+      </div>
+      <div class="quiz-feedback" id="fb-q4"></div>
+    </div>
+
+    <div class="quiz-score" id="quizScore">
+      <div class="score-num" id="scoreNum">0/4</div>
+      <div style="color:rgba(255,255,255,0.6); font-size:0.85rem; margin-top:0.3rem" id="scoreMsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════
+     THEORIE TAB
+════════════════════════════════════════ -->
+<div id="tab-theorie" class="tab-panel">
+  <div class="theorie-layout">
+
+    <div class="theorie-card">
+      <h3>🌊 Was ist Lichtbrechung?</h3>
+      <p>Stell dir vor, du steckst einen Bleistift ins Wasser – er sieht plötzlich <strong>abgeknickt</strong> aus! Das liegt an der <strong>Lichtbrechung</strong>: Licht ändert seine Richtung, wenn es von einem Stoff in einen anderen wechselt.</p>
+      <p style="margin-top:0.5rem">Der Grund ist ganz einfach: Licht fährt in verschiedenen Stoffen <strong>unterschiedlich schnell</strong>. In Wasser ist Licht langsamer als in Luft. Dadurch „knickt" der Strahl an der Grenzfläche ab.</p>
+      <p style="margin-top:0.5rem">Die <strong>Brechzahl n</strong> sagt uns, wie stark ein Stoff das Licht bremst. Eine höhere Zahl = stärkere Bremsung = stärkere Ablenkung.</p>
+      <div class="formula-box">
+        Größeres n → Licht wird stärker abgelenkt
+        <div class="f-sub">Luft: n=1,00 · Wasser: n=1,33 · Diamant: n=2,42</div>
+      </div>
+    </div>
+
+    <div class="theorie-card">
+      <h3>📐 Die Brechungsregel</h3>
+      <p>Wenn Licht <strong>aus dem Wasser in die Luft</strong> tritt (wie bei unserem Fisch):</p>
+      <ul class="aufgabe-text" style="margin-left:1.2rem; margin-top:0.4rem">
+        <li>Der Strahl knickt <strong>von der Senkrechten weg</strong> – also breiter nach außen</li>
+        <li>Der Brechungswinkel β ist <strong>größer</strong> als der Einfallswinkel α</li>
+        <li>Je steiler der Winkel, desto weiter knickt der Strahl weg</li>
+      </ul>
+      <div class="formula-box" style="margin-top:0.8rem">
+        n₁ · sin(α) = n₂ · sin(β)
+        <div class="f-sub">α = Einfallswinkel (im Wasser) · β = Brechungswinkel (in der Luft)</div>
+      </div>
+      <p style="margin-top:0.5rem">Irgendwann ist β so groß, dass er <strong>90°</strong> erreicht – das Licht würde entlang der Oberfläche laufen. Das ist der <strong>Grenzfall</strong>!</p>
+    </div>
+
+    <div class="theorie-card">
+      <h3>🔴 Wann passiert Totalreflexion?</h3>
+      <p>Totalreflexion passiert, wenn der Lichtstrahl <strong>zu flach</strong> auf die Wasseroberfläche trifft – also der Winkel zu groß wird.</p>
+      <p style="margin-top:0.5rem">Ab einem bestimmten Winkel – dem <strong>Grenzwinkel</strong> – kommt gar kein Licht mehr durch die Oberfläche. Es wird <strong>komplett zurückgeworfen</strong>, wie von einem Spiegel!</p>
+      <div class="formula-box">
+        Grenzwinkel: sin(α_G) = 1 / n
+        <div class="f-sub">Je größer n, desto kleiner der Grenzwinkel – Totalreflexion tritt früher auf</div>
+      </div>
+      <p style="margin-top:0.5rem">Für unseren Fisch bedeutet das: <em>Außerhalb des Grenzwinkels sieht er nur den Boden – wie in einem Spiegel!</em></p>
+    </div>
+
+    <div class="theorie-card">
+      <h3>📊 Vergleich der Stoffe</h3>
+      <table class="medium-table">
+        <tr><th>Stoff</th><th>Brechzahl n</th><th>Grenzwinkel</th></tr>
+        <tr><td>💧 Wasser</td><td>1,33</td><td>48,8°</td></tr>
+        <tr><td>🪟 Glas</td><td>1,52</td><td>41,1°</td></tr>
+        <tr><td>💎 Diamant</td><td>2,42</td><td>24,4°</td></tr>
+      </table>
+      <p style="margin-top:0.8rem">Merke: <strong>Je dichter der Stoff, desto kleiner der Grenzwinkel</strong> – Totalreflexion tritt also bei einem kleineren Winkel auf.</p>
+      <p style="margin-top:0.4rem">Deshalb funkeln Diamanten so stark: Fast das gesamte Licht bleibt im Stein gefangen und wird hin- und hergespiegelt! ✨</p>
+    </div>
+
+    <div class="theorie-card full-span">
+      <h3>💡 Wo begegnet uns das im Alltag?</h3>
+      <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(200px,1fr)); gap:0.8rem; margin-top:0.5rem">
+        <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:0.9rem">
+          <div style="font-size:1.5rem; margin-bottom:0.4rem">🐟</div>
+          <div style="font-size:0.85rem; font-weight:800; color:var(--white); margin-bottom:0.3rem">Was sieht der Fisch?</div>
+          <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); line-height:1.5">Ein Fisch schaut nach oben und sieht durch ein „Fenster" von ca. 97° die Außenwelt. Alles außerhalb dieses Fensters wirkt wie ein Spiegel – er sieht nur den Meeresboden!</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:0.9rem">
+          <div style="font-size:1.5rem; margin-bottom:0.4rem">🌐</div>
+          <div style="font-size:0.85rem; font-weight:800; color:var(--white); margin-bottom:0.3rem">Glasfaserkabel (Internet!)</div>
+          <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); line-height:1.5">Dein WLAN-Router ist über Glasfaserkabel angeschlossen. Licht springt darin durch Totalreflexion hin und her – das ist buchstäblich wie dein Internet durch Licht fließt!</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:0.9rem">
+          <div style="font-size:1.5rem; margin-bottom:0.4rem">💎</div>
+          <div style="font-size:0.85rem; font-weight:800; color:var(--white); margin-bottom:0.3rem">Warum funkeln Diamanten?</div>
+          <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); line-height:1.5">Diamanten werden extra so geschliffen, dass Licht möglichst viele Male reflektiert wird, bevor es den Stein verlässt. Das ist pures Physik-Design!</div>
+        </div>
+        <div style="background:rgba(0,0,0,0.2); border-radius:12px; padding:0.9rem">
+          <div style="font-size:1.5rem; margin-bottom:0.4rem">🏥</div>
+          <div style="font-size:0.85rem; font-weight:800; color:var(--white); margin-bottom:0.3rem">Beim Arzt: Endoskop</div>
+          <div style="font-size:0.78rem; color:rgba(255,255,255,0.6); line-height:1.5">Wenn der Arzt mit einer kleinen Kamera in deinen Körper schaut, nutzt er Glasfasern. Das Licht biegt sich durch Totalreflexion um Kurven – fast wie ein Lichter-Schlauch!</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</div><!-- /content -->
+
+<script>
+// ═══════════════════════════════════════
+// BUBBLES
+// ═══════════════════════════════════════
+(function() {
+  const container = document.getElementById('bubbles');
+  for (let i = 0; i < 18; i++) {
+    const b = document.createElement('div');
+    b.className = 'bubble';
+    const size = 8 + Math.random() * 30;
+    b.style.cssText = `
+      width:${size}px; height:${size}px;
+      left:${Math.random()*100}%;
+      animation-duration:${8+Math.random()*14}s;
+      animation-delay:${Math.random()*12}s;
+    `;
+    container.appendChild(b);
+  }
+})();
+
+// ═══════════════════════════════════════
+// TABS
+// ═══════════════════════════════════════
+function switchTab(name) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  event.currentTarget.classList.add('active');
+  if (name === 'sim') drawSim();
+}
+
+// ═══════════════════════════════════════
+// PHYSICS STATE
+// ═══════════════════════════════════════
+const MEDIA = {
+  water:   { n: 1.33, name: 'Wasser',  icon: '💧', color: '#1565a8' },
+  glass:   { n: 1.52, name: 'Glas',    icon: '🪟', color: '#37474f' },
+  diamond: { n: 2.42, name: 'Diamant', icon: '💎', color: '#4a148c' }
+};
+
+let state = {
+  angle: 30,
+  medium: 'water',
+  animFrame: 0
+};
+
+let animId = null;
+
+function criticalAngle(n) {
+  return Math.asin(1.0 / n) * 180 / Math.PI;
+}
+
+function refractionAngle(incidenceDeg, n1, n2) {
+  const sinOut = (n1 / n2) * Math.sin(incidenceDeg * Math.PI / 180);
+  if (Math.abs(sinOut) >= 1) return null; // TIR
+  return Math.asin(sinOut) * 180 / Math.PI;
+}
+
+// ═══════════════════════════════════════
+// CANVAS DRAWING
+// ═══════════════════════════════════════
+const canvas = document.getElementById('simCanvas');
+const ctx    = canvas.getContext('2d');
+
+let animPhase = 0;
+
+function drawArrow(ctx, x1, y1, x2, y2, color, size) {
+  const angle = Math.atan2(y2 - y1, x2 - x1);
+  ctx.save();
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - size * Math.cos(angle - 0.4), y2 - size * Math.sin(angle - 0.4));
+  ctx.lineTo(x2 - size * Math.cos(angle + 0.4), y2 - size * Math.sin(angle + 0.4));
+  ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawPhoton(ctx, x, y, color, glowColor) {
+  ctx.beginPath(); ctx.arc(x, y, 5, 0, Math.PI*2);
+  ctx.fillStyle = color; ctx.fill();
+  const g = ctx.createRadialGradient(x, y, 0, x, y, 14);
+  g.addColorStop(0, glowColor); g.addColorStop(1, 'rgba(0,0,0,0)');
+  ctx.fillStyle = g;
+  ctx.beginPath(); ctx.arc(x, y, 14, 0, Math.PI*2); ctx.fill();
+}
+
+function drawSim() {
+  const W = canvas.width, H = canvas.height;
+  const surfaceY = H * 0.42;
+  const n1 = MEDIA[state.medium].n; // water/glass/diamond BELOW (denser, incoming)
+  const n2 = 1.0;                    // air ABOVE (less dense, refracted)
+  const alpha = state.angle;
+  const alphaRad = alpha * Math.PI / 180;
+  const critAngle = criticalAngle(n1); // critical angle: sin(αc) = n2/n1
+  const isTIR = alpha >= critAngle;
+  // Snellius: n1*sin(α) = n2*sin(β)  →  β = arcsin(n1/n2 * sin(α)), β > α
+  const beta  = isTIR ? null : refractionAngle(alpha, n1, n2);
+
+  ctx.clearRect(0, 0, W, H);
+
+  // ─── BACKGROUNDS ───
+  // Air (top)
+  const airGrad = ctx.createLinearGradient(0, 0, 0, surfaceY);
+  airGrad.addColorStop(0,   '#0a1628');
+  airGrad.addColorStop(1,   '#1a3a5c');
+  ctx.fillStyle = airGrad;
+  ctx.fillRect(0, 0, W, surfaceY);
+
+  // Water / medium (bottom)
+  const waterGrad = ctx.createLinearGradient(0, surfaceY, 0, H);
+  waterGrad.addColorStop(0, MEDIA[state.medium].color);
+  waterGrad.addColorStop(1, '#020b14');
+  ctx.fillStyle = waterGrad;
+  ctx.fillRect(0, surfaceY, W, H - surfaceY);
+
+  // Caustic shimmer in water
+  for (let i = 0; i < 6; i++) {
+    const cx2 = (W * 0.1) + i * W * 0.16 + Math.sin(animPhase * 0.7 + i) * 15;
+    const cy2 = surfaceY + 30 + i * 20 + Math.cos(animPhase * 0.5 + i * 0.8) * 10;
+    const cg = ctx.createRadialGradient(cx2, cy2, 0, cx2, cy2, 40);
+    cg.addColorStop(0, 'rgba(0,229,255,0.07)');
+    cg.addColorStop(1, 'rgba(0,229,255,0)');
+    ctx.fillStyle = cg;
+    ctx.beginPath();
+    ctx.ellipse(cx2, cy2, 45, 15, 0, 0, Math.PI*2);
+    ctx.fill();
+  }
+
+  // ─── SURFACE LINE (wavy) ───
+  ctx.beginPath();
+  ctx.moveTo(0, surfaceY);
+  for (let x = 0; x <= W; x += 2) {
+    const wave = Math.sin(x * 0.018 + animPhase) * 3 + Math.sin(x * 0.04 + animPhase * 1.3) * 1.5;
+    ctx.lineTo(x, surfaceY + wave);
+  }
+  ctx.lineTo(W, H); ctx.lineTo(0, H); ctx.closePath();
+  // refill water region with wave
+  const wg2 = ctx.createLinearGradient(0, surfaceY, 0, H);
+  wg2.addColorStop(0, MEDIA[state.medium].color);
+  wg2.addColorStop(1, '#020b14');
+  ctx.fillStyle = wg2;
+  ctx.fill();
+
+  ctx.strokeStyle = isTIR ? 'rgba(255,107,107,0.7)' : 'rgba(0,229,255,0.6)';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(0, surfaceY);
+  for (let x = 0; x <= W; x += 2) {
+    const wave = Math.sin(x * 0.018 + animPhase) * 3 + Math.sin(x * 0.04 + animPhase * 1.3) * 1.5;
+    ctx.lineTo(x, surfaceY + wave);
+  }
+  ctx.stroke();
+
+  // ─── LABELS ───
+  ctx.font = '600 12px Nunito';
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.fillText('LUFT (n = 1,00)', 14, 22);
+  ctx.fillText(MEDIA[state.medium].name.toUpperCase() + ' (n = ' + n2.toFixed(2) + ')', 14, surfaceY + 20);
+
+  // Hit point
+  const hitX = W * 0.5;
+  const hitY = surfaceY;
+
+  // ─── NORMAL LINE ───
+  ctx.setLineDash([6, 5]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(hitX, surfaceY - 100);
+  ctx.lineTo(hitX, surfaceY + 100);
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  /*
+   * COORDINATE SYSTEM (Canvas: Y increases downward)
+   *
+   * The scene is from the FISH's perspective inside the water (bottom half).
+   * Light travels from bottom-left → hit point → continues upper-left into air.
+   *
+   * Incoming ray:   starts bottom-LEFT of hitX  (hitX - sin(α)·len, hitY + cos(α)·len)
+   *                 travels right-and-up → hitX, hitY
+   *
+   * Reflected ray:  mirrors across normal → bottom-RIGHT of hitX
+   *                 travels from hitX right-and-down → (hitX + sin(α)·len, hitY + cos(α)·len)
+   *
+   * Refracted ray:  continues into air on the SAME LEFT side, but β > α (away from normal)
+   *                 travels from hitX left-and-up → (hitX - sin(β)·len, hitY - cos(β)·len)
+   *
+   * All angles measured from the vertical normal.
+   */
+
+  const rayLen = 200;
+
+  // ── Incoming ray endpoint (starts in water, bottom-left) ──
+  const inStartX = hitX - Math.sin(alphaRad) * rayLen;
+  const inStartY = hitY + Math.cos(alphaRad) * rayLen;
+
+  // ── Reflected ray endpoint (back into water, bottom-right) ──
+  const reflEndX = hitX + Math.sin(alphaRad) * rayLen;
+  const reflEndY = hitY + Math.cos(alphaRad) * rayLen;
+
+  // ── Refracted ray endpoint (into air, upper-RIGHT, β > α) ──
+  // Incoming travels from bottom-left → hitX (moving rightward = positive X).
+  // Refracted continues on the SAME side = upper-right: +sin(β) horizontally, -cos(β) vertically.
+  const betaRad = beta ? beta * Math.PI / 180 : null;
+  const refrEndX = betaRad !== null ? hitX + Math.sin(betaRad) * rayLen : null;
+  const refrEndY = betaRad !== null ? hitY - Math.cos(betaRad) * rayLen : null;
+
+  // ─── DRAW INCOMING RAY (yellow, from bottom-left to hit) ───
+  const rayGrad = ctx.createLinearGradient(inStartX, inStartY, hitX, hitY);
+  rayGrad.addColorStop(0, 'rgba(255,235,59,0)');
+  rayGrad.addColorStop(1, 'rgba(255,235,59,1)');
+  ctx.beginPath();
+  ctx.moveTo(inStartX, inStartY);
+  ctx.lineTo(hitX, hitY);
+  ctx.strokeStyle = rayGrad;
+  ctx.lineWidth = 2.5;
+  ctx.stroke();
+  // arrowhead at hit
+  drawArrow(ctx, inStartX, inStartY, hitX, hitY, '#ffe57a', 10);
+  // animated photon
+  const t = (animPhase * 2.5) % 1;
+  const photonX_in = inStartX + (hitX - inStartX) * t;
+  const photonY_in = inStartY + (hitY - inStartY) * t;
+  drawPhoton(ctx, photonX_in, photonY_in, '#ffe57a', 'rgba(255,235,59,0.5)');
+
+  // ─── DRAW REFLECTED RAY (red/orange, from hit to bottom-right, back into water) ───
+  const reflGrad = ctx.createLinearGradient(hitX, hitY, reflEndX, reflEndY);
+  reflGrad.addColorStop(0, isTIR ? 'rgba(255,107,107,1)' : 'rgba(255,140,60,0.6)');
+  reflGrad.addColorStop(1, isTIR ? 'rgba(255,107,107,0)' : 'rgba(255,140,60,0)');
+  ctx.beginPath();
+  ctx.moveTo(hitX, hitY);
+  ctx.lineTo(reflEndX, reflEndY);
+  ctx.strokeStyle = reflGrad;
+  ctx.lineWidth = isTIR ? 3 : 1.8;
+  ctx.stroke();
+  drawArrow(ctx, hitX, hitY, reflEndX, reflEndY, isTIR ? '#ff6b6b' : 'rgba(255,140,60,0.7)', 10);
+  // animated photon on reflected
+  const t2 = (animPhase * 2.5) % 1;
+  const photonX_rf = hitX + (reflEndX - hitX) * t2;
+  const photonY_rf = hitY + (reflEndY - hitY) * t2;
+  if (isTIR) drawPhoton(ctx, photonX_rf, photonY_rf, '#ff6b6b', 'rgba(255,107,107,0.4)');
+
+  // ─── DRAW REFRACTED RAY (cyan, from hit to upper-left, into air, β > α) ───
+  if (!isTIR && refrEndX !== null) {
+    const refG2 = ctx.createLinearGradient(hitX, hitY, refrEndX, refrEndY);
+    refG2.addColorStop(0, 'rgba(0,229,255,1)');
+    refG2.addColorStop(1, 'rgba(0,229,255,0)');
+    ctx.beginPath();
+    ctx.moveTo(hitX, hitY);
+    ctx.lineTo(refrEndX, refrEndY);
+    ctx.strokeStyle = refG2;
+    ctx.lineWidth = 2.5;
+    ctx.stroke();
+    drawArrow(ctx, hitX, hitY, refrEndX, refrEndY, '#00e5ff', 10);
+    // animated photon on refracted
+    const t3 = (animPhase * 2.5) % 1;
+    const px3 = hitX + (refrEndX - hitX) * t3;
+    const py3 = hitY + (refrEndY - hitY) * t3;
+    drawPhoton(ctx, px3, py3, '#00e5ff', 'rgba(0,229,255,0.4)');
+
+    // β arc: from straight-up normal going RIGHT to refracted ray (upper-right)
+    // Canvas: straight up = -π/2; refracted ray direction = -π/2 + betaRad
+    const arcR2 = 40;
+    ctx.beginPath();
+    ctx.arc(hitX, hitY, arcR2, -Math.PI/2, -Math.PI/2 + betaRad, false);
+    ctx.strokeStyle = 'rgba(0,229,255,0.6)'; ctx.lineWidth = 1.5; ctx.stroke();
+    ctx.font = 'bold 12px Nunito'; ctx.fillStyle = '#00e5ff';
+    const betaMid = -Math.PI/2 + betaRad/2;
+    ctx.fillText('β=' + beta.toFixed(1) + '°',
+      hitX + Math.cos(betaMid) * (arcR2 + 16) - 14,
+      hitY + Math.sin(betaMid) * (arcR2 + 16) + 4);
+
+  } else if (isTIR) {
+    const glowG = ctx.createRadialGradient(hitX, hitY, 0, hitX, hitY, 55);
+    glowG.addColorStop(0, 'rgba(255,107,107,0.45)');
+    glowG.addColorStop(1, 'rgba(255,107,107,0)');
+    ctx.fillStyle = glowG;
+    ctx.beginPath(); ctx.arc(hitX, hitY, 55, 0, Math.PI*2); ctx.fill();
+    ctx.font = 'bold 13px Nunito';
+    ctx.fillStyle = '#ff6b6b';
+    ctx.fillText('⚡ Totalreflexion!', hitX + 20, hitY - 16);
+  }
+
+  // ─── α ARC: incoming from bottom-left → arc is LEFT of downward normal ───
+  // Canvas: straight down = +π/2; incoming ray direction = +π/2 + alphaRad (going further left)
+  // Arc from straight-down going counterclockwise (leftward) by alphaRad
+  const arcR = 42;
+  ctx.beginPath();
+  ctx.arc(hitX, hitY, arcR, Math.PI/2 + alphaRad, Math.PI/2, true); // CCW back to down-normal
+  ctx.strokeStyle = 'rgba(255,235,59,0.8)'; ctx.lineWidth = 1.5; ctx.stroke();
+  ctx.font = 'bold 12px Nunito'; ctx.fillStyle = '#ffe57a';
+  const alphaMid = Math.PI/2 + alphaRad/2;
+  ctx.fillText('α=' + alpha.toFixed(0) + '°',
+    hitX + Math.cos(alphaMid) * (arcR + 16) - 8,
+    hitY + Math.sin(alphaMid) * (arcR + 16) + 4);
+
+  // Hit dot
+  ctx.beginPath(); ctx.arc(hitX, hitY, 6, 0, Math.PI*2);
+  ctx.fillStyle = '#ffffff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(hitX, hitY, 6, 0, Math.PI*2);
+  ctx.strokeStyle = isTIR ? '#ff6b6b' : '#00e5ff'; ctx.lineWidth = 2; ctx.stroke();
+
+  // ─── FISH ───
+  drawFish(ctx, hitX + 100, surfaceY + 90 + Math.sin(animPhase * 0.8) * 5, isTIR);
+
+  animPhase += 0.025;
+}
+
+function drawFish(ctx, x, y, scared) {
+  ctx.save();
+  // Body
+  ctx.beginPath();
+  ctx.ellipse(x, y, 30, 16, 0, 0, Math.PI*2);
+  ctx.fillStyle = scared ? '#ff9e80' : '#80deea';
+  ctx.fill();
+  ctx.strokeStyle = scared ? '#ff6b6b' : '#00bcd4';
+  ctx.lineWidth = 1.5; ctx.stroke();
+  // Tail
+  ctx.beginPath();
+  ctx.moveTo(x + 26, y);
+  ctx.lineTo(x + 42, y - 12);
+  ctx.lineTo(x + 42, y + 12);
+  ctx.closePath();
+  ctx.fillStyle = scared ? '#ff6b6b' : '#00bcd4';
+  ctx.fill();
+  // Eye
+  ctx.beginPath(); ctx.arc(x - 14, y - 4, 5, 0, Math.PI*2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  ctx.beginPath(); ctx.arc(x - 14, y - 4, 3, 0, Math.PI*2);
+  ctx.fillStyle = '#1a237e'; ctx.fill();
+  // Look up
+  ctx.beginPath(); ctx.arc(x - 13, y - 5, 1.5, 0, Math.PI*2);
+  ctx.fillStyle = '#fff'; ctx.fill();
+  // Thought bubble
+  ctx.font = '16px Arial';
+  ctx.fillText(scared ? '😱' : '👀', x - 28, y - 30);
+  ctx.restore();
+}
+
+// Animation loop
+function animate() {
+  drawSim();
+  animId = requestAnimationFrame(animate);
+}
+
+// ═══════════════════════════════════════
+// CONTROLS
+// ═══════════════════════════════════════
+function updateAngle(val) {
+  state.angle = parseInt(val);
+  const slider = document.getElementById('angleSlider');
+  slider.style.setProperty('--pct', (val/89*100) + '%');
+  document.getElementById('angleDisplay').innerHTML = val + '<span>°</span>';
+  updateReadout();
+}
+
+function setMedium(m) {
+  state.medium = m;
+  document.querySelectorAll('.med-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+m).classList.add('active');
+  document.getElementById('waterLabel').textContent =
+    MEDIA[m].icon + ' ' + MEDIA[m].name + ' · n = ' + MEDIA[m].n.toFixed(2);
+  updateReadout();
+}
+
+function updateReadout() {
+  const alpha = state.angle;
+  const n1 = MEDIA[state.medium].n; // medium below (denser)
+  const n2 = 1.0;                   // air above
+  const crit = criticalAngle(n1);
+  const isTIR = alpha >= crit;
+  const beta  = isTIR ? null : refractionAngle(alpha, n1, n2);
+
+  // Critical angle display
+  document.getElementById('criticalDisplay').textContent = crit.toFixed(1) + '°';
+
+  // Readout
+  document.getElementById('r-einfall').textContent = alpha.toFixed(1) + '°';
+  document.getElementById('r-brech').textContent   = isTIR ? '—' : (beta.toFixed(1) + '°');
+  document.getElementById('r-reflex').textContent  = alpha.toFixed(1) + '°';
+  document.getElementById('r-n').textContent       = MEDIA[state.medium].n.toFixed(2);
+
+  // Status pill
+  const pill = document.getElementById('statusPill');
+  if (isTIR) {
+    pill.className = 'pill-total'; pill.textContent = '🔴 Totalreflexion';
+  } else if (Math.abs(alpha - crit) < 2) {
+    pill.className = 'pill-critical'; pill.textContent = '⚠ Grenzfall';
+  } else {
+    pill.className = 'pill-refract'; pill.textContent = '✅ Brechung';
+  }
+
+  // Tipp
+  const tipp = document.getElementById('tippBox');
+  if (isTIR) {
+    tipp.innerHTML = '<strong>🔴 Totalreflexion!</strong> Der Einfallswinkel (' + alpha + '°) überschreitet den Grenzwinkel (' + crit.toFixed(1) + '°). Kein Licht verlässt das ' + MEDIA[state.medium].name + '. Die Oberfläche wirkt wie ein Spiegel.';
+    tipp.style.borderLeftColor = '#ff6b6b';
+  } else if (Math.abs(alpha - crit) < 3) {
+    tipp.innerHTML = '<strong>⚠ Knapp am Grenzwinkel!</strong> Du bist nahe am Grenzwinkel (' + crit.toFixed(1) + '°). Erhöhe den Winkel noch etwas – dann tritt Totalreflexion auf.';
+    tipp.style.borderLeftColor = '#ffd54f';
+  } else {
+    tipp.innerHTML = '<strong>✅ Brechung:</strong> Das Licht wird an der Grenzfläche gebrochen. Brechungswinkel β = ' + (beta ? beta.toFixed(1) + '°' : '—') + '. Erhöhe den Winkel über ' + crit.toFixed(1) + '° für Totalreflexion.';
+    tipp.style.borderLeftColor = '#00e5ff';
+  }
+}
+
+function quickSet(medium, angle) {
+  state.medium = medium;
+  state.angle  = angle;
+  document.getElementById('angleSlider').value = angle;
+  document.getElementById('angleSlider').style.setProperty('--pct', (angle/89*100) + '%');
+  document.getElementById('angleDisplay').innerHTML = angle + '<span>°</span>';
+  document.querySelectorAll('.med-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-'+medium).classList.add('active');
+  document.getElementById('waterLabel').textContent =
+    MEDIA[medium].icon + ' ' + MEDIA[medium].name + ' · n = ' + MEDIA[medium].n.toFixed(2);
+  updateReadout();
+  switchTab('sim');
+}
+
+// Override switchTab to preserve event
+function switchTab(name, ev) {
+  document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('tab-'+name).classList.add('active');
+  const btns = document.querySelectorAll('.tab-btn');
+  const map = {sim:0, aufgaben:1, theorie:2};
+  btns[map[name]].classList.add('active');
+}
+
+// ═══════════════════════════════════════
+// QUIZ
+// ═══════════════════════════════════════
+let quizAnswers = {};
+let quizCorrect = 0;
+
+function answer(btn, qId, isCorrect) {
+  if (quizAnswers[qId]) return; // already answered
+  quizAnswers[qId] = true;
+  if (isCorrect) quizCorrect++;
+
+  btn.classList.add(isCorrect ? 'correct' : 'wrong');
+  const fb = document.getElementById('fb-' + qId);
+  fb.classList.add('show', isCorrect ? 'ok' : 'nope');
+
+  const msgs = {
+    q1: ['Genau! Das Licht wird vollständig zurückgeworfen – das ist Totalreflexion!', 'Leider falsch. Wenn der Winkel zu groß ist, wird das Licht komplett zurückgeworfen.'],
+    q2: ['Super! Der Fisch sieht außerhalb des Lichtfensters die Spiegelung des Bodens.', 'Nicht ganz. Durch Totalreflexion wirkt die Oberfläche wie ein Spiegel – der Fisch sieht den Meeresboden!'],
+    q3: ['Richtig! Diamant hat n=2,42 – den kleinsten Grenzwinkel von nur 24,4°.', 'Leider falsch. Je größer die Brechzahl, desto kleiner der Grenzwinkel. Diamant gewinnt!'],
+    q4: ['Richtig! Glasfaserkabel leiten Licht durch Totalreflexion – so kommt dein Internet nach Hause!', 'Leider falsch. Es sind die Glasfaserkabel, die Totalreflexion nutzen!']
+  };
+  const idx = isCorrect ? 0 : 1;
+  fb.textContent = (isCorrect ? '✅ ' : '❌ ') + msgs[qId][idx];
+
+  if (Object.keys(quizAnswers).length === 4) showScore();
+}
+
+function showScore() {
+  const s = document.getElementById('quizScore');
+  s.classList.add('show');
+  document.getElementById('scoreNum').textContent = quizCorrect + '/4';
+  const msgs = ['Noch üben! Schau nochmal in den Theorie-Tab.', 'Fast! 1 Frage nochmal überdenken.', 'Gut gemacht! Du kennst dich schon gut aus.', 'Ausgezeichnet! Du hast alle Fragen richtig.'];
+  document.getElementById('scoreMsg').textContent = msgs[quizCorrect] || msgs[3];
+}
+
+// ═══════════════════════════════════════
+// INIT
+// ═══════════════════════════════════════
+updateReadout();
+animate();
+</script>
+</body>
+</html>
