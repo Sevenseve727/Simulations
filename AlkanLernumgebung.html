@@ -24,25 +24,152 @@
     const { useState, useCallback, useEffect } = React;
 
     // ─── IUPAC LOGIK ────────────────────────────────────────────────────────────
+    // Moleküle werden als Graphen modelliert.
+    // Knoten: Ganzzahlen (node-IDs). Kanten: Adjazenzliste.
+    // Die gezeichnete Struktur: hkLen Knoten in einer Kette (IDs 1..hkLen),
+    // plus Nebenketten als vertikale Äste (IDs hkLen+1, hkLen+2, ...).
 
-    const HAUPTKETTEN = {
+    const STAMM = {
       1:"meth",2:"eth",3:"prop",4:"but",5:"pent",
       6:"hex",7:"hept",8:"oct",9:"non",10:"dec"
     };
     const NK_NAME = { 1:"methyl", 2:"ethyl", 3:"propyl" };
     const MULT    = { 1:"", 2:"di", 3:"tri", 4:"tetra" };
 
-    function iupacName(hkLen, nk) {
-      if (!nk.length) return HAUPTKETTEN[hkLen] + "an";
-      const gr = {};
-      nk.forEach(({pos,len}) => { (gr[len] = gr[len]||[]).push(pos); });
-      const parts = Object.entries(gr)
-        .map(([len,pos]) => ({ name:NK_NAME[+len], teil:pos.sort((a,b)=>a-b).join(",") + "-" + MULT[pos.length] + NK_NAME[+len] }))
-        .sort((a,b) => a.name.localeCompare(b.name));
-      return parts.map(p=>p.teil).join("-") + "-" + HAUPTKETTEN[hkLen] + "an";
+    // Baut Adjazenzliste aus gezeichneter Struktur (hkLen + nk-Äste)
+    // Gibt auch nkNodeIds zurück: nkNodeIds[ni][k] = nodeId des k-ten Atoms der ni-ten Nebenkette
+    function buildGraph(hkLen, nk) {
+      const adj = Array.from({length: hkLen}, ()=>[]);
+      for (let i=0; i<hkLen-1; i++) {
+        adj[i].push(i+1);
+        adj[i+1].push(i);
+      }
+      let nextId = hkLen;
+      const nkNodeIds = [];
+      nk.forEach(({pos, len}) => {
+        const branchNodes = [];
+        let prev = pos - 1;
+        for (let k = 0; k < len; k++) {
+          const id = nextId++;
+          adj.push([]);
+          adj[prev].push(id);
+          adj[id].push(prev);
+          branchNodes.push(id);
+          prev = id;
+        }
+        nkNodeIds.push(branchNodes);
+      });
+      return { adj, totalNodes: nextId, nkNodeIds };
     }
 
+    // Findet die längste einfache Kette im Graphen (Tiefensuche von jedem Knoten)
+    function laengsteKette(adj) {
+      const n = adj.length;
+      let best = [];
+
+      function dfs(node, prev, path) {
+        if (path.length > best.length) best = [...path];
+        for (const nb of adj[node]) {
+          if (nb !== prev && !path.includes(nb)) {
+            dfs(nb, node, [...path, nb]);
+          }
+        }
+      }
+
+      for (let start = 0; start < n; start++) {
+        dfs(start, -1, [start]);
+      }
+      return best; // Array von Knoten-IDs (die längste Kette)
+    }
+
+    // Berechnet den korrekten IUPAC-Namen aus gezeichneter Struktur
+    // Gibt auch die Lokanten-Map zurück: nodeId (0-basiert) → IUPAC-Lokant (1-basiert)
+    function berechneIupacInfo(hkLen, nk) {
+      const { adj, nkNodeIds } = buildGraph(hkLen, nk);
+      const hauptkette = laengsteKette(adj);
+      const hkLenKorrekt = hauptkette.length;
+      const hkSet = new Set(hauptkette);
+
+      function nkLaenge(startNode, ankerNode) {
+        let maxLen = 0;
+        function dfs2(node, prev, len) {
+          if (len > maxLen) maxLen = len;
+          for (const nb of adj[node]) {
+            if (nb !== prev && !hkSet.has(nb)) dfs2(nb, node, len + 1);
+          }
+        }
+        dfs2(startNode, ankerNode, 1);
+        return maxLen;
+      }
+
+      // Substituenten für beide Richtungen berechnen
+      const subsVorwaerts = [];
+      hauptkette.forEach((hkNode, idx) => {
+        for (const nb of adj[hkNode]) {
+          if (!hkSet.has(nb)) subsVorwaerts.push({ pos: idx+1, len: nkLaenge(nb, hkNode) });
+        }
+      });
+      const n = hkLenKorrekt;
+      const subsRueckwaerts = subsVorwaerts.map(s => ({ pos: n+1-s.pos, len: s.len }));
+
+      const sumV = subsVorwaerts.reduce((a,s)=>a+s.pos, 0);
+      const sumR = subsRueckwaerts.reduce((a,s)=>a+s.pos, 0);
+      let subs = subsVorwaerts;
+      let richtungUmgekehrt = false;
+      if (sumR < sumV) { subs = subsRueckwaerts; richtungUmgekehrt = true; }
+      else if (sumV === sumR) {
+        const sv = [...subsVorwaerts].map(s=>s.pos).sort((a,b)=>a-b);
+        const sr = [...subsRueckwaerts].map(s=>s.pos).sort((a,b)=>a-b);
+        for (let i=0; i<sv.length; i++) {
+          if (sr[i] < sv[i]) { subs = subsRueckwaerts; richtungUmgekehrt = true; break; }
+          if (sv[i] < sr[i]) break;
+        }
+      }
+
+      // Lokanten-Map: nodeId → IUPAC-Lokant
+      // Die Hauptkette bekommt Lokantnummern 1..n (ggf. umgekehrt)
+      const lokantMap = {};
+      hauptkette.forEach((nodeId, idx) => {
+        lokantMap[nodeId] = richtungUmgekehrt ? (n - idx) : (idx + 1);
+      });
+      // NK-Knoten bekommen keine Lokantnummer (sie sind Substituenten)
+
+      // Name aufbauen
+      let name;
+      if (!subs.length) {
+        name = STAMM[hkLenKorrekt] + "an";
+      } else {
+        const gr = {};
+        subs.forEach(({pos,len}) => { (gr[len] = gr[len]||[]).push(pos); });
+        const parts = Object.entries(gr)
+          .map(([len,pos]) => ({ name: NK_NAME[+len]||("C"+len), teil: pos.sort((a,b)=>a-b).join(",") + "-" + MULT[pos.length] + (NK_NAME[+len]||("C"+len+"yl")) }))
+          .sort((a,b) => a.name.localeCompare(b.name));
+        name = parts.map(p=>p.teil).join("-") + "-" + STAMM[hkLenKorrekt] + "an";
+      }
+
+      return { name, lokantMap, echteHkLen: hkLenKorrekt, echteHkNodes: hauptkette, nkNodeIds };
+    }
+
+    function berechneIupacName(hkLen, nk) {
+      return berechneIupacInfo(hkLen, nk).name;
+    }
+
+    // Gibt für jeden gezeichneten HK-Index (0-basiert) die IUPAC-Lokantnummer zurück
+    // nodeId für HK-Atom i = i (0-basiert), für NK-Atome = hkLen + offset
+    // Gibt lokantMap und nkNodeIds zurück für den Renderer
+    function berechneLokantInfo(hkLen, nk) {
+      const info = berechneIupacInfo(hkLen, nk);
+      return { lokantMap: info.lokantMap, nkNodeIds: info.nkNodeIds };
+    }
+
+    function berechneLokantMap(hkLen, nk) {
+      return berechneIupacInfo(hkLen, nk).lokantMap;
+    }
+
+    // Normalisiert NK-Positionen für die gezeichnete Darstellung (nur für Zeichnung/Vergleich)
     function normalisiereNK(hkLen, nk) {
+      // Berechne den echten Namen und prüfe ob Struktur IUPAC-korrekt ist
+      // (d.h. die gezeichnete HK wirklich die längste ist)
       const orig  = nk.map(n=>({...n}));
       const spigl = nk.map(n=>({pos: hkLen+1-n.pos, len:n.len}));
       const sO = orig.reduce((s,n)=>s+n.pos,0);
@@ -58,25 +185,41 @@
       return orig;
     }
 
-    function generiereAlkan(sw) {
-      let hkLen, anz, lens;
-      if (sw==="leicht")      { hkLen=4+Math.floor(Math.random()*4); anz=1; lens=[1]; }
-      else if (sw==="mittel") { hkLen=5+Math.floor(Math.random()*4); anz=1+Math.floor(Math.random()*2); lens=Array.from({length:anz},()=>1+Math.floor(Math.random()*2)); }
-      else                    { hkLen=6+Math.floor(Math.random()*4); anz=2+Math.floor(Math.random()*3); lens=Array.from({length:anz},()=>1+Math.floor(Math.random()*3)); }
-      let nk=[]; let v=0;
-      while (nk.length<anz && v++<200) {
-        const pos=2+Math.floor(Math.random()*(hkLen-2));
-        if (nk.filter(n=>n.pos===pos).length<1) nk.push({pos,len:lens[nk.length]});
-      }
-      nk = normalisiereNK(hkLen, nk);
-      return { hkLen, nk, name: iupacName(hkLen, nk) };
+    // Prüft ob die gezeichnete Hauptkette wirklich die längste ist
+    function zeichnungIstKorrektHK(hkLen, nk) {
+      const { adj } = buildGraph(hkLen, nk);
+      const laengste = laengsteKette(adj);
+      return laengste.length === hkLen;
     }
 
-    function vergleicheNK(a,b) {
-      const sa=[...a].sort((x,y)=>x.pos-y.pos||x.len-y.len);
-      const sb=[...b].sort((x,y)=>x.pos-y.pos||x.len-y.len);
-      if (sa.length!==sb.length) return false;
-      return sa.every((n,i)=>n.pos===sb[i].pos&&n.len===sb[i].len);
+    function generiereAlkan(sw) {
+      let versuche = 0;
+      while (versuche++ < 500) {
+        let hkLen, anz, lens;
+        if (sw==="leicht")      { hkLen=4+Math.floor(Math.random()*4); anz=1; lens=[1]; }
+        else if (sw==="mittel") { hkLen=5+Math.floor(Math.random()*4); anz=1+Math.floor(Math.random()*2); lens=Array.from({length:anz},()=>1+Math.floor(Math.random()*2)); }
+        else                    { hkLen=6+Math.floor(Math.random()*4); anz=2+Math.floor(Math.random()*3); lens=Array.from({length:anz},()=>1+Math.floor(Math.random()*3)); }
+        let nk=[]; let v=0;
+        while (nk.length<anz && v++<200) {
+          const pos=2+Math.floor(Math.random()*(hkLen-2));
+          if (nk.filter(n=>n.pos===pos).length<1) nk.push({pos,len:lens[nk.length]});
+        }
+        nk = normalisiereNK(hkLen, nk);
+        // Prüfe: echte IUPAC-Hauptkette darf max. 10 C-Atome haben
+        const info = berechneIupacInfo(hkLen, nk);
+        if (info.echteHkLen > 10) continue;
+        return { hkLen, nk, name: info.name };
+      }
+      // Fallback: einfaches Butan
+      return { hkLen: 4, nk: [], name: STAMM[4] + "an" };
+    }
+
+    // Vergleich zweier Strukturen: sind sie als Graph isomorph (gleiche Molekülformel)?
+    // Für unsere Zwecke: berechne den IUPAC-Namen beider und vergleiche
+    function strukturenGleich(hkLen1, nk1, hkLen2, nk2) {
+      const name1 = berechneIupacName(hkLen1, nk1);
+      const name2 = berechneIupacName(hkLen2, nk2);
+      return name1 === name2;
     }
 
     // ─── LEWIS-FORMEL RENDERER ───────────────────────────────────────────────────
@@ -109,7 +252,7 @@
       return { STEP, NKSTEP, CY, hkX, nkDirs, nkDirsForHK, allPts };
     }
 
-    function LewisFormel({ hkLen, nk, highlight={}, showNums=false, scale=1, onAtomClick=null, activeAtom=null }) {
+    function LewisFormel({ hkLen, nk, highlight={}, showNums=false, scale=1, onAtomClick=null, activeAtom=null, lokantMap=null, nkNodeIds=null }) {
       const S = scale;
       const HLEN=20*S, HGAP=7*S, BOND_W=2.2*S, CR=15*S;
       const fontSize=13*S, fontSizeH=11*S;
@@ -220,7 +363,9 @@
                   fill={isActive?"#1d4ed8":clickable?"#2563eb":HK_COL}
                   fontWeight="700" fontFamily="Georgia,serif">C</text>
                 {showNums&&<text x={tx(cx)} y={ty(CY)+28*S}
-                  textAnchor="middle" fontSize={10*S} fill={NUM_COL} fontWeight="700">{pos}</text>}
+                  textAnchor="middle" fontSize={10*S} fill={NUM_COL} fontWeight="700">
+                  {lokantMap ? (lokantMap[i] !== undefined ? lokantMap[i] : "") : pos}
+                </text>}
               </g>
             );
           })}
@@ -229,6 +374,11 @@
             const dir=nkDirs[ni], bx=hkX(n.pos-1);
             return Array.from({length:n.len},(_,k)=>{
               const cy=CY+dir*(k+1)*NKSTEP;
+              // Node-ID dieses NK-Atoms → Lokant aus Map
+              const nodeId = nkNodeIds ? nkNodeIds[ni][k] : null;
+              const lokant = (lokantMap && nodeId !== null && lokantMap[nodeId] !== undefined) ? lokantMap[nodeId] : null;
+              // Zeige Nummer links vom Atom (Platz oben/unten ist durch H-Striche belegt)
+              const numDir = dir === -1 ? 1 : -1; // Nummer auf der freien Seite
               return (
                 <g key={"nkc"+ni+"-"+k}>
                   {hStricheNK(bx,cy,k,n.len,dir,ni)}
@@ -237,6 +387,10 @@
                   <text x={tx(bx)} y={ty(cy)+fontSize*0.38}
                     textAnchor="middle" fontSize={fontSize}
                     fill={NK_COL} fontWeight="700" fontFamily="Georgia,serif">C</text>
+                  {showNums && lokant !== null && (
+                    <text x={tx(bx)+18*S} y={ty(cy)+fontSize*0.38}
+                      textAnchor="start" fontSize={10*S} fill={NUM_COL} fontWeight="700">{lokant}</text>
+                  )}
                 </g>
               );
             });
@@ -290,8 +444,11 @@
               </div>
             </div>
             <div style={{overflowX:"auto",paddingBottom:8}}>
+              {(()=>{ const li=berechneLokantInfo(BEISPIEL.hkLen,BEISPIEL.nk); return (
               <LewisFormel hkLen={BEISPIEL.hkLen} nk={BEISPIEL.nk} scale={0.88} showNums={showNums}
+                lokantMap={li.lokantMap} nkNodeIds={li.nkNodeIds}
                 highlight={hl?{hauptkette:"#1a56db",nebenkette:"#b45309"}:{hauptkette:"#374151",nebenkette:"#374151"}}/>
+              ); })()}
             </div>
             {hl&&(
               <div style={{display:"flex",gap:16,marginTop:8,flexWrap:"wrap",justifyContent:"center"}}>
@@ -346,8 +503,11 @@
           <div style={{background:"#fff",border:"1.5px solid #e5e7eb",borderRadius:14,padding:"20px",marginBottom:16}}>
             <p style={{color:"#6b7280",fontSize:13,marginBottom:10}}>Wie heißt dieses Alkan nach IUPAC?</p>
             <div style={{overflowX:"auto",paddingBottom:8}}>
+              {(()=>{ const li=berechneLokantInfo(alkan.hkLen,alkan.nk); return (
               <LewisFormel hkLen={alkan.hkLen} nk={alkan.nk} scale={0.82} showNums={showNums}
-                highlight={{hauptkette:"#1e3a5f",nebenkette:"#92400e"}}/>
+                lokantMap={li.lokantMap} nkNodeIds={li.nkNodeIds}
+                highlight={{hauptkette:"#374151",nebenkette:"#374151"}}/>
+              ); })()}
             </div>
           </div>
           <div style={{display:"flex",gap:10,marginBottom:12}}>
@@ -419,13 +579,12 @@
       const removeNK=idx=>{ setNk(prev=>prev.filter((_,i)=>i!==idx));setStatus(null); };
 
       const pruefen=()=>{
-        const nU=normalisiereNK(hkLen,nk), nZ=normalisiereNK(aufgabe.hkLen,aufgabe.nk);
-        const ok=hkLen===aufgabe.hkLen&&vergleicheNK(nU,nZ);
+        const ok = strukturenGleich(hkLen, nk, aufgabe.hkLen, aufgabe.nk);
         setStatus(ok?"richtig":"falsch");
         if(ok) onPunkte("bauen",2);
       };
 
-      const userName=iupacName(hkLen,normalisiereNK(hkLen,nk));
+      const userName=berechneIupacName(hkLen,normalisiereNK(hkLen,nk));
 
       useEffect(()=>{
         if(!activeAtom) return;
@@ -498,6 +657,9 @@
                 <div>
                   <div style={{fontSize:13,fontWeight:700,color:"#374151"}}>👁 Deine Strukturformel</div>
                   <div style={{fontFamily:"monospace",fontSize:13,color:"#1a56db",marginTop:2}}>{userName}</div>
+                  {berechneIupacName(hkLen,normalisiereNK(hkLen,nk)) !== berechneIupacName(hkLen,[]) && userName !== berechneIupacName(hkLen,nk) && (
+                    <div style={{fontSize:11,color:"#b45309",marginTop:3}}>⚠ Der angezeigte Name basiert auf der längsten tatsächlichen Kette.</div>
+                  )}
                 </div>
                 <button onClick={()=>setShowNums(v=>!v)} style={{fontSize:12,padding:"4px 12px",borderRadius:6,border:"1px solid #d1d5db",background:showNums?"#dcfce7":"#f3f4f6",color:"#374151",cursor:"pointer"}}>
                   {showNums?"Nummern aus":"Nummern an"}
@@ -505,15 +667,19 @@
               </div>
 
               <div style={{overflowX:"auto",paddingBottom:10,position:"relative"}} onClick={e=>e.stopPropagation()}>
+                {(()=>{ const _nk=normalisiereNK(hkLen,nk); const li=berechneLokantInfo(hkLen,_nk); return (
                 <LewisFormel
                   hkLen={hkLen}
-                  nk={normalisiereNK(hkLen,nk)}
+                  nk={_nk}
                   scale={0.82}
                   showNums={showNums}
+                  lokantMap={li.lokantMap}
+                  nkNodeIds={li.nkNodeIds}
                   highlight={{hauptkette:"#1e3a5f",nebenkette:"#b45309"}}
                   onAtomClick={handleAtomClick}
                   activeAtom={activeAtom}
                 />
+                ); })()}
 
                 {activeAtom!==null && activeAtom>=2 && activeAtom<=hkLen-1 && (()=>{
                   const S=0.82;
