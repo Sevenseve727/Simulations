@@ -1,0 +1,1950 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Destillation – Interaktive Lernumgebung | Klasse 6</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Space+Mono:wght@400;700&display=swap');
+
+  :root {
+    --bg: #0d1b2a;
+    --bg2: #132237;
+    --panel: #1a2e45;
+    --panel2: #1f3a56;
+    --accent: #00c9a7;
+    --accent2: #f7b731;
+    --heat: #ff6b35;
+    --cool: #48cae4;
+    --steam: rgba(200,230,255,0.18);
+    --text: #e8f4f8;
+    --text-dim: #7ea8c4;
+    --salt: #f0e6d3;
+    --water: #48cae4;
+    --ethanol: #c084fc;
+    --dye: #f87171;
+    --sugar: #fbbf24;
+    --radius: 16px;
+    --shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Nunito', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── HEADER ── */
+  header {
+    background: linear-gradient(135deg, #0a1628 0%, #132237 60%, #0d2340 100%);
+    border-bottom: 2px solid var(--accent);
+    padding: 18px 32px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.5);
+  }
+  header h1 {
+    font-size: 1.5rem;
+    font-weight: 900;
+    letter-spacing: -0.5px;
+    color: var(--accent);
+  }
+  header h1 span { color: var(--text-dim); font-weight: 600; font-size: 0.95rem; display: block; }
+  .header-badge {
+    background: var(--accent);
+    color: #0d1b2a;
+    border-radius: 20px;
+    padding: 4px 14px;
+    font-size: 0.8rem;
+    font-weight: 800;
+    font-family: 'Space Mono', monospace;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 28px 20px;
+    display: grid;
+    grid-template-columns: 320px 1fr;
+    gap: 24px;
+  }
+
+  /* ── CONTROL PANEL ── */
+  .control-panel {
+    background: var(--panel);
+    border-radius: var(--radius);
+    padding: 24px;
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,201,167,0.15);
+    height: fit-content;
+    position: sticky;
+    top: 90px;
+  }
+  .panel-title {
+    font-size: 0.75rem;
+    font-family: 'Space Mono', monospace;
+    color: var(--accent);
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,201,167,0.2);
+  }
+
+  .control-group { margin-bottom: 22px; }
+  .control-label {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    display: block;
+  }
+
+  /* Mixture selector */
+  .mixture-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .mixture-btn {
+    background: var(--panel2);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 10px 8px;
+    cursor: pointer;
+    text-align: center;
+    transition: all 0.2s;
+    color: var(--text);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    line-height: 1.3;
+  }
+  .mixture-btn:hover { border-color: var(--accent); background: rgba(0,201,167,0.1); }
+  .mixture-btn.active { border-color: var(--accent); background: rgba(0,201,167,0.15); color: var(--accent); }
+  .mixture-btn .dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+    margin-bottom: 4px;
+  }
+
+  /* Temperature slider */
+  .temp-display {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+  }
+  .temp-value {
+    font-family: 'Space Mono', monospace;
+    font-size: 1.6rem;
+    font-weight: 700;
+    color: var(--accent2);
+  }
+  .temp-phase {
+    font-size: 0.75rem;
+    text-align: right;
+    color: var(--text-dim);
+    max-width: 120px;
+  }
+  input[type=range] {
+    width: 100%;
+    -webkit-appearance: none;
+    background: linear-gradient(to right, #1e4d6b, var(--heat));
+    height: 8px;
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px;
+    background: var(--accent2);
+    border-radius: 50%;
+    border: 3px solid var(--bg);
+    box-shadow: 0 2px 8px rgba(247,183,49,0.5);
+    transition: transform 0.15s;
+  }
+  input[type=range]::-webkit-slider-thumb:hover { transform: scale(1.2); }
+
+  /* Boiling point info */
+  .bp-info {
+    margin-top: 10px;
+    background: var(--panel2);
+    border-radius: 10px;
+    padding: 10px 12px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .bp-row { display: flex; justify-content: space-between; margin: 3px 0; }
+  .bp-row span:last-child { font-weight: 700; }
+
+  /* Animation toggle */
+  .toggle-row { display: flex; gap: 10px; margin-top: 8px; }
+  .toggle-btn {
+    flex: 1;
+    background: var(--panel2);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 8px;
+    color: var(--text-dim);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.78rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active { border-color: var(--accent2); color: var(--accent2); }
+
+  /* ── RIGHT AREA ── */
+  .right-area { display: flex; flex-direction: column; gap: 24px; }
+
+  /* ── APPARATUS CANVAS ── */
+  .apparatus-card {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,201,167,0.12);
+    overflow: hidden;
+  }
+  .apparatus-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid rgba(255,255,255,0.06);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .apparatus-header h2 { font-size: 1rem; font-weight: 800; }
+  .apparatus-header p { font-size: 0.8rem; color: var(--text-dim); margin-top: 2px; }
+  .hint-chip {
+    margin-left: auto;
+    background: rgba(247,183,49,0.15);
+    color: var(--accent2);
+    border-radius: 20px;
+    padding: 4px 12px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  #apparatus-svg {
+    width: 100%;
+    display: block;
+    cursor: default;
+  }
+  .clickable-zone { cursor: pointer; }
+  .clickable-zone:hover .highlight-ring { opacity: 1; }
+
+  /* ── MICRO MODAL ── */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(8,15,25,0.85);
+    backdrop-filter: blur(6px);
+    z-index: 200;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .modal-overlay.active { opacity: 1; pointer-events: all; }
+  .modal-box {
+    background: var(--panel);
+    border: 1.5px solid var(--accent);
+    border-radius: 20px;
+    width: min(680px, 95vw);
+    max-height: 88vh;
+    overflow-y: auto;
+    box-shadow: 0 16px 64px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,201,167,0.2);
+    transform: translateY(20px) scale(0.97);
+    transition: transform 0.3s;
+    padding: 28px;
+  }
+  .modal-overlay.active .modal-box { transform: translateY(0) scale(1); }
+  .modal-title {
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--accent);
+    margin-bottom: 4px;
+  }
+  .modal-subtitle {
+    font-size: 0.82rem;
+    color: var(--text-dim);
+    margin-bottom: 20px;
+  }
+  .modal-close {
+    position: absolute;
+    top: 16px; right: 20px;
+    background: none; border: none;
+    color: var(--text-dim);
+    font-size: 1.4rem;
+    cursor: pointer;
+    line-height: 1;
+    transition: color 0.2s;
+  }
+  .modal-close:hover { color: var(--text); }
+  .modal-box { position: relative; }
+
+  /* Particle canvas inside modal */
+  #particle-canvas {
+    width: 100%;
+    height: 260px;
+    background: #0a1a2e;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    display: block;
+  }
+
+  /* Level tabs */
+  .level-tabs { display: flex; gap: 8px; margin-bottom: 16px; }
+  .level-tab {
+    background: var(--panel2);
+    border: 2px solid transparent;
+    border-radius: 8px;
+    padding: 7px 16px;
+    color: var(--text-dim);
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.82rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .level-tab.active { border-color: var(--accent); color: var(--accent); }
+
+  .level-content { display: none; }
+  .level-content.active { display: block; }
+
+  .info-box {
+    background: var(--panel2);
+    border-radius: 12px;
+    padding: 16px;
+    font-size: 0.88rem;
+    line-height: 1.65;
+    margin-bottom: 12px;
+  }
+  .info-box strong { color: var(--accent2); }
+  .info-box.extend { border-left: 3px solid var(--accent); }
+
+  /* ── QUIZ SECTION ── */
+  .quiz-section {
+    background: var(--panel);
+    border-radius: var(--radius);
+    box-shadow: var(--shadow);
+    border: 1px solid rgba(0,201,167,0.12);
+    padding: 24px;
+  }
+  .quiz-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+  .quiz-icon {
+    width: 40px; height: 40px;
+    background: rgba(0,201,167,0.15);
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.2rem;
+  }
+  .quiz-header h2 { font-size: 1rem; font-weight: 800; }
+  .quiz-header p { font-size: 0.8rem; color: var(--text-dim); }
+
+  .quiz-progress {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 20px;
+  }
+  .q-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--panel2);
+    transition: background 0.3s;
+  }
+  .q-dot.done { background: var(--accent); }
+  .q-dot.current { background: var(--accent2); }
+  .q-dot.wrong { background: var(--heat); }
+
+  .quiz-question {
+    font-size: 1rem;
+    font-weight: 700;
+    margin-bottom: 16px;
+    line-height: 1.4;
+  }
+  .quiz-options { display: flex; flex-direction: column; gap: 9px; }
+  .quiz-option {
+    background: var(--panel2);
+    border: 2px solid transparent;
+    border-radius: 10px;
+    padding: 12px 16px;
+    cursor: pointer;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: left;
+    transition: all 0.2s;
+  }
+  .quiz-option:hover:not(:disabled) { border-color: var(--accent); background: rgba(0,201,167,0.1); }
+  .quiz-option.correct { border-color: var(--accent); background: rgba(0,201,167,0.18); color: var(--accent); }
+  .quiz-option.wrong { border-color: var(--heat); background: rgba(255,107,53,0.15); color: var(--heat); }
+  .quiz-option:disabled { cursor: default; opacity: 0.7; }
+
+  .quiz-feedback {
+    margin-top: 14px;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    line-height: 1.5;
+    display: none;
+  }
+  .quiz-feedback.show { display: block; }
+  .quiz-feedback.ok { background: rgba(0,201,167,0.12); color: var(--accent); border: 1px solid rgba(0,201,167,0.3); }
+  .quiz-feedback.fail { background: rgba(255,107,53,0.12); color: #ffaa80; border: 1px solid rgba(255,107,53,0.3); }
+
+  .quiz-nav {
+    margin-top: 16px;
+    display: flex;
+    justify-content: flex-end;
+  }
+  .btn-primary {
+    background: var(--accent);
+    color: #0d1b2a;
+    border: none;
+    border-radius: 10px;
+    padding: 10px 24px;
+    font-family: 'Nunito', sans-serif;
+    font-size: 0.9rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: none;
+  }
+  .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,201,167,0.4); }
+  .btn-primary.show { display: inline-block; }
+
+  .quiz-result {
+    text-align: center;
+    padding: 20px;
+    display: none;
+  }
+  .quiz-result.show { display: block; }
+  .result-score {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--accent);
+    font-family: 'Space Mono', monospace;
+  }
+  .result-msg { font-size: 1rem; color: var(--text-dim); margin: 8px 0 20px; }
+
+  /* ── LEGEND ── */
+  .legend-strip {
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+    padding: 14px 20px;
+    background: var(--panel2);
+    border-radius: 10px;
+    margin-top: 8px;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 7px;
+    font-size: 0.78rem;
+    color: var(--text-dim);
+  }
+  .legend-dot {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    text-align: center;
+    padding: 24px;
+    font-size: 0.75rem;
+    color: #3a5a7a;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    margin-top: 24px;
+  }
+
+  /* ── ANIMATIONS ── */
+  @keyframes bubble-rise {
+    0% { transform: translateY(0) scale(1); opacity: 0.7; }
+    100% { transform: translateY(-80px) scale(0.4); opacity: 0; }
+  }
+  @keyframes steam-drift {
+    0% { transform: translateY(0) translateX(0) scaleX(1); opacity: 0.6; }
+    100% { transform: translateY(-60px) translateX(10px) scaleX(1.5); opacity: 0; }
+  }
+  @keyframes drop-fall {
+    0% { transform: translateY(0); opacity: 1; }
+    100% { transform: translateY(30px); opacity: 0; }
+  }
+  @keyframes flame-flicker {
+    0%,100% { transform: scaleY(1) scaleX(1); }
+    33% { transform: scaleY(1.08) scaleX(0.95); }
+    66% { transform: scaleY(0.95) scaleX(1.05); }
+  }
+  @keyframes pulse-ring-flask {
+    0% { r: 72; opacity: 0.55; }
+    100% { r: 96; opacity: 0; }
+  }
+  @keyframes pulse-ring-cooler {
+    0% { r: 48; opacity: 0.55; }
+    100% { r: 68; opacity: 0; }
+  }
+  @keyframes pulse-ring-collector {
+    0% { r: 44; opacity: 0.55; }
+    100% { r: 62; opacity: 0; }
+  }
+
+  /* responsive */
+  @media (max-width: 800px) {
+    .main-container { grid-template-columns: 1fr; }
+    .control-panel { position: static; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div>
+    <h1>⚗️ Destillation
+      <span>Interaktive Lernumgebung · Chemie Klasse 6</span>
+    </h1>
+  </div>
+  <div class="header-badge">Realschule NDS</div>
+</header>
+
+<div class="main-container">
+
+  <!-- ── CONTROL PANEL ── -->
+  <aside class="control-panel">
+    <div class="panel-title">⚙ Einstellungen</div>
+
+    <!-- Mixture -->
+    <div class="control-group">
+      <span class="control-label">Stoffgemisch wählen</span>
+      <div class="mixture-grid">
+        <button class="mixture-btn active" onclick="setMixture('salt')" id="btn-salt">
+          <span class="dot" style="background:#f0e6d3"></span><br>Wasser<br>+ Salz
+        </button>
+        <button class="mixture-btn" onclick="setMixture('ethanol')" id="btn-ethanol">
+          <span class="dot" style="background:#c084fc"></span><br>Wasser<br>+ Ethanol
+        </button>
+        <button class="mixture-btn" onclick="setMixture('dye')" id="btn-dye">
+          <span class="dot" style="background:#f87171"></span><br>Wasser<br>+ Lebensmittelfarbe
+        </button>
+        <button class="mixture-btn" onclick="setMixture('sugar')" id="btn-sugar">
+          <span class="dot" style="background:#fbbf24"></span><br>Wasser<br>+ Zucker
+        </button>
+      </div>
+    </div>
+
+    <!-- Temperature -->
+    <div class="control-group">
+      <span class="control-label">Temperatur einstellen</span>
+      <div class="temp-display">
+        <div class="temp-value" id="temp-display">20°C</div>
+        <div class="temp-phase" id="temp-phase">Noch kein Sieden</div>
+      </div>
+      <input type="range" id="temp-slider" min="20" max="120" value="20" oninput="setTemperature(this.value)">
+      <div class="bp-info" id="bp-info">
+        <div class="bp-row"><span>Siedepunkt Wasser:</span><span>100 °C</span></div>
+        <div class="bp-row" id="bp-component"><span>Siedepunkt Salz:</span><span>1413 °C (verdampft nicht)</span></div>
+      </div>
+    </div>
+
+    <!-- Legend -->
+    <div class="control-group">
+      <span class="control-label">Teilchenlegende</span>
+      <div class="legend-strip" id="legend-strip">
+        <div class="legend-item"><span class="legend-dot" style="background:var(--water)"></span>Wasser</div>
+        <div class="legend-item"><span class="legend-dot" style="background:var(--salt)"></span>Salz</div>
+      </div>
+    </div>
+
+    <!-- Buttons -->
+    <div class="control-group">
+      <span class="control-label">Animation</span>
+      <div class="toggle-row">
+        <button class="toggle-btn active" id="btn-play" onclick="toggleAnimation()">▶ Start</button>
+        <button class="toggle-btn" onclick="resetAll()">↺ Reset</button>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ── RIGHT CONTENT ── -->
+  <div class="right-area">
+
+    <!-- APPARATUS -->
+    <div class="apparatus-card">
+      <div class="apparatus-header">
+        <div>
+          <h2>🔬 Versuchsaufbau – Destillation</h2>
+          <p>Klicke auf einen Bereich des Aufbaus, um die Teilchenebene zu sehen</p>
+        </div>
+        <div class="hint-chip">👆 Klickbar!</div>
+      </div>
+
+      <!-- SVG Apparatus -->
+      <svg id="apparatus-svg" viewBox="0 0 800 440" xmlns="http://www.w3.org/2000/svg">
+        <defs>
+          <linearGradient id="glassGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:rgba(72,202,228,0.15)"/>
+            <stop offset="40%" style="stop-color:rgba(72,202,228,0.35)"/>
+            <stop offset="100%" style="stop-color:rgba(72,202,228,0.1)"/>
+          </linearGradient>
+          <linearGradient id="fluidGrad" x1="0%" y1="0%" x2="0%" y2="100%">
+            <stop offset="0%" stop-color="#48cae4" stop-opacity="0.6"/>
+            <stop offset="100%" stop-color="#0096c7" stop-opacity="0.9"/>
+          </linearGradient>
+          <linearGradient id="coolerGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+            <stop offset="0%" style="stop-color:rgba(72,202,228,0.08)"/>
+            <stop offset="50%" style="stop-color:rgba(72,202,228,0.22)"/>
+            <stop offset="100%" style="stop-color:rgba(72,202,228,0.08)"/>
+          </linearGradient>
+          <filter id="glow">
+            <feGaussianBlur stdDeviation="3" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <filter id="heat-glow">
+            <feGaussianBlur stdDeviation="5" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+          <clipPath id="flask-clip">
+            <ellipse cx="130" cy="295" rx="60" ry="50"/>
+          </clipPath>
+          <clipPath id="collector-clip">
+            <rect x="640" y="340" width="80" height="50" rx="8"/>
+          </clipPath>
+        </defs>
+
+        <!-- Background grid subtle -->
+        <rect width="800" height="440" fill="url(#bg-grad)"/>
+
+        <!-- ══ FLASK (Rundkolben) ══ -->
+        <g class="clickable-zone" onclick="openModal('flask')" id="zone-flask">
+          <!-- Stand -->
+          <rect x="70" y="368" width="120" height="8" rx="4" fill="#2a4a6a"/>
+          <rect x="105" y="344" width="50" height="28" rx="3" fill="#1e3a5a"/>
+          <!-- Flask body -->
+          <ellipse cx="130" cy="295" rx="68" ry="58" fill="url(#glassGrad)" stroke="rgba(72,202,228,0.6)" stroke-width="2"/>
+          <!-- Fluid inside -->
+          <ellipse cx="130" cy="316" rx="55" ry="34" fill="url(#fluidGrad)" id="flask-fluid"/>
+          <!-- Particle bubbles (animated via JS) -->
+          <g id="bubble-group"></g>
+          <!-- Flask neck -->
+          <rect x="118" y="225" width="24" height="72" rx="8" fill="url(#glassGrad)" stroke="rgba(72,202,228,0.5)" stroke-width="1.5"/>
+          <!-- Label -->
+          <rect x="82" y="378" width="96" height="22" rx="5" fill="rgba(0,201,167,0.12)"/>
+          <text x="130" y="393" text-anchor="middle" fill="var(--accent)" font-family="Nunito" font-size="10" font-weight="700">① Rundkolben</text>
+          <!-- Flame (shown when hot) -->
+          <g id="flame-group" opacity="0">
+            <ellipse cx="130" cy="378" rx="14" ry="20" fill="#ff4d00" opacity="0.85"
+              style="animation: flame-flicker 0.4s ease-in-out infinite; transform-origin: 130px 380px;"/>
+            <ellipse cx="130" cy="372" rx="8" ry="13" fill="#ff9900" opacity="0.9"
+              style="animation: flame-flicker 0.35s ease-in-out infinite; transform-origin: 130px 375px;"/>
+            <ellipse cx="130" cy="367" rx="4" ry="8" fill="#ffdd00" opacity="0.95"
+              style="animation: flame-flicker 0.45s ease-in-out infinite; transform-origin: 130px 370px;"/>
+          </g>
+          <!-- Hover label -->
+          <rect x="48" y="254" width="80" height="22" rx="5" fill="rgba(247,183,49,0.0)" id="flask-hover-bg"/>
+          <text x="88" y="269" text-anchor="middle" fill="rgba(247,183,49,0)" font-family="Nunito" font-size="9" font-weight="700" id="flask-hover-text">🔍 Ansehen</text>
+        </g>
+
+        <!-- ══ CONNECTING TUBE ══ -->
+        <path d="M 130 225 L 130 210 Q 130 195 145 195 L 340 195 Q 360 195 360 178"
+          fill="none" stroke="rgba(72,202,228,0.5)" stroke-width="14" stroke-linecap="round"/>
+        <path d="M 130 225 L 130 210 Q 130 195 145 195 L 340 195 Q 360 195 360 178"
+          fill="none" stroke="rgba(72,202,228,0.12)" stroke-width="10" stroke-linecap="round"/>
+        <!-- Steam particles in tube -->
+        <g id="tube-steam"></g>
+
+        <!-- ══ THERMOMETER ══ -->
+        <g>
+          <rect x="152" y="180" width="6" height="60" rx="3" fill="rgba(72,202,228,0.3)" stroke="rgba(72,202,228,0.5)" stroke-width="1"/>
+          <circle cx="155" cy="245" r="5" fill="#ff6b35"/>
+          <rect x="153" y="220" width="4" height="25" rx="2" fill="#ff6b35" id="thermo-mercury"/>
+          <text x="164" y="207" fill="var(--text-dim)" font-family="Space Mono" font-size="9" id="thermo-text">20°C</text>
+        </g>
+
+        <!-- ══ LIEBIG COOLER ══ -->
+        <g class="clickable-zone" onclick="openModal('cooler')" id="zone-cooler">
+          <!-- Outer jacket -->
+          <rect x="340" y="148" width="160" height="60" rx="20"
+            fill="url(#coolerGrad)" stroke="rgba(72,202,228,0.55)" stroke-width="2"/>
+          <!-- Outer jacket highlight -->
+          <rect x="340" y="148" width="160" height="22" rx="16"
+            fill="rgba(255,255,255,0.04)"/>
+          <!-- Inner tube -->
+          <rect x="360" y="158" width="120" height="40" rx="12"
+            fill="rgba(72,202,228,0.08)" stroke="rgba(72,202,228,0.35)" stroke-width="1"/>
+          <!-- Water in/out labels -->
+          <rect x="332" y="196" width="30" height="14" rx="3" fill="rgba(72,202,228,0.2)"/>
+          <text x="347" y="206" text-anchor="middle" fill="var(--cool)" font-family="Nunito" font-size="7" font-weight="700">H₂O</text>
+          <rect x="482" y="148" width="30" height="14" rx="3" fill="rgba(72,202,228,0.2)"/>
+          <text x="497" y="158" text-anchor="middle" fill="var(--cool)" font-family="Nunito" font-size="7" font-weight="700">H₂O</text>
+          <!-- Cooling droplets animation -->
+          <g id="cool-drops"></g>
+          <!-- Arrow water flow -->
+          <text x="310" y="180" fill="var(--cool)" font-family="Nunito" font-size="8" opacity="0.7">↑ Kühlwasser</text>
+          <!-- Label -->
+          <rect x="348" y="220" width="144" height="22" rx="5" fill="rgba(0,201,167,0.12)"/>
+          <text x="420" y="235" text-anchor="middle" fill="var(--accent)" font-family="Nunito" font-size="10" font-weight="700">② Liebig-Kühler</text>
+        </g>
+
+        <!-- Tube from cooler to collector -->
+        <path d="M 500 168 Q 520 168 530 180 L 580 280 Q 590 300 610 310 L 640 330"
+          fill="none" stroke="rgba(72,202,228,0.5)" stroke-width="12" stroke-linecap="round"/>
+        <path d="M 500 168 Q 520 168 530 180 L 580 280 Q 590 300 610 310 L 640 330"
+          fill="none" stroke="rgba(72,202,228,0.1)" stroke-width="8" stroke-linecap="round"/>
+        <!-- Condensate drops -->
+        <g id="outlet-drops"></g>
+
+        <!-- ══ COLLECTOR (Auffangbehälter) ══ -->
+        <g class="clickable-zone" onclick="openModal('collector')" id="zone-collector">
+          <!-- Beaker -->
+          <rect x="640" y="330" width="80" height="60" rx="8"
+            fill="url(#glassGrad)" stroke="rgba(72,202,228,0.55)" stroke-width="2"/>
+          <!-- Fluid collected -->
+          <rect x="642" y="355" width="76" height="33" rx="0 0 6 6" fill="rgba(72,202,228,0.4)" id="collector-fluid"/>
+          <!-- Stand -->
+          <rect x="628" y="390" width="104" height="8" rx="4" fill="#2a4a6a"/>
+          <!-- Label -->
+          <rect x="636" y="407" width="88" height="22" rx="5" fill="rgba(0,201,167,0.12)"/>
+          <text x="680" y="422" text-anchor="middle" fill="var(--accent)" font-family="Nunito" font-size="10" font-weight="700">③ Auffanggefäß</text>
+        </g>
+
+        <!-- ══ CLICK HINT LABELS ══ -->
+        <g id="click-hints">
+          <text x="88" y="248" text-anchor="middle" fill="rgba(247,183,49,0.7)" font-family="Nunito" font-size="9" font-weight="700">👆 klicken</text>
+          <text x="420" y="246" text-anchor="middle" fill="rgba(247,183,49,0.7)" font-family="Nunito" font-size="9" font-weight="700">👆 klicken</text>
+          <text x="680" y="327" text-anchor="middle" fill="rgba(247,183,49,0.7)" font-family="Nunito" font-size="9" font-weight="700">👆 klicken</text>
+        </g>
+
+        <!-- ══ PULSE RINGS – feste Position, kein transform ══ -->
+        <g id="pulse-rings" pointer-events="none">
+          <!-- Flask ring -->
+          <circle cx="130" cy="295" r="72" fill="none" stroke="#f7b731" stroke-width="2">
+            <animate attributeName="r" values="72;96" dur="1.6s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.55;0" dur="1.6s" repeatCount="indefinite"/>
+          </circle>
+          <circle cx="130" cy="295" r="72" fill="none" stroke="#f7b731" stroke-width="1.5">
+            <animate attributeName="r" values="72;96" dur="1.6s" begin="0.5s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.35;0" dur="1.6s" begin="0.5s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Cooler ring -->
+          <circle cx="420" cy="178" r="44" fill="none" stroke="#f7b731" stroke-width="2">
+            <animate attributeName="r" values="44;62" dur="1.6s" begin="0.3s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.55;0" dur="1.6s" begin="0.3s" repeatCount="indefinite"/>
+          </circle>
+          <!-- Collector ring -->
+          <circle cx="680" cy="360" r="42" fill="none" stroke="#f7b731" stroke-width="2">
+            <animate attributeName="r" values="42;60" dur="1.6s" begin="0.7s" repeatCount="indefinite"/>
+            <animate attributeName="opacity" values="0.55;0" dur="1.6s" begin="0.7s" repeatCount="indefinite"/>
+          </circle>
+        </g>
+
+      </svg>
+    </div>
+
+    <!-- QUIZ -->
+    <div class="quiz-section">
+      <div class="quiz-header">
+        <div class="quiz-icon">🧠</div>
+        <div>
+          <h2>Wissen überprüfen</h2>
+          <p>Beantworte die Fragen zur Destillation</p>
+        </div>
+      </div>
+      <div class="quiz-progress" id="quiz-progress"></div>
+      <div id="quiz-content">
+        <div class="quiz-question" id="quiz-question"></div>
+        <div class="quiz-options" id="quiz-options"></div>
+        <div class="quiz-feedback" id="quiz-feedback"></div>
+        <div class="quiz-nav">
+          <button class="btn-primary" id="btn-next" onclick="nextQuestion()">Nächste Frage →</button>
+        </div>
+      </div>
+      <div class="quiz-result" id="quiz-result">
+        <div class="result-score" id="result-score">0/5</div>
+        <div class="result-msg" id="result-msg"></div>
+        <button class="btn-primary show" onclick="resetQuiz()">↺ Nochmal versuchen</button>
+      </div>
+    </div>
+
+  </div><!-- /right-area -->
+</div><!-- /main-container -->
+
+<!-- ══ MODAL ══ -->
+<div class="modal-overlay" id="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title" id="modal-title">Station</div>
+    <div class="modal-subtitle" id="modal-subtitle">Teilchenebene</div>
+    <canvas id="particle-canvas" width="620" height="260"></canvas>
+    <div class="level-tabs">
+      <button class="level-tab active" onclick="setLevel('basis',this)">📗 Basis</button>
+      <button class="level-tab" onclick="setLevel('extend',this)">📘 Erweiterung</button>
+    </div>
+    <div class="level-content active" id="content-basis"></div>
+    <div class="level-content" id="content-extend"></div>
+  </div>
+</div>
+
+<footer>Interaktive Lernumgebung · Destillation · Chemie Klasse 6 · Realschule Niedersachsen</footer>
+
+<script>
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+const state = {
+  mixture: 'salt',
+  temperature: 20,
+  running: false,
+  animFrame: null,
+  particles: [],
+  currentModal: null,
+};
+
+const MIXTURES = {
+  salt: {
+    name: 'Wasser + Salz',
+    component: 'Salz',
+    color: '#f0e6d3',
+    bp: null, // does not evaporate meaningfully
+    bpText: '1413 °C (verdampft nicht)',
+    distillate: 'reines Wasser',
+    residue: 'Salz',
+    fluidColor: 'rgba(72,202,228,0.55)',
+    legendExtra: { label: 'Salz', color: '#f0e6d3' },
+  },
+  ethanol: {
+    name: 'Wasser + Ethanol',
+    component: 'Ethanol',
+    color: '#c084fc',
+    bp: 78,
+    bpText: '78 °C',
+    distillate: 'Ethanol (zuerst)',
+    residue: 'Wasser',
+    fluidColor: 'rgba(192,132,252,0.45)',
+    legendExtra: { label: 'Ethanol', color: '#c084fc' },
+  },
+  dye: {
+    name: 'Wasser + Lebensmittelfarbe',
+    component: 'Lebensmittelfarbe',
+    color: '#f87171',
+    bp: null,
+    bpText: 'verdampft nicht (fest gelöst)',
+    distillate: 'reines Wasser',
+    residue: 'Farbstoff',
+    fluidColor: 'rgba(248,113,113,0.5)',
+    legendExtra: { label: 'Farbstoff', color: '#f87171' },
+  },
+  sugar: {
+    name: 'Wasser + Zucker',
+    component: 'Zucker',
+    color: '#fbbf24',
+    bp: null,
+    bpText: 'zersetzt sich (~186 °C)',
+    distillate: 'reines Wasser',
+    residue: 'Zucker',
+    fluidColor: 'rgba(251,191,36,0.45)',
+    legendExtra: { label: 'Zucker', color: '#fbbf24' },
+  },
+};
+
+// ══════════════════════════════════════════════
+//  INIT
+// ══════════════════════════════════════════════
+window.onload = () => {
+  updateUI();
+  initQuiz();
+  startAnimation();
+  state.running = true;
+  document.getElementById('btn-play').textContent = '⏸ Pause';
+  document.getElementById('btn-play').classList.add('active');
+};
+
+function setMixture(m) {
+  state.mixture = m;
+  document.querySelectorAll('.mixture-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('btn-' + m).classList.add('active');
+  updateUI();
+}
+
+function setTemperature(v) {
+  state.temperature = parseInt(v);
+  updateUI();
+}
+
+function updateUI() {
+  const mix = MIXTURES[state.mixture];
+  const t = state.temperature;
+
+  // temp display
+  document.getElementById('temp-display').textContent = t + '°C';
+  document.getElementById('thermo-text').textContent = t + '°C';
+  // thermometer mercury
+  const pct = (t - 20) / 100;
+  document.getElementById('thermo-mercury').setAttribute('height', 4 + pct * 21);
+  document.getElementById('thermo-mercury').setAttribute('y', 220 + (1 - pct) * 21);
+
+  // phase text
+  const waterBP = 100;
+  const compBP = mix.bp;
+  let phaseText = 'Noch kein Sieden';
+  if (t >= waterBP && compBP && t >= compBP) phaseText = '💧🟣 Wasser + ' + mix.component + ' sieden!';
+  else if (t >= waterBP) phaseText = '💧 Wasser siedet!';
+  else if (compBP && t >= compBP) phaseText = '🟣 ' + mix.component + ' siedet!';
+  else if (t >= 80) phaseText = 'Bald siedet Wasser…';
+  else if (t >= 60) phaseText = 'Wird heißer…';
+  document.getElementById('temp-phase').textContent = phaseText;
+
+  // flame
+  document.getElementById('flame-group').style.opacity = t > 50 ? Math.min((t - 50) / 50, 1) : 0;
+
+  // boiling point info
+  document.getElementById('bp-component').innerHTML =
+    `<span>Siedepunkt ${mix.component}:</span><span>${mix.bpText}</span>`;
+
+  // fluid color in flask
+  document.getElementById('flask-fluid').setAttribute('fill', mix.fluidColor);
+
+  // legend
+  const leg = document.getElementById('legend-strip');
+  leg.innerHTML = `
+    <div class="legend-item"><span class="legend-dot" style="background:var(--water)"></span>Wassermolekül</div>
+    <div class="legend-item"><span class="legend-dot" style="background:${mix.legendExtra.color}"></span>${mix.legendExtra.label}-Teilchen</div>
+    <div class="legend-item"><span class="legend-dot" style="background:rgba(200,230,255,0.5);border:1px solid var(--cool)"></span>Dampf</div>
+  `;
+
+  // collector fluid color – fills when boiling
+  const collecting = t >= waterBP || (compBP && t >= compBP);
+  const collectorH = collecting ? 33 : 5;
+  document.getElementById('collector-fluid').setAttribute('height', collectorH);
+  document.getElementById('collector-fluid').setAttribute('y', 388 - collectorH);
+}
+
+// ══════════════════════════════════════════════
+//  CANVAS ANIMATION (apparatus overlay)
+// ══════════════════════════════════════════════
+let svgBubbles = [];
+let svgSteam = [];
+let svgDrips = [];
+let tick = 0;
+
+function startAnimation() {
+  animLoop();
+}
+
+function animLoop() {
+  state.animFrame = requestAnimationFrame(animLoop);
+  if (!state.running) return;
+  tick++;
+  const t = state.temperature;
+  const mix = MIXTURES[state.mixture];
+  const boiling = t >= 100 || (mix.bp && t >= mix.bp);
+  const warm = t > 60;
+
+  // ── Bubbles in flask ──
+  if (boiling && tick % 6 === 0) {
+    svgBubbles.push({ x: 100 + Math.random() * 60, y: 320, r: 2 + Math.random() * 4, vy: -(0.8 + Math.random()), life: 1 });
+  }
+  if (warm && !boiling && tick % 14 === 0) {
+    svgBubbles.push({ x: 110 + Math.random() * 40, y: 318, r: 1.5 + Math.random() * 2, vy: -0.5, life: 1 });
+  }
+  svgBubbles = svgBubbles.filter(b => b.life > 0);
+  svgBubbles.forEach(b => { b.y += b.vy; b.life -= 0.035; b.r *= 0.995; });
+
+  // ── Steam in tube ──
+  if (boiling && tick % 10 === 0) {
+    svgSteam.push({ t: 0 });
+  }
+  svgSteam = svgSteam.filter(s => s.t < 1);
+  svgSteam.forEach(s => { s.t += 0.015; });
+
+  // ── Outlet drips ──
+  if (boiling && tick % 30 === 0) {
+    svgDrips.push({ y: 330, life: 1 });
+  }
+  svgDrips = svgDrips.filter(d => d.life > 0);
+  svgDrips.forEach(d => { d.y += 2.5; d.life -= 0.05; });
+
+  renderSVGParticles();
+}
+
+function renderSVGParticles() {
+  // Bubbles
+  const bg = document.getElementById('bubble-group');
+  bg.innerHTML = svgBubbles.map(b =>
+    `<circle cx="${b.x}" cy="${b.y}" r="${b.r}" fill="rgba(200,230,255,${b.life * 0.7})" stroke="rgba(72,202,228,${b.life * 0.5})" stroke-width="0.5"/>`
+  ).join('');
+
+  // Steam in tube
+  const ts = document.getElementById('tube-steam');
+  ts.innerHTML = svgSteam.map(s => {
+    const prog = s.t;
+    // Follow tube path approximately
+    let x, y;
+    if (prog < 0.3) {
+      x = 130; y = 225 - prog * 50;
+    } else if (prog < 0.7) {
+      const p2 = (prog - 0.3) / 0.4;
+      x = 130 + p2 * 230; y = 210 - p2 * 15;
+    } else {
+      const p3 = (prog - 0.7) / 0.3;
+      x = 360 + p3 * 0; y = 195 - p3 * 17;
+    }
+    const op = prog < 0.1 ? prog * 10 : prog > 0.8 ? (1 - prog) * 5 : 0.6;
+    return `<circle cx="${x}" cy="${y}" r="4" fill="rgba(200,230,255,${op * 0.5})"/>`;
+  }).join('');
+
+  // Outlet drips
+  const od = document.getElementById('outlet-drops');
+  od.innerHTML = svgDrips.map(d =>
+    `<ellipse cx="640" cy="${d.y}" rx="3" ry="4" fill="rgba(72,202,228,${d.life * 0.9})"/>`
+  ).join('');
+}
+
+function toggleAnimation() {
+  state.running = !state.running;
+  const btn = document.getElementById('btn-play');
+  btn.textContent = state.running ? '⏸ Pause' : '▶ Start';
+}
+
+function resetAll() {
+  state.temperature = 20;
+  document.getElementById('temp-slider').value = 20;
+  state.running = true;
+  document.getElementById('btn-play').textContent = '⏸ Pause';
+  svgBubbles = []; svgSteam = []; svgDrips = [];
+  updateUI();
+}
+
+// ══════════════════════════════════════════════
+//  PARTICLE CANVAS – Aggregatzustand + Übergänge
+// ══════════════════════════════════════════════
+let particles = [];
+let pcanvas, pctx, pAnimFrame;
+
+// ── Teilchen zeichnen ──
+function drawParticle(ctx, p) {
+  const alpha = p.alpha !== undefined ? p.alpha : 1;
+  ctx.globalAlpha = alpha;
+  ctx.beginPath();
+  ctx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+  ctx.fillStyle = p.color;
+  ctx.fill();
+  ctx.strokeStyle = p.phase === 'gas' ? 'rgba(255,255,255,0.15)' : 'rgba(255,255,255,0.3)';
+  ctx.lineWidth = p.phase === 'gas' ? 0.6 : 1.1;
+  ctx.stroke();
+  if (p.phase !== 'gas') {
+    ctx.beginPath();
+    ctx.arc(p.x - p.r * 0.28, p.y - p.r * 0.28, p.r * 0.24, 0, Math.PI * 2);
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fill();
+  }
+  ctx.globalAlpha = 1;
+}
+
+// ── Zonen-Hintergrund + Label ──
+function drawZone(ctx, W, zone) {
+  const { yTop, yBot, state: zs, label, sublabel, fromGas } = zone;
+  const zH = yBot - yTop;
+  if (zs === 'gas') {
+    ctx.fillStyle = 'rgba(168,216,234,0.06)';
+    ctx.fillRect(0, yTop, W, zH);
+  } else if (zs === 'liquid') {
+    ctx.fillStyle = 'rgba(72,202,228,0.13)';
+    ctx.fillRect(0, yTop, W, zH);
+  } else {
+    const gr = ctx.createLinearGradient(0, yTop, 0, yBot);
+    gr.addColorStop(0, fromGas ? 'rgba(168,216,234,0.06)' : 'rgba(72,202,228,0.13)');
+    gr.addColorStop(1, fromGas ? 'rgba(72,202,228,0.13)' : 'rgba(168,216,234,0.06)');
+    ctx.fillStyle = gr;
+    ctx.fillRect(0, yTop, W, zH);
+  }
+  if (yTop > 1) {
+    ctx.strokeStyle = 'rgba(72,202,228,0.45)';
+    ctx.lineWidth = 1.5; ctx.setLineDash([8, 5]);
+    ctx.beginPath(); ctx.moveTo(10, yTop); ctx.lineTo(W - 10, yTop); ctx.stroke();
+    ctx.setLineDash([]);
+  }
+  const icons = { gas: '💨', liquid: '💧', transition: '🔄' };
+  const labelY = yTop + 17;
+  ctx.font = 'bold 11px Space Mono';
+  const tw = ctx.measureText(label).width;
+  ctx.fillStyle = zs === 'gas' ? 'rgba(168,216,234,0.2)' : zs === 'transition' ? 'rgba(100,200,220,0.18)' : 'rgba(72,202,228,0.2)';
+  ctx.beginPath();
+  if (ctx.roundRect) ctx.roundRect(W - tw - 28, labelY - 13, tw + 18, 19, 5);
+  else ctx.rect(W - tw - 28, labelY - 13, tw + 18, 19);
+  ctx.fill();
+  ctx.fillStyle = zs === 'gas' ? '#a8d8ea' : zs === 'transition' ? '#72c8e0' : '#48cae4';
+  ctx.fillText(label, W - tw - 19, labelY);
+  ctx.font = '13px serif';
+  ctx.fillText(icons[zs] || '🔄', W - tw - 44, labelY);
+  ctx.font = '9px Nunito';
+  ctx.fillStyle = 'rgba(180,220,240,0.55)';
+  ctx.fillText(sublabel, 10, labelY);
+}
+
+// ══════════════════════════════════════════════
+//  STATION 1 – KOLBEN
+//  Flüssige Teilchen steigen auf → wechseln zu Gas → verlassen oben den Canvas
+//  Ethanol (bp=78°C) verdampft zuerst; Wasser erst ab 100°C
+// ══════════════════════════════════════════════
+function initFlask(W, H, mix, t) {
+  particles = [];
+
+  const waterBoils    = t >= 100;
+  const compBoils     = !!(mix.bp && t >= mix.bp);   // z.B. Ethanol ab 78°C
+  const anythingBoils = waterBoils || compBoils;
+  const warm          = t >= 50;
+  const surfaceY      = anythingBoils ? H * 0.48 : (warm ? H * 0.28 : H * 0.08);
+  const speed         = anythingBoils ? 0.85 : warm ? 0.42 : 0.18;
+
+  // Flüssige Wasserteilchen
+  for (let i = 0; i < 28; i++) {
+    particles.push({
+      x: 14 + Math.random() * (W - 28),
+      y: surfaceY + 10 + Math.random() * (H - surfaceY - 18),
+      r: 7 + Math.random() * 1.2,
+      vx: (Math.random() - 0.5) * speed,
+      vy: (Math.random() - 0.5) * speed,
+      color: '#48cae4', phase: 'liquid', type: 'water',
+      alpha: 1, escaping: false,
+    });
+  }
+  // Komponenten-Teilchen
+  for (let i = 0; i < 9; i++) {
+    particles.push({
+      x: 14 + Math.random() * (W - 28),
+      y: surfaceY + 14 + Math.random() * (H - surfaceY - 24),
+      r: 8 + Math.random(),
+      vx: (Math.random() - 0.5) * 0.22,
+      vy: (Math.random() - 0.5) * 0.22,
+      color: mix.legendExtra.color, phase: 'liquid', type: 'component',
+      alpha: 1, escaping: false,
+    });
+  }
+  // Startgas-Teilchen – Farbe richtet sich nach was gerade siedet
+  if (warm || anythingBoils) {
+    const gc = anythingBoils ? 6 : 2;
+    for (let i = 0; i < gc; i++) {
+      // Bei beiden siedend: abwechselnd Wasser- und Komponenten-Farbe
+      let gasColor, gasType;
+      if (waterBoils && compBoils) {
+        const useComp = i % 2 === 0;
+        gasColor = useComp ? mix.legendExtra.color : '#a8d8ea';
+        gasType  = useComp ? 'component' : 'water';
+      } else if (compBoils) {
+        gasColor = mix.legendExtra.color;
+        gasType  = 'component';
+      } else {
+        gasColor = '#a8d8ea';
+        gasType  = 'water';
+      }
+      particles.push({
+        x: 14 + Math.random() * (W - 28),
+        y: 8 + Math.random() * (surfaceY - 16),
+        r: 7 + Math.random() * 1.2,
+        vx: (Math.random() - 0.5) * 0.9,
+        vy: -(0.35 + Math.random() * 0.45),
+        color: gasColor, phase: 'gas', type: gasType,
+        alpha: 0.5 + Math.random() * 0.4, escaping: true,
+        gasColor, startColor: gasColor,
+      });
+    }
+  }
+  return { surfaceY, waterBoils, compBoils, anythingBoils, warm, speed };
+}
+
+function updateFlask(W, H, mix, t, meta) {
+  const { surfaceY, waterBoils, compBoils, anythingBoils, warm } = meta;
+
+  // Welche Typen sieden gerade?
+  // 78–99°C (compBoils only): nur Komponente (z.B. Ethanol) verdampft
+  // ≥100°C (waterBoils): Wasser verdampft; wenn compBoils auch noch true → beide sieden
+  const evapTargets = [];
+  if (compBoils && !waterBoils) {
+    evapTargets.push({ type: 'component', color: mix.legendExtra.color });
+  } else if (waterBoils && !compBoils) {
+    evapTargets.push({ type: 'water', color: '#a8d8ea' });
+  } else if (waterBoils && compBoils) {
+    // Beide sieden: beide Typen können verdampfen
+    evapTargets.push({ type: 'water',     color: '#a8d8ea' });
+    evapTargets.push({ type: 'component', color: mix.legendExtra.color });
+  }
+  // Kein Target → nichts siedet
+
+  // Gelegentlich ein Teilchen eines zufällig gewählten siedenden Typs ablösen
+  if (evapTargets.length > 0 && Math.random() < (anythingBoils ? 0.06 : 0.018)) {
+    const target = evapTargets[Math.floor(Math.random() * evapTargets.length)];
+    const candidates = particles.filter(p => p.phase === 'liquid' && p.type === target.type && !p.escaping);
+    if (candidates.length > 2) {
+      candidates.sort((a, b) => a.y - b.y);
+      const chosen = candidates[Math.floor(Math.random() * Math.min(4, candidates.length))];
+      chosen.escaping  = true;
+      chosen.gasColor  = target.color;
+      chosen.startColor = target.color;
+      chosen.vy = -(0.35 + Math.random() * 0.45);
+      chosen.vx = (Math.random() - 0.5) * 0.8;
+    }
+  }
+
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < p.r + 4)     { p.x = p.r + 4;     p.vx =  Math.abs(p.vx); }
+    if (p.x > W - p.r - 4) { p.x = W - p.r - 4; p.vx = -Math.abs(p.vx); }
+
+    if (p.escaping) {
+      // Beim Überqueren der Oberfläche → wird zu Gas, behält Farbe seines Typs
+      if (p.y < surfaceY && p.phase === 'liquid') {
+        p.phase = 'gas';
+        p.color = p.gasColor || '#a8d8ea';
+        p.r = Math.max(p.r, 7);
+      }
+      // Als Gas: alpha sinkt linear von 1 (surfaceY) → 0 (y=0), dann dead
+      if (p.phase === 'gas') {
+        p.alpha = Math.max(0, p.y / surfaceY);
+        if (p.y < -p.r) p.dead = true;
+      }
+    } else if (p.phase === 'liquid') {
+      if (p.y < surfaceY + p.r + 2) { p.y = surfaceY + p.r + 2; p.vy = Math.abs(p.vy); }
+      if (p.y > H - p.r - 2)        { p.y = H - p.r - 2;        p.vy = -Math.abs(p.vy); }
+    }
+  });
+
+  // Tote entfernen – kein Nachspawn: Vorrat nimmt sichtbar ab
+  particles = particles.filter(p => !p.dead);
+
+  // Gas-Teilchen: max. 18 gleichzeitig (mehr wegen beider Typen)
+  const gasCount = particles.filter(p => p.phase === 'gas').length;
+  if (gasCount > 18) {
+    let rem = 0;
+    particles = particles.filter(p => {
+      if (p.phase === 'gas' && rem < gasCount - 18) { rem++; return false; }
+      return true;
+    });
+  }
+}
+
+// ══════════════════════════════════════════════
+//  STATION 2 – KÜHLER
+//  Gas kommt von oben → kühlt ab → wird Flüssigkeit → verlässt Canvas nach unten
+// ══════════════════════════════════════════════
+//  STATION 2 – KÜHLER
+//  Nur aktiv wenn bei Station 1 etwas verdampft.
+//  Gasfarbe = verdampfender Stoff von Station 1.
+// ══════════════════════════════════════════════
+function initCooler(W, H, mix, t) {
+  particles = [];
+  const waterBoils = t >= 100;
+  const compBoils  = !!(mix.bp && t >= mix.bp);
+  const anythingBoils = waterBoils || compBoils;
+
+  // Gasfarben: Wasser-Gas = hell/transparent, Komponenten-Gas = Stofffarbe
+  const waterGasColor = '#a8d8ea';
+  const compGasColor  = mix.legendExtra.color;
+  const gasColor      = (compBoils && !waterBoils) ? compGasColor : waterGasColor;
+  const liqColor      = '#48cae4'; // nur intern als Fallback
+
+  const transTop = H * 0.36, transBot = H * 0.56;
+
+  if (anythingBoils) {
+    for (let i = 0; i < 9; i++) {
+      const col = (waterBoils && compBoils)
+        ? (i % 2 === 0 ? compGasColor : waterGasColor)
+        : gasColor;
+      particles.push({
+        x: 14 + Math.random() * (W - 28),
+        y: 8 + Math.random() * (transTop - 14),
+        r: 7 + Math.random() * 1.2,
+        vx: (Math.random() - 0.5) * 1.1,
+        vy: 0.5 + Math.random() * 0.55,
+        color: col, startColor: col, phase: 'gas', alpha: 0.82, condensing: false,
+      });
+    }
+  }
+  return { transTop, transBot, anythingBoils, waterBoils, compBoils, gasColor, liqColor, waterGasColor, compGasColor };
+}
+
+function updateCooler(W, H, meta) {
+  const { transTop, transBot, anythingBoils, gasColor, liqColor } = meta;
+  if (!anythingBoils) return;
+
+  // Neue Gas-Teilchen von oben spawnen – Gasfarben immer hell/transparent
+  if (Math.random() < 0.055 && particles.filter(p => p.phase === 'gas').length < 14) {
+    const spawnCount = particles.filter(p => p.phase === 'gas').length;
+    const col = (meta.waterBoils && meta.compBoils)
+      ? (spawnCount % 2 === 0 ? meta.compGasColor : meta.waterGasColor)
+      : meta.gasColor;
+    particles.push({
+      x: 14 + Math.random() * (W - 28),
+      y: 2,
+      r: 7 + Math.random() * 1.2,
+      vx: (Math.random() - 0.5) * 1.1,
+      vy: 0.6 + Math.random() * 0.5,
+      color: col, startColor: col, phase: 'gas', alpha: 0.82, condensing: false,
+    });
+  }
+
+  particles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < p.r + 4)     { p.x = p.r + 4;     p.vx =  Math.abs(p.vx); }
+    if (p.x > W - p.r - 4) { p.x = W - p.r - 4; p.vx = -Math.abs(p.vx); }
+
+    if (p.phase === 'gas') {
+      if (p.y < p.r) { p.y = p.r; p.vy = Math.abs(p.vy); }
+
+      if (p.y > transTop) {
+        p.condensing = true;
+        const prog = Math.min((p.y - transTop) / (transBot - transTop), 1);
+        p.vx *= 0.96;
+        p.vy = Math.max(p.vy * 0.94, 0.25);
+        // Nur alpha und Größe anpassen – Farbe bleibt immer die Ausgangsfarbe
+        p.alpha = 0.78 + prog * 0.22;
+        p.r = 7 + prog * 1.2;
+      }
+
+      if (p.y >= transBot) {
+        p.phase = 'liquid';
+        // Wasser-Gas (#a8d8ea) → flüssiges Wasser (#48cae4)
+        // Ethanol-Gas (lila) → flüssiges Ethanol (lila, unverändert)
+        p.color = (p.startColor === '#a8d8ea') ? '#48cae4' : p.startColor;
+        p.alpha = 1;
+        p.r = 7.5 + Math.random() * 0.8;
+        p.vx = (Math.random() - 0.5) * 0.4;
+        p.vy = 0.45 + Math.random() * 0.35;
+      }
+    } else {
+      if (p.y > H + p.r * 2) p.dead = true;
+    }
+  });
+
+  particles = particles.filter(p => !p.dead);
+  const liqCount = particles.filter(p => p.phase === 'liquid').length;
+  if (liqCount > 22) {
+    let rem = 0;
+    particles = particles.filter(p => {
+      if (p.phase === 'liquid' && rem < liqCount - 22) { rem++; return false; }
+      return true;
+    });
+  }
+}
+
+// ══════════════════════════════════════════════
+//  STATION 3 – AUFFANGGEFÄSS
+//  Startet LEER. Tropfenfarbe = was in Station 1 verdampft ist.
+//  Keine Aktivität wenn nichts verdampft.
+// ══════════════════════════════════════════════
+let collectedParticles = [];
+let fallingDrops = [];
+const COLL_MAX_ROWS = 5;
+
+function initCollector(W, H, mix, t) {
+  collectedParticles = [];
+  fallingDrops = [];
+  const waterBoils    = t >= 100;
+  const compBoils     = !!(mix.bp && t >= mix.bp);
+  const anythingBoils = waterBoils || compBoils;
+
+  // Tropfenfarben = flüssige Farben der siedenden Stoffe
+  const dropColors = [];
+  if (waterBoils)  dropColors.push('#48cae4');              // flüssiges Wasser
+  if (compBoils)   dropColors.push(mix.legendExtra.color);  // flüssiges Ethanol etc.
+  if (dropColors.length === 0) dropColors.push('#48cae4'); // Fallback
+
+  if (anythingBoils) {
+    for (let i = 0; i < 3; i++) {
+      const col = dropColors[i % dropColors.length];
+      fallingDrops.push({
+        x: 20 + Math.random() * (W - 40),
+        y: -10 - Math.random() * 80,
+        r: 5.5 + Math.random() * 1.5,
+        vy: 1.2 + Math.random() * 0.8,
+        color: col, alpha: 0.85,
+      });
+    }
+  }
+  return { anythingBoils, dropColors };
+}
+
+function updateCollector(W, H, meta) {
+  const { anythingBoils, dropColors } = meta;
+  if (!anythingBoils) return;
+
+  const R = 7;
+  const cols    = Math.max(1, Math.floor((W - 16) / (R * 2.5)));
+  const maxRows = COLL_MAX_ROWS;
+  const poolTop = H - 10 - maxRows * (R * 2.5);
+  const currentRows = Math.ceil(collectedParticles.length / cols);
+  const landY   = H - 10 - currentRows * (R * 2.5) - R;
+
+  // Neue Tropfen spawnen – Farbe reihum aus dropColors
+  if (Math.random() < 0.04 && fallingDrops.length < 7) {
+    const col = dropColors[(fallingDrops.length + collectedParticles.length) % dropColors.length];
+    fallingDrops.push({
+      x: 20 + Math.random() * (W - 40), y: -10,
+      r: 5.5 + Math.random() * 1.5, vy: 1.2 + Math.random() * 0.8,
+      color: col, alpha: 0.85,
+    });
+  }
+
+  fallingDrops.forEach(d => { d.y += d.vy; });
+  fallingDrops = fallingDrops.filter(d => {
+    if (d.y >= Math.max(landY, poolTop)) {
+      if (currentRows < maxRows) {
+        const col = collectedParticles.length % cols;
+        const row = Math.floor(collectedParticles.length / cols);
+        // Gesammeltes Teilchen behält die Farbe des Tropfens
+        collectedParticles.push({
+          x: 10 + col * (R * 2.5) + (row % 2) * R * 1.2,
+          y: H - 10 - row * (R * 2.5),
+          r: R + Math.random() * 0.5,
+          vx: (Math.random() - 0.5) * 0.2, vy: (Math.random() - 0.5) * 0.2,
+          color: d.color, phase: 'liquid', alpha: 1,
+        });
+      }
+      return false;
+    }
+    return true;
+  });
+
+  collectedParticles.forEach(p => {
+    p.x += p.vx; p.y += p.vy;
+    if (p.x < p.r + 4)     { p.x = p.r + 4;     p.vx =  Math.abs(p.vx) * 0.5; }
+    if (p.x > W - p.r - 4) { p.x = W - p.r - 4; p.vx = -Math.abs(p.vx) * 0.5; }
+    if (p.y < H - 10 - maxRows * (R * 2.5) + p.r) p.vy = Math.abs(p.vy) * 0.5;
+    if (p.y > H - p.r - 2) { p.y = H - p.r - 2; p.vy = -Math.abs(p.vy) * 0.5; }
+  });
+}
+
+// ══════════════════════════════════════════════
+//  HAUPT-INIT + RENDER
+// ══════════════════════════════════════════════
+let pMeta = {};
+
+function initParticleCanvas(station) {
+  pcanvas = document.getElementById('particle-canvas');
+  pctx = pcanvas.getContext('2d');
+  particles = []; collectedParticles = []; fallingDrops = [];
+  if (pAnimFrame) cancelAnimationFrame(pAnimFrame);
+  const W = pcanvas.width, H = pcanvas.height;
+  const mix = MIXTURES[state.mixture];
+  const t   = state.temperature;
+  if (station === 'flask')          pMeta = initFlask(W, H, mix, t);
+  else if (station === 'cooler')    pMeta = initCooler(W, H, mix, t);
+  else if (station === 'collector') pMeta = initCollector(W, H, mix, t);
+  pAnimFrame = requestAnimationFrame(() => renderParticles(station));
+}
+
+function renderParticles(station) {
+  if (!pctx) return;
+  const W = pcanvas.width, H = pcanvas.height;
+  const mix = MIXTURES[state.mixture];
+  const t   = state.temperature;
+
+  pctx.clearRect(0, 0, W, H);
+  pctx.fillStyle = '#09182a';
+  pctx.fillRect(0, 0, W, H);
+
+  if (station === 'flask') {
+    const { surfaceY, waterBoils, compBoils, anythingBoils, warm } = pMeta;
+
+    // Sublabels: welcher Stoff verdampft / bleibt zurück?
+    const evapLabel   = (compBoils && !waterBoils)
+      ? `${mix.component}-Teilchen verdampfen`
+      : (waterBoils && compBoils)
+        ? `Wasser + ${mix.component} verdampfen`
+        : anythingBoils ? 'Wasserteilchen verdampfen'
+        : 'Wenig Dampf';
+    const remainLabel = (compBoils && !waterBoils)
+      ? 'Wasser bleibt zurück'
+      : (waterBoils && compBoils)
+        ? 'Beide Stoffe sieden!'
+        : anythingBoils ? `${mix.component} bleibt zurück`
+        : warm ? 'Teilchen bewegen sich schneller' : 'Gemisch wird erhitzt';
+
+    if (warm || anythingBoils) {
+      drawZone(pctx, W, { state: 'gas',        label: 'gasförmig',  sublabel: evapLabel,             yTop: 0,                  yBot: surfaceY * 0.88 });
+      drawZone(pctx, W, { state: 'transition', label: '↑ Übergang', sublabel: 'flüssig → gasförmig', fromGas: false, yTop: surfaceY * 0.88, yBot: surfaceY });
+    }
+    drawZone(pctx, W, { state: 'liquid', label: 'flüssig', sublabel: remainLabel, yTop: surfaceY, yBot: H });
+
+    updateFlask(W, H, mix, t, pMeta);
+    // Reihenfolge: zuerst Flüssig, dann Gas (Gas obendrüber)
+    particles.filter(p => p.phase === 'liquid').forEach(p => drawParticle(pctx, p));
+    particles.filter(p => p.phase === 'gas').forEach(p => drawParticle(pctx, p));
+
+  } else if (station === 'cooler') {
+    const { transTop, transBot, anythingBoils, gasColor } = pMeta;
+
+    if (!anythingBoils) {
+      // Kein Dampf → Hinweistext statt Animation
+      pctx.fillStyle = 'rgba(72,202,228,0.12)';
+      pctx.fillRect(0, 0, W, H);
+      pctx.font = 'bold 13px Nunito';
+      pctx.fillStyle = 'rgba(180,220,240,0.6)';
+      pctx.textAlign = 'center';
+      pctx.fillText('Kein Dampf vorhanden.', W / 2, H / 2 - 14);
+      pctx.font = '11px Nunito';
+      pctx.fillStyle = 'rgba(120,180,210,0.5)';
+      pctx.fillText('Erhöhe die Temperatur auf ≥ Siedepunkt.', W / 2, H / 2 + 10);
+      pctx.textAlign = 'left';
+    } else {
+      const compBoils  = !!(mix.bp && t >= mix.bp);
+      const waterBoils = t >= 100;
+      const gasLabel   = (compBoils && !waterBoils)
+        ? `${mix.component}-Dampf tritt ein`
+        : (waterBoils && compBoils)
+          ? `Wasser- + ${mix.component}-Dampf`
+          : 'Wasserdampf tritt ein';
+      const liqLabel   = 'Kondensat fließt nach unten';
+
+      drawZone(pctx, W, { state: 'gas',        label: 'gasförmig',   sublabel: gasLabel,  yTop: 0,        yBot: transTop });
+      drawZone(pctx, W, { state: 'transition', label: '↓ Abkühlung', sublabel: 'Gas → Flüssigkeit', fromGas: true, yTop: transTop, yBot: transBot });
+      drawZone(pctx, W, { state: 'liquid',     label: 'flüssig',     sublabel: liqLabel,  yTop: transBot, yBot: H });
+
+      updateCooler(W, H, pMeta);
+      particles.filter(p => p.phase === 'liquid').forEach(p => drawParticle(pctx, p));
+      particles.filter(p => p.phase === 'gas').forEach(p => drawParticle(pctx, p));
+    }
+
+  } else if (station === 'collector') {
+    const { anythingBoils, dropColors } = pMeta;
+    const R = 7, cols = Math.max(1, Math.floor((W - 16) / (R * 2.5)));
+    const maxRows = COLL_MAX_ROWS;
+    const poolTop = H - 10 - maxRows * (R * 2.5);
+
+    if (!anythingBoils) {
+      pctx.fillStyle = 'rgba(72,202,228,0.08)';
+      pctx.fillRect(0, 0, W, H);
+      pctx.font = 'bold 13px Nunito';
+      pctx.fillStyle = 'rgba(180,220,240,0.6)';
+      pctx.textAlign = 'center';
+      pctx.fillText('Noch kein Destillat.', W / 2, H / 2 - 14);
+      pctx.font = '11px Nunito';
+      pctx.fillStyle = 'rgba(120,180,210,0.5)';
+      pctx.fillText('Erhöhe die Temperatur auf ≥ Siedepunkt.', W / 2, H / 2 + 10);
+      pctx.textAlign = 'left';
+    } else {
+      const currentRows = Math.ceil(collectedParticles.length / cols);
+      const fillY = Math.max(H - 10 - currentRows * (R * 2.5), poolTop);
+
+      // Zonen: oben leer/fallend, unten gesammelt (nur wenn schon was da)
+      if (collectedParticles.length > 0) {
+        drawZone(pctx, W, { state: 'gas',    label: 'Tropfen fallen', sublabel: 'Destillat tropft ein',      yTop: 0,    yBot: Math.max(fillY - 16, H * 0.35) });
+        drawZone(pctx, W, { state: 'liquid', label: 'flüssig',        sublabel: `Reines ${mix.distillate}`,  yTop: Math.max(fillY - 16, H * 0.35), yBot: H });
+      } else {
+        drawZone(pctx, W, { state: 'gas', label: 'Tropfen fallen', sublabel: 'Warte auf erste Tropfen …', yTop: 0, yBot: H });
+      }
+
+      // MAX-Linie
+      pctx.strokeStyle = 'rgba(247,183,49,0.5)';
+      pctx.lineWidth = 1.5; pctx.setLineDash([6, 4]);
+      pctx.beginPath(); pctx.moveTo(10, poolTop); pctx.lineTo(W - 10, poolTop); pctx.stroke();
+      pctx.setLineDash([]);
+      pctx.font = '9px Space Mono'; pctx.fillStyle = 'rgba(247,183,49,0.7)';
+      pctx.fillText('MAX', W - 36, poolTop - 3);
+
+      updateCollector(W, H, pMeta);
+
+      fallingDrops.forEach(d => {
+        pctx.globalAlpha = d.alpha;
+        pctx.beginPath(); pctx.arc(d.x, d.y, d.r, 0, Math.PI * 2);
+        pctx.fillStyle = d.color; pctx.fill();
+        pctx.strokeStyle = 'rgba(255,255,255,0.22)'; pctx.lineWidth = 0.8; pctx.stroke();
+        pctx.globalAlpha = 1;
+      });
+      collectedParticles.forEach(p => drawParticle(pctx, p));
+    }
+  }
+
+  pAnimFrame = requestAnimationFrame(() => renderParticles(station));
+}
+
+// ══════════════════════════════════════════════
+//  MODAL
+// ══════════════════════════════════════════════
+const MODAL_CONTENT = {
+  flask: {
+    title: '① Rundkolben – Das Stoffgemisch',
+    subtitle: 'Was passiert im Kolben beim Erhitzen?',
+    basis: (mix, t) => {
+      const waterBoils = t >= 100;
+      const compBoils  = !!(mix.bp && t >= mix.bp);
+
+      // Beschreibung was gerade passiert – stoffspezifisch
+      let evapText = '';
+      if (mix.mixture === 'ethanol' || mix.bp) {
+        // Ethanol: siedet bei 78°C zuerst
+        if (compBoils && !waterBoils) {
+          evapText = `🌡️ <strong>${mix.component} siedet bei ${mix.bp} °C!</strong> Die ${mix.component}-Teilchen verlassen als Dampf den Kolben. Die Wasserteilchen bleiben zurück.`;
+        } else if (waterBoils && compBoils) {
+          evapText = `🌡️ <strong>Jetzt sieden beide Stoffe!</strong> Wasser (100 °C) und ${mix.component} (${mix.bp} °C) verdampfen gleichzeitig.`;
+        } else if (t >= 60) {
+          evapText = `Die Teilchen bewegen sich schneller. Bei ${mix.bp} °C beginnt ${mix.component} zu sieden.`;
+        } else {
+          evapText = `Die Teilchen bewegen sich langsam. Erhöhe die Temperatur!`;
+        }
+      } else {
+        // Salz, Zucker, Farbstoff
+        if (waterBoils) {
+          evapText = `🌡️ <strong>Das Wasser siedet bei 100 °C!</strong> Wasserdampf steigt auf. Die ${mix.component}-Teilchen bleiben im Kolben zurück.`;
+        } else if (t >= 60) {
+          evapText = `Die Teilchen bewegen sich schneller. Bei 100 °C beginnt das Wasser zu sieden.`;
+        } else {
+          evapText = `Die Teilchen bewegen sich langsam. Erhöhe die Temperatur!`;
+        }
+      }
+
+      // Was bleibt im Kolben?
+      let residueText = '';
+      if (mix.bp) {
+        // Ethanol: verdampft zuerst → Wasser bleibt; bei ≥100°C beide weg
+        if (compBoils && !waterBoils) {
+          residueText = `Die <span style="color:#48cae4">●</span> Wasserteilchen bleiben im Kolben zurück, weil Wasser erst bei <strong>100 °C</strong> siedet.`;
+        } else if (waterBoils && compBoils) {
+          residueText = `Beide Stoffe sieden – der Kolben leert sich langsam.`;
+        } else {
+          residueText = `${mix.component} siedet bei <strong>${mix.bp} °C</strong>, Wasser bei <strong>100 °C</strong>. Noch verdampft nichts.`;
+        }
+      } else {
+        residueText = `Die <span style="color:${mix.legendExtra.color}">●</span> ${mix.component}-Teilchen bleiben im Kolben zurück – ${mix.component} verdampft bei der Destillation nicht (Siedepunkt: ${mix.bpText}).`;
+      }
+
+      return `
+        <div class="info-box">
+          Im Rundkolben befindet sich: <strong>${mix.name}</strong>.<br><br>
+          ${evapText}
+        </div>
+        <div class="info-box">
+          ${residueText}
+        </div>`;
+    },
+    extend: (mix, t) => {
+      const siedepunktText = mix.bp
+        ? `<strong>${mix.component}</strong> siedet bei <strong>${mix.bp} °C</strong>, <strong>Wasser</strong> bei <strong>100 °C</strong>.
+           Da ${mix.component} den niedrigeren Siedepunkt hat, verdampft es zuerst.
+           Wasser bleibt zunächst im Kolben zurück.`
+        : `<strong>Wasser</strong> siedet bei <strong>100 °C</strong>.
+           <strong>${mix.component}</strong> hat einen viel höheren Siedepunkt (${mix.bpText}) und verdampft bei der Destillation nicht.
+           Deshalb bleibt ${mix.component} als Rückstand im Kolben.`;
+      return `
+        <div class="info-box extend">
+          <strong>Siedepunkte im Vergleich:</strong><br><br>
+          ${siedepunktText}
+        </div>
+        <div class="info-box extend">
+          <strong>Teilchenmodell:</strong> Beim Erhitzen nimmt die Bewegungsenergie der Teilchen zu.
+          Ab dem Siedepunkt ist die Energie groß genug, um die Anziehungskräfte zwischen den Teilchen zu überwinden –
+          sie verlassen die Flüssigkeit als Dampf.
+        </div>`;
+    },
+  },
+
+  cooler: {
+    title: '② Liebig-Kühler – Kondensation',
+    subtitle: 'Wie wird aus Dampf wieder Flüssigkeit?',
+    basis: (mix, t) => {
+      const waterBoils = t >= 100;
+      const compBoils  = !!(mix.bp && t >= mix.bp);
+      const anythingBoils = waterBoils || compBoils;
+
+      let dampfText = '';
+      if (!anythingBoils) {
+        dampfText = `Noch kein Dampf vorhanden – erhöhe die Temperatur auf mindestens ${mix.bp || 100} °C.`;
+      } else if (compBoils && !waterBoils) {
+        dampfText = `${mix.component}-Dampf (${mix.bp} °C) strömt durch den Kühler. Das Kühlwasser entzieht dem Dampf Wärme – die ${mix.component}-Teilchen kühlen ab und werden wieder flüssig.`;
+      } else if (waterBoils && compBoils) {
+        dampfText = `Wasser- und ${mix.component}-Dampf strömen durch den Kühler. Beide Stoffe kühlen ab und kondensieren zu Flüssigkeit.`;
+      } else {
+        dampfText = `Wasserdampf strömt durch den Kühler. Das Kühlwasser entzieht dem Dampf Wärme – die Wasserteilchen kühlen ab und werden wieder flüssig.`;
+      }
+      return `
+        <div class="info-box">
+          Der Dampf strömt durch den <strong>Liebig-Kühler</strong>. Kaltes Wasser fließt außen am Kühler entlang und kühlt den Dampf ab.<br><br>
+          ${dampfText}
+        </div>
+        <div class="info-box">
+          Dieser Übergang von gasförmig zu flüssig heißt <strong>Kondensation</strong>. 💧<br>
+          Die Tropfen fließen weiter in das Auffanggefäß.
+        </div>`;
+    },
+    extend: (mix, t) => `
+      <div class="info-box extend">
+        <strong>Kondensation im Teilchenmodell:</strong> Die schnell bewegten Gasteilchen geben beim Abkühlen Energie an das Kühlwasser ab.
+        Ihre Bewegung wird langsamer, die Anziehungskräfte zwischen den Molekülen überwiegen –
+        die Teilchen rücken zusammen und werden wieder flüssig.
+      </div>
+      <div class="info-box extend">
+        <strong>Warum Gegenstrom?</strong> Das Kühlwasser fließt entgegen der Dampfrichtung.
+        So trifft der Dampf am Ende auf das kälteste Kühlwasser – das macht die Kühlung besonders effektiv.
+      </div>`,
+  },
+
+  collector: {
+    title: '③ Auffanggefäß – Das Destillat',
+    subtitle: 'Was haben wir am Ende gewonnen?',
+    basis: (mix, t) => {
+      const waterBoils = t >= 100;
+      const compBoils  = !!(mix.bp && t >= mix.bp);
+      const anythingBoils = waterBoils || compBoils;
+
+      if (!anythingBoils) {
+        return `
+          <div class="info-box">
+            Noch kein Destillat vorhanden. Erhöhe die Temperatur auf mindestens <strong>${mix.bp || 100} °C</strong>.
+          </div>`;
+      }
+
+      let destText = '', kolbenText = '', bewertung = '';
+
+      if (mix.bp) {
+        // Gemisch mit flüchtigem Stoff (Ethanol)
+        if (compBoils && !waterBoils) {
+          // Nur Ethanol siedet → saubere Trennung möglich
+          destText   = `Im Auffanggefäß sammelt sich <strong>${mix.component}</strong>. Es hat den niedrigeren Siedepunkt (${mix.bp} °C) und verdampft als erster Stoff.`;
+          kolbenText = `Im Kolben bleibt <strong>Wasser</strong> zurück – es siedet erst bei 100 °C.`;
+          bewertung  = `✅ <strong>Trennung erfolgreich:</strong> Bei dieser Temperatur verdampft nur ${mix.component}. Das Destillat ist weitgehend reines ${mix.component}.`;
+        } else {
+          // Beide sieden → keine saubere Trennung
+          destText   = `Im Auffanggefäß sammeln sich <strong>Wasser und ${mix.component}</strong> als Gemisch – bei ≥ 100 °C sieden beide Stoffe gleichzeitig.`;
+          kolbenText = `Im Kolben bleiben kaum Rückstände – beide Stoffe verdampfen.`;
+          bewertung  = `⚠️ <strong>Keine saubere Trennung:</strong> Da beide Stoffe sieden, enthält das Destillat ein Gemisch aus Wasser und ${mix.component}. Für eine saubere Trennung die Temperatur auf ${mix.bp}–99 °C begrenzen!`;
+        }
+      } else {
+        // Nicht-flüchtiger Stoff (Salz, Zucker, Farbstoff)
+        destText   = `Im Auffanggefäß sammelt sich <strong>reines Wasser</strong>. Nur das Wasser verdampft und kondensiert wieder.`;
+        kolbenText = `Im Kolben bleibt <strong>${mix.component}</strong> als Rückstand zurück – es verdampft nicht (${mix.bpText}).`;
+        bewertung  = `✅ <strong>Trennung erfolgreich:</strong> Das Destillat ist reines Wasser. ${mix.component} bleibt vollständig im Kolben zurück.`;
+      }
+
+      return `
+        <div class="info-box">
+          ${destText}
+        </div>
+        <div class="info-box">
+          ${kolbenText}
+        </div>
+        <div class="info-box" style="border-left: 3px solid ${bewertung.startsWith('✅') ? 'var(--accent)' : 'var(--accent2)'}">
+          ${bewertung}
+        </div>`;
+    },
+    extend: (mix, t) => {
+      const waterBoils = t >= 100;
+      const compBoils  = !!(mix.bp && t >= mix.bp);
+
+      let trennText = '';
+      if (mix.bp) {
+        trennText = `Die Trennung funktioniert, weil <strong>${mix.component}</strong> bei <strong>${mix.bp} °C</strong> und <strong>Wasser</strong> bei <strong>100 °C</strong> siedet.
+          Da die Siedepunkte verschieden sind, kann man durch gezielte Temperatursteuerung zunächst nur ${mix.component} verdampfen lassen –
+          Wasser bleibt dabei im Kolben zurück.`;
+      } else {
+        trennText = `Die Trennung funktioniert, weil <strong>Wasser</strong> bei <strong>100 °C</strong> verdampft,
+          <strong>${mix.component}</strong> aber nicht (${mix.bpText}).
+          So gewinnt man aus dem Gemisch reines Wasser als Destillat.`;
+      }
+      return `
+        <div class="info-box extend">
+          <strong>Warum funktioniert die Trennung?</strong><br><br>
+          ${trennText}
+        </div>
+        <div class="info-box extend">
+          <strong>Anwendungen:</strong> Destillation wird zur Trinkwasseraufbereitung (z. B. Meerwasserentsalzung),
+          in der Lebensmittelindustrie, zur Herstellung von Parfüm und zur Verarbeitung von Erdöl genutzt.
+        </div>`;
+    },
+  },
+};
+
+function openModal(station) {
+  state.currentModal = station;
+  const mix = MIXTURES[state.mixture];
+  const t = state.temperature;
+  const content = MODAL_CONTENT[station];
+  document.getElementById('modal-title').textContent = content.title;
+  document.getElementById('modal-subtitle').textContent = content.subtitle;
+  document.getElementById('content-basis').innerHTML = content.basis(mix, t);
+  document.getElementById('content-extend').innerHTML = content.extend(mix, t);
+  // Reset tabs
+  document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.level-tab')[0].classList.add('active');
+  document.getElementById('content-basis').classList.add('active');
+  document.getElementById('modal-overlay').classList.add('active');
+  setTimeout(() => initParticleCanvas(station), 50);
+}
+
+function closeModal() {
+  document.getElementById('modal-overlay').classList.remove('active');
+  if (pAnimFrame) cancelAnimationFrame(pAnimFrame);
+}
+
+function closeModalOutside(e) {
+  if (e.target === document.getElementById('modal-overlay')) closeModal();
+}
+
+function setLevel(level, btn) {
+  document.querySelectorAll('.level-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.level-content').forEach(c => c.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('content-' + level).classList.add('active');
+}
+
+// ══════════════════════════════════════════════
+//  QUIZ
+// ══════════════════════════════════════════════
+const QUESTIONS = [
+  {
+    q: 'Was passiert beim Erhitzen des Stoffgemischs im Rundkolben?',
+    opts: ['Das Gemisch wird sofort kälter', 'Die Flüssigkeit verdampft und der Dampf steigt auf', 'Alle Stoffe lösen sich auf', 'Der Kühler fängt Feuer'],
+    correct: 1,
+    fb_ok: '✅ Richtig! Beim Erhitzen verdampft ab dem Siedepunkt die Flüssigkeit – die Teilchen haben genug Energie, um die Flüssigkeit zu verlassen.',
+    fb_fail: '❌ Beim Erhitzen nimmt die Energie der Teilchen zu. Ab dem Siedepunkt haben sie genug Energie, um zu verdampfen.',
+  },
+  {
+    q: 'Was ist die Aufgabe des Liebig-Kühlers?',
+    opts: ['Den Kolben schützen', 'Den Dampf abkühlen und zu Flüssigkeit machen', 'Das Wasser im Kolben erhitzen', 'Die Temperatur messen'],
+    correct: 1,
+    fb_ok: '✅ Richtig! Im Kühler strömt kaltes Wasser außen herum – der Dampf kühlt ab und kondensiert zu Flüssigkeit.',
+    fb_fail: '❌ Der Liebig-Kühler kühlt den Dampf ab. Aus Gas wird dabei wieder Flüssigkeit (= Kondensation).',
+  },
+  {
+    q: 'Wenn du Wasser + Salz destillierst, was erhältst du im Auffanggefäß?',
+    opts: ['Salzwasser', 'Reines Salz', 'Reines Wasser', 'Salzdampf'],
+    correct: 2,
+    fb_ok: '✅ Super! Salz siedet erst bei über 1400 °C und verdampft nicht – nur das Wasser gelangt als Dampf in den Kühler und dann ins Auffanggefäß.',
+    fb_fail: '❌ Salz siedet erst bei über 1400 °C und verdampft bei unserer Destillation nicht. Nur Wasser verdampft und landet im Auffanggefäß.',
+  },
+  {
+    q: 'Ethanol siedet bei 78 °C, Wasser bei 100 °C. Was passiert bei der Destillation von Wasser + Ethanol bei 85 °C?',
+    opts: ['Wasser verdampft zuerst', 'Ethanol verdampft zuerst, Wasser bleibt im Kolben', 'Beide Stoffe verdampfen gleichzeitig', 'Nichts verdampft'],
+    correct: 1,
+    fb_ok: '✅ Richtig! Bei 85 °C liegt die Temperatur über dem Siedepunkt von Ethanol (78 °C), aber unter dem von Wasser (100 °C). Ethanol verdampft zuerst.',
+    fb_fail: '❌ Bei 85 °C hat nur Ethanol seinen Siedepunkt erreicht (78 °C). Wasser siedet erst bei 100 °C – es bleibt also im Kolben zurück.',
+  },
+  {
+    q: 'Was nennt man den Übergang von Gas zu Flüssigkeit?',
+    opts: ['Verdampfung', 'Kondensation', 'Schmelzen', 'Sublimation'],
+    correct: 1,
+    fb_ok: '✅ Korrekt! Kondensation = Gas → Flüssigkeit. Der umgekehrte Prozess (Flüssigkeit → Gas) heißt Verdampfung.',
+    fb_fail: '❌ Den Übergang von Gas zu Flüssigkeit nennt man Kondensation. Im Liebig-Kühler findet genau dieser Prozess statt.',
+  },
+  {
+    q: 'Bei welcher Temperatur siedet reines Wasser bei normalem Luftdruck?',
+    opts: ['78 °C', '90 °C', '100 °C', '120 °C'],
+    correct: 2,
+    fb_ok: '✅ Richtig! Wasser siedet bei genau 100 °C. Ethanol hat einen niedrigeren Siedepunkt: 78 °C.',
+    fb_fail: '❌ Reines Wasser siedet bei 100 °C. 78 °C ist der Siedepunkt von Ethanol – ein wichtiger Unterschied bei der Destillation!',
+  },
+];
+
+let quizState = { current: 0, score: 0, answered: false, results: [] };
+
+function initQuiz() {
+  quizState = { current: 0, score: 0, answered: false, results: [] };
+  renderQuiz();
+}
+
+function renderQuiz() {
+  const qs = quizState;
+  const q = QUESTIONS[qs.current];
+
+  // Progress dots
+  const prog = document.getElementById('quiz-progress');
+  prog.innerHTML = QUESTIONS.map((_, i) => {
+    let cls = 'q-dot';
+    if (i < qs.current) cls += qs.results[i] ? ' done' : ' wrong';
+    else if (i === qs.current) cls += ' current';
+    return `<div class="${cls}"></div>`;
+  }).join('');
+
+  document.getElementById('quiz-question').textContent = q.q;
+  const opts = document.getElementById('quiz-options');
+  opts.innerHTML = q.opts.map((o, i) =>
+    `<button class="quiz-option" onclick="answerQuiz(${i})">${o}</button>`
+  ).join('');
+
+  document.getElementById('quiz-feedback').className = 'quiz-feedback';
+  document.getElementById('quiz-feedback').textContent = '';
+  document.getElementById('btn-next').classList.remove('show');
+  document.getElementById('quiz-content').style.display = 'block';
+  document.getElementById('quiz-result').classList.remove('show');
+  qs.answered = false;
+}
+
+function answerQuiz(idx) {
+  if (quizState.answered) return;
+  quizState.answered = true;
+  const q = QUESTIONS[quizState.current];
+  const opts = document.querySelectorAll('.quiz-option');
+  opts.forEach(o => o.disabled = true);
+
+  const correct = idx === q.correct;
+  opts[idx].classList.add(correct ? 'correct' : 'wrong');
+  if (!correct) opts[q.correct].classList.add('correct');
+
+  quizState.results[quizState.current] = correct;
+  if (correct) quizState.score++;
+
+  const fb = document.getElementById('quiz-feedback');
+  fb.textContent = correct ? q.fb_ok : q.fb_fail;
+  fb.className = 'quiz-feedback show ' + (correct ? 'ok' : 'fail');
+
+  document.getElementById('btn-next').classList.add('show');
+  document.getElementById('btn-next').textContent =
+    quizState.current < QUESTIONS.length - 1 ? 'Nächste Frage →' : 'Ergebnis anzeigen';
+}
+
+function nextQuestion() {
+  quizState.current++;
+  if (quizState.current >= QUESTIONS.length) {
+    showResult();
+  } else {
+    renderQuiz();
+  }
+}
+
+function showResult() {
+  document.getElementById('quiz-content').style.display = 'none';
+  const result = document.getElementById('quiz-result');
+  result.classList.add('show');
+  const s = quizState.score;
+  document.getElementById('result-score').textContent = s + '/' + QUESTIONS.length;
+  const msgs = [
+    'Versuch es nochmal – du schaffst das! 💪',
+    'Gut versucht! Schau dir die Erklärungen nochmal an. 📖',
+    'Solide Leistung! Du kennst die Grundlagen. 👍',
+    'Gut gemacht! Weiter so! 👍',
+    'Sehr gut! Fast alles richtig! 🌟',
+    'Ausgezeichnet! Nur eine kleine Lücke. 🌟',
+    'Perfekt! Du bist ein Destillations-Profi! 🏆',
+  ];
+  document.getElementById('result-msg').textContent = msgs[Math.min(s, msgs.length - 1)];
+}
+
+function resetQuiz() {
+  initQuiz();
+}
+</script>
+</body>
+</html>
