@@ -1,0 +1,2054 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Fraktionierte Destillation von Erdöl – Simulation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;0,9..144,700;1,9..144,400&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #f5f1ea;
+    --bg-card: #fbf8f2;
+    --ink: #1a1512;
+    --ink-soft: #5a4f45;
+    --line: #d9d1c2;
+    --line-soft: #e8e1d2;
+    --accent: #b8410e;
+    --accent-soft: #e8b88a;
+    --cool: #2a4d6e;
+    --ok: #3a6b3a;
+    --warn: #a8541a;
+    --shadow: 0 1px 2px rgba(26,21,18,.04), 0 8px 24px rgba(26,21,18,.06);
+
+    /* Fraktions-Farben */
+    --frak-gas: #c9d4dc;
+    --frak-benzin: #f2c14e;
+    --frak-kerosin: #e8944a;
+    --frak-diesel: #b8541a;
+    --frak-heizoel: #6b3a1a;
+    --frak-rueck: #2a1a12;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { background: var(--bg); color: var(--ink); font-family: 'IBM Plex Sans', sans-serif; font-size: 15px; line-height: 1.55; }
+  body {
+    background-image:
+      radial-gradient(circle at 20% 10%, rgba(184,65,14,.04), transparent 40%),
+      radial-gradient(circle at 80% 90%, rgba(42,77,110,.04), transparent 40%);
+    min-height: 100vh;
+    padding: 32px 20px 80px;
+  }
+
+  .wrap { max-width: 1280px; margin: 0 auto; }
+
+  /* Header */
+  header { margin-bottom: 28px; border-bottom: 1px solid var(--line); padding-bottom: 20px; }
+  .kicker { font-family: 'IBM Plex Mono', monospace; font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ink-soft); margin-bottom: 6px; }
+  h1 { font-family: 'Fraunces', serif; font-weight: 600; font-size: clamp(28px, 4vw, 44px); line-height: 1.05; letter-spacing: -0.02em; }
+  h1 em { font-style: italic; color: var(--accent); font-weight: 400; }
+  .subtitle { margin-top: 10px; color: var(--ink-soft); max-width: 620px; font-size: 15px; }
+
+  /* Layout */
+  .grid {
+    display: grid;
+    grid-template-columns: 320px 1fr 360px;
+    gap: 20px;
+    align-items: start;
+  }
+  @media (max-width: 1100px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: var(--shadow);
+  }
+  .card-title {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .card-title::before {
+    content: '';
+    width: 10px;
+    height: 10px;
+    background: var(--accent);
+    border-radius: 50%;
+  }
+  .card h2 {
+    font-family: 'Fraunces', serif;
+    font-weight: 600;
+    font-size: 18px;
+    letter-spacing: -0.01em;
+    margin-bottom: 4px;
+  }
+
+  /* Controls */
+  .ctrl { margin-bottom: 20px; }
+  .ctrl:last-child { margin-bottom: 0; }
+  .ctrl label { display: flex; justify-content: space-between; font-size: 13px; color: var(--ink-soft); margin-bottom: 8px; }
+  .ctrl label .val {
+    font-family: 'IBM Plex Mono', monospace;
+    color: var(--ink);
+    font-weight: 500;
+    background: var(--line-soft);
+    padding: 2px 8px;
+    border-radius: 2px;
+  }
+
+  input[type=range] {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100%;
+    height: 4px;
+    background: var(--line);
+    border-radius: 2px;
+    outline: none;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 18px; height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-card);
+    box-shadow: 0 0 0 1px var(--accent);
+  }
+  input[type=range]::-moz-range-thumb {
+    width: 18px; height: 18px;
+    background: var(--accent);
+    border-radius: 50%;
+    cursor: pointer;
+    border: 2px solid var(--bg-card);
+  }
+
+  .btn-row { display: flex; gap: 8px; flex-wrap: wrap; }
+  button {
+    font-family: 'IBM Plex Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 9px 14px;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--ink);
+    cursor: pointer;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  button:hover { background: var(--ink); color: var(--bg-card); border-color: var(--ink); }
+  button.primary { background: var(--accent); color: white; border-color: var(--accent); }
+  button.primary:hover { background: var(--ink); border-color: var(--ink); }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  /* View toggle */
+  .view-toggle {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 16px;
+    background: var(--line-soft);
+    padding: 3px;
+    border-radius: 2px;
+  }
+  .vbtn {
+    flex: 1;
+    padding: 9px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    border-radius: 2px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+  }
+  .vbtn:hover { background: transparent; color: var(--ink); }
+  .vbtn.active { background: var(--bg-card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.08); }
+  .vbtn svg { width: 14px; height: 14px; opacity: 0.7; }
+
+  .viz-stage { position: relative; min-height: 520px; }
+  .viz-view { display: none; }
+  .viz-view.active { display: block; }
+
+  .column-svg { width: 100%; max-width: 420px; height: auto; display: block; margin: 0 auto; }
+
+  .tray-box {
+    background: linear-gradient(180deg, #e8eef3 0%, #fbf8f2 40%, #f5d5b0 100%);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    overflow: hidden;
+    position: relative;
+  }
+  .tray-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--bg-card);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-soft);
+  }
+  #trayCanvas { width: 100%; height: auto; display: block; }
+
+  .tray-explain {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 10px;
+    margin-top: 14px;
+    font-size: 13px;
+  }
+  .explain-card {
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--line-soft);
+    border-left: 3px solid var(--accent);
+    border-radius: 2px;
+    line-height: 1.5;
+  }
+  .explain-card strong { color: var(--accent); font-family: 'Fraunces', serif; font-weight: 600; }
+  .explain-card.cool { border-left-color: var(--cool); }
+  .explain-card.cool strong { color: var(--cool); }
+  .explain-card.neutral { border-left-color: var(--ink-soft); }
+  .explain-card.neutral strong { color: var(--ink-soft); }
+
+  /* Tray-Selector */
+  .tray-selector {
+    display: flex; gap: 6px; align-items: center; flex-wrap: wrap;
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--line-soft);
+    background: var(--bg-card);
+  }
+  .sel-label {
+    color: var(--ink-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.15em;
+    margin-right: 6px;
+  }
+  .sel-pill {
+    padding: 5px 12px;
+    font-size: 12px;
+    font-weight: 500;
+    border: 1px solid var(--line);
+    background: var(--bg-card);
+    color: var(--ink-soft);
+    border-radius: 20px;
+    cursor: pointer;
+    display: inline-flex; align-items: center; gap: 6px;
+  }
+  .sel-pill:hover { color: var(--ink); border-color: var(--ink-soft); background: var(--bg-card); }
+  .sel-pill .dot { width: 10px; height: 10px; border-radius: 50%; }
+  .sel-pill.active { background: var(--ink); color: var(--bg-card); border-color: var(--ink); }
+
+  /* Fraction legend */
+  .legend { display: flex; flex-direction: column; gap: 6px; margin-top: 16px; }
+  .leg-row {
+    display: grid;
+    grid-template-columns: 16px 1fr auto auto;
+    gap: 10px;
+    align-items: center;
+    padding: 8px 10px;
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    font-size: 13px;
+    transition: all 0.2s;
+  }
+  .leg-row.active {
+    border-color: var(--accent);
+    background: rgba(184, 65, 14, 0.04);
+  }
+  .leg-swatch { width: 14px; height: 14px; border-radius: 2px; border: 1px solid rgba(0,0,0,.1); }
+  .leg-name { font-weight: 500; }
+  .leg-range { font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft); }
+  .leg-pct {
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    font-weight: 500;
+    background: var(--line-soft);
+    padding: 2px 6px;
+    border-radius: 2px;
+    min-width: 42px;
+    text-align: right;
+  }
+
+  /* Task panel */
+  .task-q { font-family: 'Fraunces', serif; font-size: 17px; line-height: 1.4; margin-bottom: 14px; }
+  .task-options { display: flex; flex-direction: column; gap: 6px; }
+  .task-opt {
+    text-align: left;
+    padding: 10px 12px;
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    cursor: pointer;
+    font-size: 14px;
+    border-radius: 2px;
+    transition: all 0.15s;
+  }
+  .task-opt:hover { background: var(--line-soft); color: var(--ink); border-color: var(--ink-soft); }
+  .task-opt.correct { background: #e8f0e0; border-color: var(--ok); color: var(--ok); }
+  .task-opt.wrong { background: #f5e4dc; border-color: var(--accent); color: var(--accent); }
+  .task-opt.reveal { border-color: var(--ok); color: var(--ok); font-weight: 500; }
+
+  /* Tabs */
+  .tab-row { display: flex; gap: 0; margin-bottom: 16px; border-bottom: 2px solid var(--line); }
+  .tab-btn {
+    flex: 1; padding: 10px 8px; font-size: 12px; font-weight: 600;
+    background: none; border: none; border-bottom: 2px solid transparent;
+    margin-bottom: -2px; color: var(--ink-soft); cursor: pointer;
+    font-family: 'IBM Plex Sans', sans-serif;
+    transition: all 0.15s;
+  }
+  .tab-btn:hover { color: var(--ink); background: none; }
+  .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); background: none; }
+  .tab-pane { display: none; }
+  .tab-pane.active { display: block; }
+
+  /* Path progress */
+  .path-progress {
+    display: flex; align-items: center; gap: 10px; margin-bottom: 14px;
+    font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft);
+  }
+  .path-bar { flex: 1; height: 4px; background: var(--line); border-radius: 2px; overflow: hidden; }
+  .path-fill { height: 100%; background: var(--accent); border-radius: 2px; transition: width 0.4s ease; }
+
+  /* Path instruction */
+  .path-instruction {
+    display: flex; gap: 12px; align-items: flex-start;
+    padding: 12px; margin-bottom: 14px;
+    background: linear-gradient(135deg, rgba(184,65,14,0.05), rgba(42,77,110,0.04));
+    border: 1px solid var(--line-soft); border-left: 3px solid var(--accent);
+    border-radius: 2px; font-size: 13px; line-height: 1.55;
+  }
+  .path-icon { font-size: 20px; flex-shrink: 0; margin-top: 1px; }
+  .path-text strong { color: var(--accent); }
+
+  /* Deep task list */
+  .deep-list { display: flex; flex-direction: column; gap: 6px; }
+  .deep-item {
+    text-align: left; padding: 12px 14px; font-size: 13px;
+    background: var(--bg-card); border: 1px solid var(--line);
+    cursor: pointer; border-radius: 2px; display: flex; align-items: center; gap: 10px;
+    transition: all 0.15s; line-height: 1.45;
+  }
+  .deep-item:hover { border-color: var(--ink-soft); background: var(--line-soft); color: var(--ink); }
+  .deep-item .di-icon { font-size: 18px; flex-shrink: 0; }
+  .deep-item .di-title { font-weight: 500; }
+  .deep-item .di-sub { font-size: 11px; color: var(--ink-soft); margin-top: 2px; }
+  .deep-item .di-badge {
+    margin-left: auto; font-family: 'IBM Plex Mono', monospace; font-size: 10px;
+    background: var(--line-soft); padding: 3px 7px; border-radius: 10px;
+    color: var(--ink-soft); flex-shrink: 0;
+  }
+  .deep-item.done .di-badge { background: #e8f0e0; color: var(--ok); }
+  .task-feedback {
+    margin-top: 14px;
+    padding: 12px;
+    background: var(--line-soft);
+    border-left: 3px solid var(--ink-soft);
+    font-size: 13px;
+    line-height: 1.5;
+    display: none;
+  }
+  .task-feedback.show { display: block; }
+  .task-feedback.ok { border-left-color: var(--ok); background: #eef3e8; }
+  .task-feedback.no { border-left-color: var(--accent); background: #f7ebe4; }
+  .task-stats {
+    display: flex;
+    gap: 16px;
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--line-soft);
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-soft);
+  }
+
+  /* Chart */
+  .chart-wrap {
+    background: var(--bg-card);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+    margin-top: 20px;
+  }
+  #chartCanvas { width: 100%; height: 200px; display: block; }
+
+  /* Info / Glossar */
+  details {
+    margin-top: 12px;
+    border: 1px solid var(--line-soft);
+    border-radius: 3px;
+    padding: 10px 12px;
+    background: var(--bg-card);
+  }
+  details summary {
+    cursor: pointer;
+    font-weight: 500;
+    font-size: 14px;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  details summary::-webkit-details-marker { display: none; }
+  details summary::after { content: '+'; color: var(--accent); font-size: 18px; font-weight: 400; }
+  details[open] summary::after { content: '–'; }
+  details p { margin-top: 10px; font-size: 13px; color: var(--ink-soft); line-height: 1.6; }
+
+  .footnote {
+    margin-top: 40px;
+    padding-top: 16px;
+    border-top: 1px solid var(--line);
+    font-size: 12px;
+    color: var(--ink-soft);
+    font-style: italic;
+  }
+
+  /* Mode switch */
+  .mode-row { display: flex; gap: 4px; margin-bottom: 16px; background: var(--line-soft); padding: 3px; border-radius: 2px; }
+  .mode-btn {
+    flex: 1;
+    padding: 7px 10px;
+    font-size: 12px;
+    background: transparent;
+    border: none;
+    color: var(--ink-soft);
+    border-radius: 2px;
+  }
+  .mode-btn:hover { background: transparent; color: var(--ink); }
+  .mode-btn.active { background: var(--bg-card); color: var(--ink); box-shadow: 0 1px 2px rgba(0,0,0,.05); }
+
+  .status-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: 'IBM Plex Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    padding: 4px 8px;
+    border-radius: 2px;
+    background: var(--line-soft);
+  }
+  .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--ink-soft); }
+  .status-pill.running .status-dot { background: var(--ok); animation: pulse 1.2s infinite; }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.3; } }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+<header>
+  <div class="kicker">Chemie · Klasse 10 · Realschule Niedersachsen</div>
+  <h1>Fraktionierte Destillation <em>von Erdöl</em></h1>
+  <p class="subtitle">Interaktive Simulation: Wie werden aus Rohöl Benzin, Diesel und Heizöl? Verändere die Temperatur und beobachte, wie die Fraktionen in der Kolonne getrennt werden.</p>
+</header>
+
+<div class="grid">
+
+  <!-- ========== LINKS: Steuerung ========== -->
+  <section class="card">
+    <div class="card-title">Steuerung</div>
+
+    <div class="mode-row">
+      <button class="mode-btn active" data-mode="manual">Manuell</button>
+      <button class="mode-btn" data-mode="auto">Automatik</button>
+    </div>
+
+    <div class="ctrl">
+      <label>Heiztemperatur am Kolonnenfuß <span class="val"><span id="tempVal">350</span> °C</span></label>
+      <input type="range" id="tempSlider" min="20" max="500" value="350" step="5">
+    </div>
+
+    <div class="ctrl">
+      <label>Zugeführte Rohölmenge <span class="val"><span id="flowVal">1.0</span> L/min</span></label>
+      <input type="range" id="flowSlider" min="0" max="2" value="1" step="0.1">
+    </div>
+
+    <div class="ctrl">
+      <label>Simulations­geschwindigkeit <span class="val"><span id="speedVal">1×</span></span></label>
+      <input type="range" id="speedSlider" min="0.5" max="3" value="1" step="0.5">
+    </div>
+
+    <div class="btn-row" style="margin-top: 18px;">
+      <button id="startBtn" class="primary">▶ Start</button>
+      <button id="resetBtn">↺ Zurücksetzen</button>
+    </div>
+
+    <div style="margin-top: 18px; display: flex; justify-content: space-between; align-items: center;">
+      <span class="status-pill" id="statusPill"><span class="status-dot"></span><span id="statusText">Bereit</span></span>
+      <span style="font-family: 'IBM Plex Mono', monospace; font-size: 11px; color: var(--ink-soft);">
+        t = <span id="simTime">0</span>s
+      </span>
+    </div>
+
+    <!-- Glossar -->
+    <div style="margin-top: 26px;">
+      <div class="card-title" style="margin-bottom: 10px;">Glossar</div>
+      <details>
+        <summary>Was ist eine Fraktion?</summary>
+        <p>Eine Fraktion ist ein <strong>Teilgemisch</strong> aus dem Rohöl. Die Stoffe einer Fraktion haben ähnliche Siedepunkte und werden deshalb bei ähnlicher Temperatur gasförmig.</p>
+      </details>
+      <details>
+        <summary>Warum funktioniert die Trennung?</summary>
+        <p>Die Kolonne ist unten heiß und oben kühl. Kleine, leichte Moleküle haben einen niedrigen Siedepunkt — sie steigen weit nach oben, bevor sie kondensieren. Große, schwere Moleküle kondensieren schon weiter unten.</p>
+      </details>
+      <details>
+        <summary>Was passiert im Teilchenmodell?</summary>
+        <p>Bei hoher Temperatur bewegen sich die Teilchen schneller. Kleine Teilchen können leichter in den gasförmigen Zustand übergehen (verdampfen). Beim Abkühlen werden sie wieder flüssig (kondensieren).</p>
+      </details>
+      <details>
+        <summary>Wozu braucht man das?</summary>
+        <p>Aus einer einzigen Ölsorte entstehen Kraftstoffe (Benzin, Diesel, Kerosin), Heizöl, Schmieröle und sogar der Asphalt für Straßen. Ohne Destillation wäre das nicht möglich.</p>
+      </details>
+    </div>
+  </section>
+
+  <!-- ========== MITTE: Kolonne + Teilchen ========== -->
+  <section class="card">
+    <div class="card-title">Visualisierung</div>
+
+    <div class="view-toggle" id="viewToggle">
+      <button class="vbtn active" data-view="column">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="8" y="3" width="8" height="18"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="15" x2="16" y2="15"/></svg>
+        Gesamte Kolonne
+      </button>
+      <button class="vbtn" data-view="tray">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="7" cy="8" r="2"/><circle cx="12" cy="6" r="1.5"/><circle cx="17" cy="8" r="2"/><line x1="3" y1="14" x2="21" y2="14"/><path d="M6 14 L6 10 M18 14 L18 10"/></svg>
+        Glockenboden im Detail
+      </button>
+    </div>
+
+    <div class="viz-stage">
+      <!-- VIEW 1: Gesamte Kolonne -->
+      <div class="viz-view active" data-view="column">
+        <svg class="column-svg" viewBox="0 0 320 520" xmlns="http://www.w3.org/2000/svg">
+          <defs>
+            <linearGradient id="colGrad" x1="0" x2="0" y1="0" y2="1">
+              <stop offset="0" stop-color="#e0e8f0"/>
+              <stop offset="1" stop-color="#f5d5b0"/>
+            </linearGradient>
+            <linearGradient id="flameGrad" x1="0" x2="0" y1="1" y2="0">
+              <stop offset="0" stop-color="#f2c14e"/>
+              <stop offset="0.5" stop-color="#e8732a"/>
+              <stop offset="1" stop-color="#b8410e" stop-opacity="0"/>
+            </linearGradient>
+            <!-- Wiederverwendbare Glocke (Bubble Cap) -->
+            <symbol id="glocke" viewBox="0 0 24 18">
+              <!-- Steigrohr -->
+              <rect x="10" y="8" width="4" height="10" fill="#6b5a48"/>
+              <!-- Glocke (Bell Cap) mit Zacken unten -->
+              <path d="M 3 4 Q 3 1 12 1 Q 21 1 21 4 L 21 10 L 19 10 L 19 12 L 17 10 L 15 12 L 13 10 L 11 12 L 9 10 L 7 12 L 5 10 L 3 10 Z"
+                    fill="#8a7560" stroke="#3a2f22" stroke-width="0.6" stroke-linejoin="round"/>
+              <!-- Glanzlicht -->
+              <path d="M 5 3 Q 8 2 11 2.5" stroke="#c9b89a" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+            </symbol>
+          </defs>
+
+          <!-- Skala links -->
+          <g font-family="IBM Plex Mono" font-size="9" fill="#5a4f45">
+            <text x="4" y="60" text-anchor="start">&lt; 40°</text>
+            <text x="4" y="150" text-anchor="start">40–180°</text>
+            <text x="4" y="240" text-anchor="start">180–250°</text>
+            <text x="4" y="330" text-anchor="start">250–350°</text>
+            <text x="4" y="420" text-anchor="start">350–400°</text>
+            <text x="4" y="478" text-anchor="start">&gt; 400°</text>
+          </g>
+
+          <!-- Kolonnen-Außenwand -->
+          <rect x="90" y="40" width="140" height="420" fill="url(#colGrad)" stroke="#5a4f45" stroke-width="1.5" rx="4"/>
+
+          <!-- Fraktions-Füllungen (dynamisch) -->
+          <g id="fillLayers">
+            <rect x="91" y="41"  width="138" height="54" class="fill-rect" data-f="0" fill="var(--frak-gas)" fill-opacity="0"/>
+            <rect x="91" y="101" width="138" height="84" class="fill-rect" data-f="1" fill="var(--frak-benzin)" fill-opacity="0"/>
+            <rect x="91" y="191" width="138" height="84" class="fill-rect" data-f="2" fill="var(--frak-kerosin)" fill-opacity="0"/>
+            <rect x="91" y="281" width="138" height="84" class="fill-rect" data-f="3" fill="var(--frak-diesel)" fill-opacity="0"/>
+            <rect x="91" y="371" width="138" height="54" class="fill-rect" data-f="4" fill="var(--frak-heizoel)" fill-opacity="0"/>
+            <rect x="91" y="425" width="138" height="34" class="fill-rect" data-f="5" fill="var(--frak-rueck)" fill-opacity="0.9"/>
+          </g>
+
+          <!-- Glockenböden (Bubble-Cap Trays) -->
+          <!-- Jeder Boden: Metallplatte, 3 Glocken mit Steigrohren, dünne Flüssigkeitsschicht, Überlaufrohr -->
+          <g id="trays">
+            <!-- Boden 1 bei y=95 -->
+            <g transform="translate(0, 95)">
+              <rect x="91" y="-2" width="138" height="4" fill="#6b5a48" stroke="#3a2f22" stroke-width="0.5"/>
+              <rect x="91" y="2" width="138" height="3" fill="#a89580" opacity="0.7"/>
+              <use href="#glocke" x="104" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="148" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="192" y="-15" width="20" height="16"/>
+              <!-- Überlaufrohr rechts -->
+              <rect x="225" y="-2" width="4" height="14" fill="#6b5a48"/>
+            </g>
+            <!-- Boden 2 bei y=185 -->
+            <g transform="translate(0, 185)">
+              <rect x="91" y="-2" width="138" height="4" fill="#6b5a48" stroke="#3a2f22" stroke-width="0.5"/>
+              <rect x="91" y="2" width="138" height="3" fill="#a89580" opacity="0.7"/>
+              <use href="#glocke" x="104" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="148" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="192" y="-15" width="20" height="16"/>
+              <rect x="91" y="-2" width="4" height="14" fill="#6b5a48"/>
+            </g>
+            <!-- Boden 3 bei y=275 -->
+            <g transform="translate(0, 275)">
+              <rect x="91" y="-2" width="138" height="4" fill="#6b5a48" stroke="#3a2f22" stroke-width="0.5"/>
+              <rect x="91" y="2" width="138" height="3" fill="#a89580" opacity="0.7"/>
+              <use href="#glocke" x="104" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="148" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="192" y="-15" width="20" height="16"/>
+              <rect x="225" y="-2" width="4" height="14" fill="#6b5a48"/>
+            </g>
+            <!-- Boden 4 bei y=365 -->
+            <g transform="translate(0, 365)">
+              <rect x="91" y="-2" width="138" height="4" fill="#6b5a48" stroke="#3a2f22" stroke-width="0.5"/>
+              <rect x="91" y="2" width="138" height="3" fill="#a89580" opacity="0.7"/>
+              <use href="#glocke" x="104" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="148" y="-15" width="20" height="16"/>
+              <use href="#glocke" x="192" y="-15" width="20" height="16"/>
+              <rect x="91" y="-2" width="4" height="14" fill="#6b5a48"/>
+            </g>
+          </g>
+
+          <!-- Abzweige (Outlets) mit Auffangbehältern -->
+          <g stroke="#5a4f45" stroke-width="1.5" fill="#e8e1d2">
+            <!-- Verbindungsrohre -->
+            <path d="M 155 40 L 155 18 L 250 18" fill="none"/>
+            <path d="M 230 140 L 250 140" fill="none"/>
+            <path d="M 230 230 L 250 230" fill="none"/>
+            <path d="M 230 320 L 250 320" fill="none"/>
+            <path d="M 230 410 L 250 410" fill="none"/>
+          </g>
+
+          <!-- Auffangbehälter (Container) — größer, klar erkennbar -->
+          <g>
+            <!-- Gas -->
+            <rect x="250" y="2" width="50" height="32" rx="3" fill="#f5f1ea" stroke="#5a4f45" stroke-width="1.5"/>
+            <rect class="coll-fill" data-f="0" data-bottom="32" x="252" y="32" width="46" height="0" fill="#c9d4dc"/>
+            <!-- Benzin -->
+            <rect x="250" y="124" width="50" height="32" rx="3" fill="#f5f1ea" stroke="#5a4f45" stroke-width="1.5"/>
+            <rect class="coll-fill" data-f="1" data-bottom="154" x="252" y="154" width="46" height="0" fill="#f2c14e"/>
+            <!-- Kerosin -->
+            <rect x="250" y="214" width="50" height="32" rx="3" fill="#f5f1ea" stroke="#5a4f45" stroke-width="1.5"/>
+            <rect class="coll-fill" data-f="2" data-bottom="244" x="252" y="244" width="46" height="0" fill="#e8944a"/>
+            <!-- Diesel -->
+            <rect x="250" y="304" width="50" height="32" rx="3" fill="#f5f1ea" stroke="#5a4f45" stroke-width="1.5"/>
+            <rect class="coll-fill" data-f="3" data-bottom="334" x="252" y="334" width="46" height="0" fill="#b8541a"/>
+            <!-- Heizöl -->
+            <rect x="250" y="394" width="50" height="32" rx="3" fill="#f5f1ea" stroke="#5a4f45" stroke-width="1.5"/>
+            <rect class="coll-fill" data-f="4" data-bottom="424" x="252" y="424" width="46" height="0" fill="#6b3a1a"/>
+          </g>
+
+          <!-- Liter-Labels (zeigen gesammelte Menge) -->
+          <g font-family="IBM Plex Mono" font-size="9" font-weight="500" fill="#1a1512" text-anchor="middle">
+            <text class="coll-label" data-f="0" x="275" y="50">0.0 L</text>
+            <text class="coll-label" data-f="1" x="275" y="172">0.0 L</text>
+            <text class="coll-label" data-f="2" x="275" y="262">0.0 L</text>
+            <text class="coll-label" data-f="3" x="275" y="352">0.0 L</text>
+            <text class="coll-label" data-f="4" x="275" y="442">0.0 L</text>
+          </g>
+
+          <!-- Namens-Labels oberhalb der Container -->
+          <g font-family="IBM Plex Mono" font-size="8" font-weight="600" fill="#5a4f45" text-anchor="middle" letter-spacing="0.5">
+            <text x="275" y="-2">GAS</text>
+            <text x="275" y="120">BENZIN</text>
+            <text x="275" y="210">KEROSIN</text>
+            <text x="275" y="300">DIESEL</text>
+            <text x="275" y="390">HEIZÖL</text>
+          </g>
+
+          <!-- Zufuhr (Rohöl) -->
+          <g stroke="#5a4f45" stroke-width="1.5" fill="none">
+            <path d="M 15 440 L 90 440"/>
+          </g>
+          <text x="12" y="436" font-family="IBM Plex Mono" font-size="8" fill="#1a1512">Rohöl →</text>
+
+          <!-- Heizung unten -->
+          <rect x="110" y="460" width="100" height="16" fill="#5a4f45" rx="2"/>
+          <g id="flameGroup" opacity="0.8">
+            <path d="M 130 476 Q 135 490 140 476 Q 145 495 150 476 Q 155 488 160 476 Q 165 493 170 476 Q 175 489 180 476 Q 185 494 190 476" 
+                  fill="url(#flameGrad)" stroke="none"/>
+          </g>
+          <text x="160" y="510" text-anchor="middle" font-family="IBM Plex Mono" font-size="9" fill="#5a4f45">
+            T<tspan baseline-shift="sub" font-size="7">Heiz</tspan> = <tspan id="svgTempLabel">350</tspan>°C
+          </text>
+
+          <!-- Temperatur-Indikator (vertikale Linie mit Punkt) -->
+          <g id="tempMarker" style="display:none;">
+            <line x1="82" y1="250" x2="92" y2="250" stroke="var(--accent)" stroke-width="2"/>
+            <circle cx="82" cy="250" r="3" fill="var(--accent)"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- VIEW 2: Glockenboden im Detail -->
+      <div class="viz-view" data-view="tray">
+        <div class="tray-box">
+          <div class="tray-selector" id="traySelector">
+            <span class="sel-label">Boden:</span>
+            <button class="sel-pill" data-idx="1"><span class="dot" style="background:#f2c14e"></span>Benzin</button>
+            <button class="sel-pill" data-idx="2"><span class="dot" style="background:#e8944a"></span>Kerosin</button>
+            <button class="sel-pill active" data-idx="3"><span class="dot" style="background:#b8541a"></span>Diesel</button>
+            <button class="sel-pill" data-idx="4"><span class="dot" style="background:#6b3a1a"></span>Heizöl</button>
+          </div>
+          <div class="tray-header">
+            <span>Querschnitt · Boden-Temperatur: <span id="trayTempLabel">300 °C</span></span>
+            <span id="trayAccumLabel">Angesammelt: 0</span>
+          </div>
+          <canvas id="trayCanvas" width="720" height="520"></canvas>
+        </div>
+
+        <div class="tray-explain">
+          <div class="explain-card">
+            <strong>1. Dampf steigt auf</strong><br>
+            Heißer Dampf aus dem unteren Kolonnenteil strömt durch das <em>Steigrohr</em> in der Platte nach oben.
+          </div>
+          <div class="explain-card neutral">
+            <strong>2. Umlenkung an der Glocke</strong><br>
+            Die <em>Glocke</em> (Bubble Cap) zwingt den Dampf seitlich nach unten — er kann nicht direkt weiter nach oben.
+          </div>
+          <div class="explain-card cool">
+            <strong>3. Perlen durch die Flüssigkeit</strong><br>
+            Der Dampf tritt an den Zacken aus und steigt als <em>Blasen</em> durch die Flüssigkeitsschicht auf dem Boden — dabei kondensieren schwere Anteile.
+          </div>
+          <div class="explain-card">
+            <strong>4. Ablauf über das Überlaufrohr</strong><br>
+            Die kondensierte Flüssigkeit wird zur Seite gedrängt und fließt durch das <em>Überlaufrohr</em> auf den nächstunteren Boden.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Legende -->
+    <div class="legend" id="legend"></div>
+
+    <!-- Chart -->
+    <div class="chart-wrap">
+      <div class="card-title" style="margin-bottom: 10px;">Gesammelte Fraktionen im Zeitverlauf</div>
+      <canvas id="chartCanvas" width="800" height="200"></canvas>
+    </div>
+  </section>
+
+  <!-- ========== RECHTS: Lernpfad / Vertiefung / Quiz ========== -->
+  <section class="card" style="overflow: visible;">
+    <div class="card-title">Aufgaben & Lernpfad</div>
+
+    <!-- Tabs -->
+    <div class="tab-row" id="taskTabs">
+      <button class="tab-btn active" data-tab="path">Lernpfad</button>
+      <button class="tab-btn" data-tab="deep">Vertiefung</button>
+      <button class="tab-btn" data-tab="quiz">Quiz</button>
+    </div>
+
+    <!-- ====== TAB: Lernpfad ====== -->
+    <div class="tab-pane active" data-tab="path">
+      <!-- Fortschritt -->
+      <div class="path-progress">
+        <span id="pathCounter">Schritt 1 / 10</span>
+        <div class="path-bar"><div class="path-fill" id="pathFill" style="width: 10%"></div></div>
+      </div>
+
+      <!-- Anweisung -->
+      <div class="path-instruction" id="pathInstruction">
+        <div class="path-icon" id="pathIcon">👁️</div>
+        <div class="path-text" id="pathText">Lade…</div>
+      </div>
+
+      <!-- Frage -->
+      <div class="task-q" id="pathQ"></div>
+      <div class="task-options" id="pathOpts"></div>
+      <div class="task-feedback" id="pathFb"></div>
+
+      <div class="btn-row" style="margin-top: 16px;">
+        <button id="pathPrevBtn" disabled>← Zurück</button>
+        <button id="pathNextBtn" class="primary" disabled>Weiter →</button>
+      </div>
+    </div>
+
+    <!-- ====== TAB: Vertiefung ====== -->
+    <div class="tab-pane" data-tab="deep">
+      <div class="deep-list" id="deepList"></div>
+
+      <div id="deepTaskArea" style="display: none; margin-top: 16px;">
+        <div class="path-instruction" id="deepInstruction">
+          <div class="path-icon" id="deepIcon">🔍</div>
+          <div class="path-text" id="deepText"></div>
+        </div>
+        <div class="task-q" id="deepQ"></div>
+        <div class="task-options" id="deepOpts"></div>
+        <div class="task-feedback" id="deepFb"></div>
+        <div class="btn-row" style="margin-top: 12px;">
+          <button id="deepBackBtn">← Übersicht</button>
+          <button id="deepNextQBtn" class="primary" disabled>Nächste Frage →</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====== TAB: Quiz ====== -->
+    <div class="tab-pane" data-tab="quiz">
+      <div class="task-q" id="quizQ">Lade Aufgabe…</div>
+      <div class="task-options" id="quizOpts"></div>
+      <div class="task-feedback" id="quizFb"></div>
+      <div class="btn-row" style="margin-top: 16px;">
+        <button id="quizNewBtn" class="primary">Neue Frage</button>
+        <button id="quizHintBtn">Tipp</button>
+      </div>
+      <div class="task-stats">
+        <span>Richtig: <strong id="statRight">0</strong></span>
+        <span>Falsch: <strong id="statWrong">0</strong></span>
+        <span>Quote: <strong id="statRate">–</strong></span>
+      </div>
+    </div>
+
+    <!-- Merksatz -->
+    <div style="margin-top: 24px; border-top: 1px solid var(--line-soft); padding-top: 16px;">
+      <div class="card-title" style="margin-bottom: 10px;">Merke</div>
+      <p style="font-size: 13px; color: var(--ink-soft); line-height: 1.6;">
+        <em style="font-family: 'Fraunces', serif; color: var(--ink);">Je höher eine Fraktion in der Kolonne entweicht, desto niedriger ist ihr Siedepunkt.</em> Leichte, kurze Kohlenwasserstoffe verdampfen schnell — schwere Moleküle bleiben unten.
+      </p>
+    </div>
+  </section>
+
+</div>
+
+<p class="footnote">
+  Didaktische Reduktion für Klasse 10: Die Siedepunktbereiche und Anteile sind vereinfacht. Reale Raffinerien arbeiten mit deutlich mehr Trennstufen. Datenverarbeitung erfolgt ausschließlich lokal im Browser (DSGVO-konform).
+</p>
+
+</div>
+
+<script>
+/* =========================================================================
+   DOMÄNENMODELL: Fraktionen
+   ========================================================================= */
+const FRAKTIONEN = [
+  { id: 0, name: 'Raffineriegas',   min:  -20, max:  40, anteil: 0.05, farbe: 'var(--frak-gas)',     hex: '#c9d4dc', nutzung: 'Flüssiggas, Heizgas' },
+  { id: 1, name: 'Benzin',          min:   40, max: 180, anteil: 0.20, farbe: 'var(--frak-benzin)',  hex: '#f2c14e', nutzung: 'Kraftstoff für PKW' },
+  { id: 2, name: 'Kerosin',         min:  180, max: 250, anteil: 0.15, farbe: 'var(--frak-kerosin)', hex: '#e8944a', nutzung: 'Treibstoff für Flugzeuge' },
+  { id: 3, name: 'Diesel',          min:  250, max: 350, anteil: 0.25, farbe: 'var(--frak-diesel)',  hex: '#b8541a', nutzung: 'Kraftstoff für LKW/PKW' },
+  { id: 4, name: 'Schweres Heizöl', min:  350, max: 400, anteil: 0.20, farbe: 'var(--frak-heizoel)', hex: '#6b3a1a', nutzung: 'Schiffe, Heizungen' },
+  { id: 5, name: 'Rückstand',       min:  400, max: 600, anteil: 0.15, farbe: 'var(--frak-rueck)',   hex: '#2a1a12', nutzung: 'Bitumen, Schmieröl' }
+];
+
+/* =========================================================================
+   ZUSTAND
+   ========================================================================= */
+const state = {
+  temp: 350,
+  flow: 1.0,
+  speed: 1.0,
+  mode: 'manual',
+  running: false,
+  simTime: 0,
+  collected: [0,0,0,0,0,0],   // Liter pro Fraktion
+  history: [],                 // [{t, values:[...]}]
+  stats: { right: 0, wrong: 0 },
+  view: 'column'               // 'column' | 'tray'
+};
+
+/* =========================================================================
+   VERDAMPFUNGS-LOGIK (didaktisch vereinfacht)
+   Eine Fraktion "aktiv" (d.h. wird aktuell abgetrennt), wenn
+   die Heiztemperatur ≥ max der Fraktion — dann ist sie komplett
+   verdampft und kondensiert beim passenden Abzweig.
+   Teilweise aktiv: wenn Temp zwischen min und max liegt.
+   ========================================================================= */
+function fraktionAnteil(temp, f) {
+  if (temp < f.min) return 0;
+  if (temp >= f.max) return 1;
+  return (temp - f.min) / (f.max - f.min);
+}
+
+/* Welche Fraktionen sind bei aktueller Temperatur sichtbar in der Kolonne? */
+function kolonnenZustand(temp) {
+  return FRAKTIONEN.map(f => ({
+    ...f,
+    aktiv: fraktionAnteil(temp, f)
+  }));
+}
+
+/* =========================================================================
+   RENDERING: Kolonne
+   ========================================================================= */
+function renderKolonne() {
+  const z = kolonnenZustand(state.temp);
+  document.querySelectorAll('.fill-rect').forEach(el => {
+    const fid = parseInt(el.dataset.f);
+    const anteil = z[fid].aktiv;
+    el.setAttribute('fill-opacity', (anteil * 0.75).toFixed(2));
+  });
+  document.getElementById('svgTempLabel').textContent = state.temp;
+  document.getElementById('tempVal').textContent = state.temp;
+
+  // Flammenintensität
+  const flameOpacity = Math.min(1, Math.max(0.2, state.temp / 500));
+  document.getElementById('flameGroup').setAttribute('opacity', flameOpacity.toFixed(2));
+
+  // Legende aktualisieren
+  renderLegende(z);
+
+  // Auffangbehälter-Füllungen (wachsen von unten nach oben)
+  document.querySelectorAll('.coll-fill').forEach(el => {
+    const fid = parseInt(el.dataset.f);
+    const bottom = parseFloat(el.dataset.bottom);
+    const vol = state.collected[fid];
+    // Skalierung: ~6 L füllt den Behälter vollständig (= 28 px)
+    // So sind auch kleine Mengen (z. B. Gas mit nur 5 % Anteil) sichtbar
+    const h = Math.max(0, Math.min(28, vol * 4.5));
+    el.setAttribute('y', bottom - h);
+    el.setAttribute('height', h);
+  });
+  // Liter-Anzeige
+  document.querySelectorAll('.coll-label').forEach(el => {
+    const fid = parseInt(el.dataset.f);
+    el.textContent = state.collected[fid].toFixed(1) + ' L';
+  });
+}
+
+function renderLegende(z) {
+  const leg = document.getElementById('legend');
+  leg.innerHTML = '';
+  z.forEach(f => {
+    const row = document.createElement('div');
+    row.className = 'leg-row' + (f.aktiv > 0.05 ? ' active' : '');
+    row.innerHTML = `
+      <span class="leg-swatch" style="background:${f.hex}"></span>
+      <span class="leg-name">${f.name}</span>
+      <span class="leg-range">${f.min < 0 ? '< '+f.max : f.min+'–'+f.max}°C</span>
+      <span class="leg-pct">${Math.round(state.collected[f.id]*10)/10} L</span>
+    `;
+    leg.appendChild(row);
+  });
+}
+
+/* =========================================================================
+   TEILCHENMODELL — GLOCKENBODEN IM DETAIL (Querschnitt)
+   Zeigt das Funktionsprinzip:
+   - Dampf steigt durch Steigrohr
+   - Wird an der Glocke umgelenkt
+   - Tritt als Blasen durch Zacken in die Flüssigkeit
+   - Steigt weiter nach oben (leichte Fraktionen) oder kondensiert (schwere)
+   - Kondensat fließt über Überlaufrohr nach unten
+   ========================================================================= */
+const trayCanvas = document.getElementById('trayCanvas');
+const tCtx = trayCanvas.getContext('2d');
+
+// Geometrie des Glockenbodens (Canvas-Koordinaten 720x520)
+const TRAY = {
+  W: 720, H: 520,
+  plateY: 320,        // y-Position der Metallplatte (Oberkante)
+  plateH: 8,          // Plattendicke
+  liquidTop: 285,     // Oberkante der Flüssigkeit auf dem Boden
+  weirX: 660,         // x-Position des Überlaufrohrs
+  weirW: 28,          // Breite der Überlauföffnung
+  bells: [
+    { cx: 200, riserTop: 260, riserW: 22, bellTop: 215, bellW: 76, bellBotY: 295 },
+    { cx: 430, riserTop: 260, riserW: 22, bellTop: 215, bellW: 76, bellBotY: 295 }
+  ]
+};
+
+// Teilchenklassen: size-basiert, entsprechend der 6 Fraktionen
+const PARTICLE_CLASSES = [
+  { size: 2.5, color: '#6b8ca8', bp:  20, name: 'Gas' },
+  { size: 3.5, color: '#f2c14e', bp: 100, name: 'Benzin' },
+  { size: 4.5, color: '#e8944a', bp: 215, name: 'Kerosin' },
+  { size: 6,   color: '#b8541a', bp: 300, name: 'Diesel' },
+  { size: 8,   color: '#6b3a1a', bp: 375, name: 'Heizöl' },
+  { size: 10,  color: '#2a1a12', bp: 500, name: 'Rückstand' }
+];
+
+let trayParticles = [];
+let spawnAccumulator = 0;
+
+// Zustand des angezeigten Bodens
+const TRAY_STATE = {
+  focusIdx: 3,                    // Welche Fraktion kondensiert auf diesem Boden (Default: Diesel)
+  accumulated: [0,0,0,0,0,0],     // Wie viele Teilchen pro Fraktion haben sich hier angesammelt
+  liquidLevel: 0                  // 0..1, visuelle Füllhöhe der Flüssigkeit auf dem Boden
+};
+
+// Lokale Temperatur dieses Bodens = Siedepunkt der Fokus-Fraktion
+function trayLocalTemp() {
+  return PARTICLE_CLASSES[TRAY_STATE.focusIdx].bp;
+}
+
+// Helper: #rrggbb → rgba string
+function hexToRgba(hex, a) {
+  const r = parseInt(hex.slice(1,3), 16);
+  const g = parseInt(hex.slice(3,5), 16);
+  const b = parseInt(hex.slice(5,7), 16);
+  return `rgba(${r},${g},${b},${a})`;
+}
+
+function spawnTrayParticle() {
+  // Welche Teilchen erreichen DIESEN Boden?
+  // - Sie müssen unten verdampft sein: bp ≤ Heiztemperatur
+  // - Sie dürfen auf keinem heißeren Boden unten schon kondensiert sein: bp ≤ localT + 30
+  //   → d.h. nur Teilchen mit bp nahe oder unter der Boden-Temperatur kommen an
+  const T = state.temp;
+  const localT = trayLocalTemp();
+
+  const eligible = [];
+  PARTICLE_CLASSES.forEach((c, i) => {
+    if (c.bp <= T && c.bp <= localT + 25) eligible.push({ c, i });
+  });
+  if (eligible.length === 0) return;
+
+  // Gewichtung: Fokus-Fraktion häufiger, um Kondensations-Effekt sichtbar zu machen
+  const weights = eligible.map(e => e.i === TRAY_STATE.focusIdx ? 3.0 : 1.0);
+  const total = weights.reduce((s, w) => s + w, 0);
+  let r = Math.random() * total;
+  let chosen = eligible[0];
+  for (let k = 0; k < eligible.length; k++) {
+    r -= weights[k];
+    if (r <= 0) { chosen = eligible[k]; break; }
+  }
+
+  const bell = TRAY.bells[Math.floor(Math.random() * TRAY.bells.length)];
+  trayParticles.push({
+    x: bell.cx + (Math.random() - 0.5) * bell.riserW * 0.7,
+    y: TRAY.H - 10,
+    vx: 0, vy: -1.2 - Math.random() * 0.8,
+    size: chosen.c.size,
+    color: chosen.c.color,
+    bp: chosen.c.bp,
+    classIdx: chosen.i,
+    phase: 'rising_below',
+    targetBell: bell,
+    age: 0,
+    _counted: false
+  });
+}
+
+function stepTrayParticles(dt) {
+  const T = state.temp;
+  const flow = state.flow;
+
+  // Neue Teilchen erzeugen (Rate hängt von Temperatur und Flow ab)
+  spawnAccumulator += dt * state.speed * (0.5 + flow) * (0.3 + T / 500) * 30;
+  while (spawnAccumulator > 1) {
+    if (trayParticles.length < 200 && flow > 0) spawnTrayParticle();
+    spawnAccumulator -= 1;
+  }
+
+  trayParticles.forEach(p => {
+    p.age += dt;
+    const b = p.targetBell;
+
+    switch (p.phase) {
+      case 'rising_below': {
+        // Steigt von unten zur Platte
+        p.vy += -0.05;
+        p.vy = Math.max(p.vy, -2.2);
+        p.vx += (b.cx - p.x) * 0.003; // zentriert Richtung Steigrohr
+        p.vx *= 0.9;
+        if (p.y <= TRAY.plateY + TRAY.plateH) {
+          p.phase = 'in_riser';
+          p.x = b.cx + (Math.random() - 0.5) * b.riserW * 0.5;
+        }
+        break;
+      }
+      case 'in_riser': {
+        // Im Steigrohr nach oben
+        p.vy = -1.8;
+        p.vx *= 0.5;
+        p.x += (b.cx - p.x) * 0.15;
+        if (p.y <= b.riserTop + 5) {
+          p.phase = 'under_bell';
+          p.vy = -0.5;
+          p.bellEntryTime = p.age;  // Merke, wann diese Phase begann
+        }
+        break;
+      }
+      case 'under_bell': {
+        // Trifft auf Glocken-Oberseite, wird nach außen/unten gelenkt
+        const dx = p.x - b.cx;
+        p.vx += Math.sign(dx || (Math.random() - 0.5)) * 0.3;
+        p.vy += 0.15; // nach unten umgelenkt
+        p.vx *= 0.92; p.vy *= 0.95;
+
+        // Wenn außerhalb der Glocke (Zacken-Austritt) → in die Flüssigkeit
+        if (Math.abs(dx) > b.bellW / 2 - 4 && p.y >= b.bellBotY - 6) {
+          p.phase = 'bubbling';
+          p.vx *= 0.3;
+          p.vy = -0.1;
+          p.y = Math.max(p.y, b.bellBotY);  // Sicherstellen: in der Flüssigkeit
+        }
+        // Timeout: zu lange unter der Glocke → seitlich rausdrücken auf Höhe der Zacken
+        const timeInBell = p.age - (p.bellEntryTime || 0);
+        if (timeInBell > 0.8) {
+          p.phase = 'bubbling';
+          p.x = b.cx + Math.sign(dx || 1) * (b.bellW / 2 + 3);
+          p.y = b.bellBotY;              // Auf Höhe der Zacken → im Flüssigkeitsbereich
+          p.vy = -0.1;
+        }
+        break;
+      }
+      case 'bubbling': {
+        // Blase steigt LANGSAM durch Flüssigkeit — hier passiert die Trennung!
+        // Reale Blasen in Flüssigkeit sind deutlich langsamer als Dampf in Luft.
+        p.vy = -0.15 - Math.random() * 0.1;   // sehr langsam aufwärts
+        p.vx += (Math.random() - 0.5) * 0.15;
+        p.vx *= 0.85;
+
+        // KERN DER TRENNUNG:
+        // Vergleiche Siedepunkt des Teilchens mit der lokalen Boden-Temperatur.
+        const localT = trayLocalTemp();
+        const bpDiff = p.bp - localT;   // ≈0 = diese Fraktion gehört hierhin, <0 = leichter
+
+        // In der Flüssigkeitsschicht?
+        if (p.y < TRAY.plateY && p.y > TRAY.liquidTop - 15) {
+          if (Math.abs(bpDiff) < 50) {
+            // PASSENDE Fraktion: hohe Kondensations-Wahrscheinlichkeit pro Frame
+            // Je näher bp an localT, desto sicherer kondensiert das Teilchen.
+            const match = 1 - Math.abs(bpDiff) / 50;  // 1.0 bei exakt, 0 am Rand
+            const condenseProb = 0.15 + match * 0.25;  // 0.15 bis 0.40 pro Frame
+            if (Math.random() < condenseProb) {
+              p.phase = 'settled';
+              p.vy = 0.4;
+              p.vx = (Math.random() - 0.5) * 0.4;
+              break;
+            }
+          }
+          // LEICHTERE Fraktionen (bp deutlich unter localT): bleiben gasförmig,
+          // aber die Flüssigkeit bremst sie — sie müssen sich „durchkämpfen".
+          // Keine Kondensation, aber Verlangsamung.
+        }
+
+        // Sobald über der Flüssigkeitsoberfläche: Phase wechseln
+        if (p.y <= TRAY.liquidTop - 15) {
+          p.phase = 'above_liquid';
+        }
+        break;
+      }
+      case 'above_liquid': {
+        // Leichte Fraktion: hat die Flüssigkeit durchquert ohne zu kondensieren
+        // → steigt schnell weiter auf zum nächsten Boden
+        p.vy -= 0.06;
+        p.vy = Math.max(p.vy, -1.8);
+        p.vx += (Math.random() - 0.5) * 0.12;
+        p.vx *= 0.95;
+        // Verlässt Canvas oben
+        if (p.y < -10) p.phase = 'escaped';
+        break;
+      }
+      case 'settled': {
+        // Teilchen hat kondensiert und liegt als Flüssigkeit auf dem Boden
+        p.vy += 0.12;
+        p.vy *= 0.7;
+        p.vx += 0.03 + (Math.random() - 0.5) * 0.08;
+        p.vx *= 0.85;
+
+        // An Flüssigkeitsoberfläche / Boden halten
+        if (p.y > TRAY.plateY - p.size - 1) { p.y = TRAY.plateY - p.size - 1; p.vy *= -0.2; }
+        if (p.y < TRAY.liquidTop + 3) { p.y = TRAY.liquidTop + 3; p.vy = 0.2; }
+
+        // Glocken umgehen
+        TRAY.bells.forEach(bell => {
+          const dx = p.x - bell.cx;
+          if (Math.abs(dx) < bell.bellW / 2 + 4 && p.y > bell.bellTop) {
+            p.vx += Math.sign(dx || 1) * 0.18;
+          }
+        });
+
+        // Einmalig zählen: Flüssigkeitslevel steigt
+        if (!p._counted) {
+          TRAY_STATE.accumulated[p.classIdx]++;
+          TRAY_STATE.liquidLevel = Math.min(1, TRAY_STATE.liquidLevel + 0.006);
+          p._counted = true;
+        }
+
+        // Erreicht Überlaufrohr → Ablauf nach unten
+        if (p.x >= TRAY.weirX) {
+          p.phase = 'downflow';
+        }
+        break;
+      }
+      case 'downflow': {
+        // Fließt durch Überlaufrohr nach unten
+        p.vy += 0.15;
+        p.vx = 0;
+        p.x = TRAY.weirX + TRAY.weirW / 2;
+        if (p.y > TRAY.H + 10) p.phase = 'escaped';
+        break;
+      }
+    }
+
+    // Physik anwenden
+    if (p.phase !== 'escaped') {
+      p.x += p.vx * state.speed;
+      p.y += p.vy * state.speed;
+    }
+
+    // Seitliche Ränder
+    if (p.x < 10) { p.x = 10; p.vx *= -0.5; }
+    if (p.x > TRAY.W - 10 && p.phase !== 'downflow') { p.x = TRAY.W - 10; p.vx *= -0.5; }
+  });
+
+  // Aufräumen
+  trayParticles = trayParticles.filter(p => p.phase !== 'escaped' && p.age < 30);
+}
+
+function drawTray() {
+  const ctx = tCtx;
+  const W = TRAY.W, H = TRAY.H;
+  ctx.clearRect(0, 0, W, H);
+
+  // Hintergrund: kalt oben → heiß unten
+  const hotness = Math.min(1, state.temp / 500);
+  const bg = ctx.createLinearGradient(0, 0, 0, H);
+  bg.addColorStop(0, `rgba(200, 215, 228, ${0.4 + (1-hotness)*0.2})`);
+  bg.addColorStop(0.5, 'rgba(245, 238, 220, 0.4)');
+  bg.addColorStop(1, `rgba(${220 + hotness*30}, ${150 - hotness*40}, ${90 - hotness*40}, ${0.3 + hotness*0.35})`);
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Andeutung: nächster Boden oben (gestrichelte Linie + Label)
+  ctx.setLineDash([6, 6]);
+  ctx.strokeStyle = 'rgba(107, 90, 72, 0.4)';
+  ctx.lineWidth = 1;
+  ctx.beginPath(); ctx.moveTo(0, 20); ctx.lineTo(W, 20); ctx.stroke();
+  ctx.setLineDash([]);
+  ctx.fillStyle = '#5a4f45';
+  ctx.font = '11px "IBM Plex Mono"';
+  ctx.fillText('↑ zum nächsten Boden (kühler)', 14, 14);
+  ctx.fillText('↓ vom unteren Boden (heißer)', 14, H - 6);
+
+  // Unteren Bereich markieren
+  ctx.setLineDash([6, 6]);
+  ctx.beginPath(); ctx.moveTo(0, H - 20); ctx.lineTo(W, H - 20); ctx.stroke();
+  ctx.setLineDash([]);
+
+  // ====== STRUKTUR: Platte, Überlaufrohr, Glocken ======
+
+  // Flüssigkeit auf dem Boden — Farbe = Fokus-Fraktion, Höhe wächst mit Ansammlung
+  const focusColor = PARTICLE_CLASSES[TRAY_STATE.focusIdx].color;
+  const liquidMinTop = TRAY.plateY - 8;   // fast leer: nur dünner Film
+  const liquidMaxTop = TRAY.liquidTop;     // voll: bis zur Überlaufkante
+  const currentLiquidTop = liquidMinTop - (liquidMinTop - liquidMaxTop) * TRAY_STATE.liquidLevel;
+
+  const liquidGrad = ctx.createLinearGradient(0, currentLiquidTop, 0, TRAY.plateY);
+  liquidGrad.addColorStop(0, hexToRgba(focusColor, 0.55));
+  liquidGrad.addColorStop(1, hexToRgba(focusColor, 0.85));
+  ctx.fillStyle = liquidGrad;
+  ctx.fillRect(0, currentLiquidTop, TRAY.weirX, TRAY.plateY - currentLiquidTop);
+
+  // Flüssigkeit auch im Überlaufrohr (nur wenn Level hoch genug)
+  if (TRAY_STATE.liquidLevel > 0.6) {
+    ctx.fillStyle = hexToRgba(focusColor, 0.7);
+    ctx.fillRect(TRAY.weirX, currentLiquidTop, TRAY.weirW, H - currentLiquidTop);
+  }
+
+  // Flüssigkeits-Oberflächenlinie mit kleinen Wellen
+  ctx.strokeStyle = hexToRgba(focusColor, 0.9);
+  ctx.lineWidth = 1.2;
+  ctx.beginPath();
+  for (let x = 0; x <= TRAY.weirX; x += 4) {
+    const y = currentLiquidTop + Math.sin((x + state.simTime * 30) * 0.15) * 0.8;
+    if (x === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+  }
+  ctx.stroke();
+
+  // Metallplatte
+  ctx.fillStyle = '#6b5a48';
+  ctx.fillRect(0, TRAY.plateY, TRAY.weirX, TRAY.plateH);
+  ctx.fillStyle = '#8a7560';
+  ctx.fillRect(0, TRAY.plateY, TRAY.weirX, 2);
+  ctx.strokeStyle = '#3a2f22';
+  ctx.lineWidth = 0.5;
+  ctx.strokeRect(0, TRAY.plateY, TRAY.weirX, TRAY.plateH);
+
+  // Steigrohre (Risers) — Öffnungen in der Platte, Rohr ragt nach oben
+  TRAY.bells.forEach(b => {
+    // Loch in der Platte (dunkel)
+    ctx.fillStyle = '#1a1512';
+    ctx.fillRect(b.cx - b.riserW / 2, TRAY.plateY, b.riserW, TRAY.plateH);
+    // Rohrwand
+    ctx.fillStyle = '#6b5a48';
+    ctx.fillRect(b.cx - b.riserW / 2 - 2, b.riserTop, 2, TRAY.plateY - b.riserTop);
+    ctx.fillRect(b.cx + b.riserW / 2, b.riserTop, 2, TRAY.plateY - b.riserTop);
+    // Rohröffnung oben (Ellipse)
+    ctx.fillStyle = '#2a1a12';
+    ctx.beginPath();
+    ctx.ellipse(b.cx, b.riserTop, b.riserW / 2, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  });
+
+  // Überlaufrohr (Weir)
+  ctx.fillStyle = '#6b5a48';
+  ctx.fillRect(TRAY.weirX - 2, TRAY.plateY - 30, 2, 30);       // linke Wand, nach oben stehend
+  ctx.fillRect(TRAY.weirX, TRAY.plateY, 2, H - TRAY.plateY);    // links unten weiter
+  ctx.fillRect(TRAY.weirX + TRAY.weirW, TRAY.plateY - 30, 2, H - TRAY.plateY + 30);
+  ctx.fillStyle = '#3a2f22';
+  ctx.fillRect(TRAY.weirX - 3, TRAY.plateY - 30, 4, 2); // Oberkante Wehr
+  ctx.fillStyle = '#5a4f45';
+  ctx.font = '10px "IBM Plex Mono"';
+  ctx.fillText('Überlaufrohr', TRAY.weirX - 8, TRAY.plateY - 38);
+
+  // ====== TEILCHEN ZEICHNEN ======
+  trayParticles.forEach(p => {
+    const isGas = p.phase === 'rising_below' || p.phase === 'in_riser' ||
+                  p.phase === 'under_bell' || p.phase === 'above_liquid';
+    const isBubble = p.phase === 'bubbling';
+    const isSettled = p.phase === 'settled' || p.phase === 'downflow';
+
+    ctx.beginPath();
+
+    if (isSettled) {
+      // KONDENSIERT: volle Farbe, dicker Rand, leicht vergrößert (Flüssigkeitstropfen)
+      ctx.arc(p.x, p.y, p.size * 1.15, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 1.0;
+      ctx.fill();
+      ctx.strokeStyle = '#1a1512';
+      ctx.globalAlpha = 0.6;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Glanzpunkt (Tropfen-Effekt)
+      ctx.beginPath();
+      ctx.arc(p.x - p.size * 0.3, p.y - p.size * 0.3, p.size * 0.3, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.35)';
+      ctx.globalAlpha = 1;
+      ctx.fill();
+    } else if (isBubble) {
+      // BLASE in der Flüssigkeit: transparenter Körper, heller Rand, Schimmer
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.35;
+      ctx.fill();
+      ctx.strokeStyle = 'rgba(255,255,255,0.85)';
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      // Kleine Lichtreflexion
+      ctx.beginPath();
+      ctx.arc(p.x - p.size * 0.25, p.y - p.size * 0.25, p.size * 0.25, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.5)';
+      ctx.fill();
+    } else if (isGas) {
+      // DAMPF: halbtransparent mit Bewegungsspur
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = 0.7;
+      ctx.fill();
+      // Kleiner Schweif nach unten (Bewegungsrichtung)
+      if (p.vy < -0.3) {
+        ctx.beginPath();
+        ctx.moveTo(p.x - p.size * 0.5, p.y + p.size);
+        ctx.lineTo(p.x, p.y + p.size + Math.abs(p.vy) * 4);
+        ctx.lineTo(p.x + p.size * 0.5, p.y + p.size);
+        ctx.fillStyle = p.color;
+        ctx.globalAlpha = 0.2;
+        ctx.fill();
+      }
+    }
+    ctx.globalAlpha = 1;
+  });
+
+  // ====== GLOCKEN (Bubble Caps) — über der Flüssigkeit, über den Teilchen ======
+  TRAY.bells.forEach(b => {
+    const bx = b.cx, by = b.bellTop;
+    const w = b.bellW, botY = b.bellBotY;
+
+    // Glockenkörper
+    ctx.fillStyle = '#8a7560';
+    ctx.strokeStyle = '#3a2f22';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.moveTo(bx - w / 2, by + 8);
+    ctx.quadraticCurveTo(bx - w / 2, by, bx, by);
+    ctx.quadraticCurveTo(bx + w / 2, by, bx + w / 2, by + 8);
+    ctx.lineTo(bx + w / 2, botY - 10);
+    // Zacken (serrations)
+    const zacken = 10;
+    const zw = w / zacken;
+    for (let i = 0; i < zacken; i++) {
+      const x1 = bx + w / 2 - i * zw;
+      ctx.lineTo(x1 - zw * 0.3, botY);
+      ctx.lineTo(x1 - zw * 0.7, botY - 8);
+      ctx.lineTo(x1 - zw, botY - 3);
+    }
+    ctx.lineTo(bx - w / 2, botY - 10);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+
+    // Glanzlicht
+    ctx.strokeStyle = 'rgba(230, 215, 190, 0.7)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(bx - w / 2 + 8, by + 10);
+    ctx.quadraticCurveTo(bx - w / 3, by + 3, bx - 6, by + 3);
+    ctx.stroke();
+
+    // Aufhängung / Steg zur Kolonnenwand (Andeutung)
+    ctx.strokeStyle = '#3a2f22';
+    ctx.lineWidth = 0.8;
+    ctx.setLineDash([3, 3]);
+    ctx.beginPath();
+    ctx.moveTo(bx, by - 2);
+    ctx.lineTo(bx, by - 12);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // ====== BESCHRIFTUNGEN ======
+  ctx.font = '11px "IBM Plex Mono"';
+  ctx.fillStyle = '#1a1512';
+
+  // Glocke
+  ctx.fillText('Glocke', TRAY.bells[0].cx - 18, TRAY.bells[0].bellTop - 18);
+  // Steigrohr (Pfeil + Label)
+  ctx.fillText('Steigrohr', TRAY.bells[1].cx + 35, TRAY.bells[1].riserTop + 30);
+  ctx.strokeStyle = '#1a1512';
+  ctx.lineWidth = 0.8;
+  ctx.beginPath();
+  ctx.moveTo(TRAY.bells[1].cx + 32, TRAY.bells[1].riserTop + 28);
+  ctx.lineTo(TRAY.bells[1].cx + 14, TRAY.bells[1].riserTop + 18);
+  ctx.stroke();
+  // Flüssigkeit
+  ctx.fillText('Flüssigkeit', 20, TRAY.liquidTop - 6);
+  // Platte
+  ctx.fillText('Boden', 20, TRAY.plateY + 24);
+
+  // Info-Panel oben rechts: Heizung vs. Boden-Temperatur
+  const localT = trayLocalTemp();
+  const focusFrac = PARTICLE_CLASSES[TRAY_STATE.focusIdx];
+  ctx.fillStyle = 'rgba(26, 21, 18, 0.88)';
+  ctx.fillRect(W - 210, 28, 200, 72);
+  ctx.fillStyle = '#fbf8f2';
+  ctx.font = '10px "IBM Plex Mono"';
+  ctx.fillText('HEIZUNG (unten)', W - 200, 44);
+  ctx.font = 'bold 13px "IBM Plex Mono"';
+  ctx.fillText(state.temp + ' °C', W - 100, 44);
+  ctx.font = '10px "IBM Plex Mono"';
+  ctx.fillText('DIESER BODEN', W - 200, 62);
+  ctx.font = 'bold 13px "IBM Plex Mono"';
+  ctx.fillStyle = focusFrac.color;
+  ctx.fillText(localT + ' °C', W - 100, 62);
+  ctx.fillStyle = '#fbf8f2';
+  ctx.font = '10px "IBM Plex Mono"';
+  ctx.fillText('kondensiert hier:', W - 200, 82);
+  ctx.fillStyle = focusFrac.color;
+  ctx.fillRect(W - 100, 74, 8, 8);
+  ctx.fillStyle = '#fbf8f2';
+  ctx.fillText(focusFrac.name, W - 88, 82);
+
+  // Label-Updates im HTML
+  document.getElementById('trayTempLabel').textContent = localT + ' °C (' + focusFrac.name + ')';
+  const total = TRAY_STATE.accumulated.reduce((s, n) => s + n, 0);
+  document.getElementById('trayAccumLabel').textContent =
+    total === 0 ? 'Angesammelt: 0' : 'Angesammelt: ' + total + ' Teilchen';
+}
+
+
+/* =========================================================================
+   CHART (Fraktionen im Zeitverlauf)
+   ========================================================================= */
+const chartCanvas = document.getElementById('chartCanvas');
+const chartCtx = chartCanvas.getContext('2d');
+
+function drawChart() {
+  const W = chartCanvas.width, H = chartCanvas.height;
+  chartCtx.clearRect(0, 0, W, H);
+
+  // Achsen
+  chartCtx.strokeStyle = '#d9d1c2';
+  chartCtx.lineWidth = 1;
+  chartCtx.beginPath();
+  chartCtx.moveTo(40, 10); chartCtx.lineTo(40, H-25);
+  chartCtx.lineTo(W-10, H-25);
+  chartCtx.stroke();
+
+  chartCtx.font = '10px IBM Plex Mono';
+  chartCtx.fillStyle = '#5a4f45';
+  chartCtx.fillText('Liter', 4, 14);
+  chartCtx.fillText('Zeit (s)', W-50, H-8);
+
+  if (state.history.length < 2) return;
+
+  const maxT = Math.max(10, state.history[state.history.length-1].t);
+  const maxV = Math.max(1, ...state.history.flatMap(h => h.values));
+
+  // Y-Grid
+  for (let i = 1; i <= 4; i++) {
+    const y = 10 + ((H-35) / 4) * i;
+    chartCtx.strokeStyle = '#e8e1d2';
+    chartCtx.beginPath();
+    chartCtx.moveTo(40, y); chartCtx.lineTo(W-10, y);
+    chartCtx.stroke();
+    chartCtx.fillStyle = '#5a4f45';
+    chartCtx.fillText((maxV * (4-i) / 4).toFixed(1), 6, y+3);
+  }
+
+  // Kurven pro Fraktion
+  FRAKTIONEN.forEach(f => {
+    chartCtx.strokeStyle = f.hex;
+    chartCtx.lineWidth = 2;
+    chartCtx.beginPath();
+    state.history.forEach((h, i) => {
+      const x = 40 + (h.t / maxT) * (W - 50);
+      const y = (H-25) - (h.values[f.id] / maxV) * (H - 35);
+      if (i === 0) chartCtx.moveTo(x, y); else chartCtx.lineTo(x, y);
+    });
+    chartCtx.stroke();
+  });
+}
+
+/* =========================================================================
+   SIMULATIONS-LOOP
+   ========================================================================= */
+let lastTick = 0;
+function simLoop(now) {
+  const dt = (now - lastTick) / 1000;
+  lastTick = now;
+
+  if (state.running) {
+    state.simTime += dt * state.speed;
+
+    // Automatik: Temperatur hochfahren
+    if (state.mode === 'auto') {
+      state.temp = Math.min(500, 20 + state.simTime * 8 * state.speed);
+      document.getElementById('tempSlider').value = Math.round(state.temp);
+    }
+
+    // Fraktionen sammeln
+    const z = kolonnenZustand(state.temp);
+    z.forEach(f => {
+      // Nur wenn Fraktion vollständig verdampft UND Rohöl zugeführt wird
+      if (f.aktiv >= 1.0 && state.flow > 0) {
+        // Sammelrate proportional zum Anteil der Fraktion im Rohöl und Flow
+        const rate = f.anteil * state.flow * dt * state.speed;
+        state.collected[f.id] += rate;
+      }
+    });
+
+    // History
+    if (state.simTime - (state.history[state.history.length-1]?.t || -1) > 0.5) {
+      state.history.push({ t: state.simTime, values: [...state.collected] });
+      if (state.history.length > 200) state.history.shift();
+    }
+
+    document.getElementById('simTime').textContent = state.simTime.toFixed(1);
+    if (state.view === 'tray') stepTrayParticles(dt * state.speed);
+    renderKolonne();
+    drawChart();
+  }
+
+  if (state.view === 'tray') drawTray();
+  requestAnimationFrame(simLoop);
+}
+
+/* =========================================================================
+   EVENT-HANDLER
+   ========================================================================= */
+document.getElementById('tempSlider').addEventListener('input', e => {
+  state.temp = parseInt(e.target.value);
+  renderKolonne();
+});
+document.getElementById('flowSlider').addEventListener('input', e => {
+  state.flow = parseFloat(e.target.value);
+  document.getElementById('flowVal').textContent = state.flow.toFixed(1);
+});
+document.getElementById('speedSlider').addEventListener('input', e => {
+  state.speed = parseFloat(e.target.value);
+  document.getElementById('speedVal').textContent = state.speed.toFixed(1) + '×';
+});
+document.querySelectorAll('.mode-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    state.mode = btn.dataset.mode;
+    document.getElementById('tempSlider').disabled = (state.mode === 'auto');
+  });
+});
+
+// View-Toggle (Kolonne ↔ Glockenboden im Detail)
+document.getElementById('viewToggle').addEventListener('click', e => {
+  const btn = e.target.closest('.vbtn');
+  if (!btn) return;
+  state.view = btn.dataset.view;
+  document.querySelectorAll('#viewToggle .vbtn').forEach(b => b.classList.toggle('active', b === btn));
+  document.querySelectorAll('.viz-view').forEach(v => v.classList.toggle('active', v.dataset.view === state.view));
+  if (state.view === 'tray') drawTray();  // initialer Render beim Wechsel
+});
+
+// Tray-Selector: welcher Boden wird im Detail angezeigt?
+document.getElementById('traySelector').addEventListener('click', e => {
+  const btn = e.target.closest('.sel-pill');
+  if (!btn) return;
+  document.querySelectorAll('.sel-pill').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  TRAY_STATE.focusIdx = parseInt(btn.dataset.idx);
+  TRAY_STATE.accumulated = [0,0,0,0,0,0];
+  TRAY_STATE.liquidLevel = 0;
+  trayParticles = [];
+  drawTray();
+});
+
+document.getElementById('startBtn').addEventListener('click', () => {
+  state.running = !state.running;
+  const btn = document.getElementById('startBtn');
+  const pill = document.getElementById('statusPill');
+  const txt = document.getElementById('statusText');
+  if (state.running) {
+    btn.textContent = '❚❚ Pause';
+    pill.classList.add('running');
+    txt.textContent = state.mode === 'auto' ? 'Automatik läuft' : 'Simulation läuft';
+  } else {
+    btn.textContent = '▶ Start';
+    pill.classList.remove('running');
+    txt.textContent = 'Pausiert';
+  }
+});
+
+document.getElementById('resetBtn').addEventListener('click', () => {
+  state.simTime = 0;
+  state.collected = [0,0,0,0,0,0];
+  state.history = [];
+  state.running = false;
+  state.temp = state.mode === 'auto' ? 20 : 350;
+  document.getElementById('tempSlider').value = state.temp;
+  document.getElementById('startBtn').textContent = '▶ Start';
+  document.getElementById('statusPill').classList.remove('running');
+  document.getElementById('statusText').textContent = 'Bereit';
+  document.getElementById('simTime').textContent = '0';
+  trayParticles = [];
+  TRAY_STATE.accumulated = [0,0,0,0,0,0];
+  TRAY_STATE.liquidLevel = 0;
+  renderKolonne();
+  drawTray();
+  drawChart();
+});
+
+/* =========================================================================
+   TABS
+   ========================================================================= */
+document.getElementById('taskTabs').addEventListener('click', e => {
+  const btn = e.target.closest('.tab-btn');
+  if (!btn) return;
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.dataset.tab === btn.dataset.tab));
+});
+
+/* =========================================================================
+   LERNPFAD (10 Schritte, aufeinander aufbauend)
+   ========================================================================= */
+const LERNPFAD = [
+  {
+    icon: '👁️',
+    instruction: 'Stelle die Heiztemperatur auf <strong>20 °C</strong> und schaue dir die Kolonne an. Was siehst du?',
+    q: 'Wird bei 20 °C bereits eine Fraktion abgetrennt?',
+    opts: ['Ja, das Raffineriegas wird sofort gasförmig.', 'Nein, bei 20 °C passiert fast nichts.', 'Alle Fraktionen werden gleichzeitig getrennt.', 'Nur die Rückstände trennen sich ab.'],
+    correct: 1,
+    fb: 'Genau — 20 °C ist Raumtemperatur. Die meisten Kohlenwasserstoffe im Erdöl sind bei dieser Temperatur flüssig. Der Trennprozess beginnt erst, wenn die Temperatur über den Siedepunkt der leichtesten Fraktion steigt.'
+  },
+  {
+    icon: '🔥',
+    instruction: 'Erhöhe die Temperatur nun langsam auf etwa <strong>60 °C</strong>. Beobachte die Kolonne und die Legende.',
+    q: 'Welche Fraktion wird als Erste aktiv (färbt sich in der Kolonne ein)?',
+    opts: ['Diesel', 'Raffineriegas', 'Schweres Heizöl', 'Rückstand'],
+    correct: 1,
+    fb: 'Richtig! Raffineriegas hat den niedrigsten Siedebereich (unter 40 °C). Es enthält die leichtesten Moleküle und wird bei geringer Temperaturerhöhung zuerst gasförmig.'
+  },
+  {
+    icon: '📊',
+    instruction: 'Schaue dir die <strong>Legende</strong> unterhalb der Kolonne an. Vergleiche die Siedepunktbereiche aller Fraktionen.',
+    q: 'Welche Fraktion hat den <em>höchsten</em> Siedebereich?',
+    opts: ['Benzin (40–180 °C)', 'Kerosin (180–250 °C)', 'Diesel (250–350 °C)', 'Rückstand (> 400 °C)'],
+    correct: 3,
+    fb: 'Stimmt — der Rückstand enthält die längsten, schwersten Kohlenwasserstoff-Ketten. Sie brauchen enorm viel Energie, um zu verdampfen. In der Kolonne bleiben sie ganz unten.'
+  },
+  {
+    icon: '🌡️',
+    instruction: 'Stelle die Heiztemperatur auf <strong>250 °C</strong>. Starte die Simulation und beobachte die Auffangbehälter rechts.',
+    q: 'Welche Fraktionen werden bei 250 °C <em>vollständig</em> abgetrennt?',
+    opts: ['Nur Raffineriegas.', 'Raffineriegas und Benzin.', 'Raffineriegas, Benzin und Kerosin.', 'Alle Fraktionen.'],
+    correct: 2,
+    fb: 'Richtig! Bei 250 °C sind alle Stoffe mit Siedepunkt bis 250 °C verdampft: Gas (< 40 °C), Benzin (40–180 °C) und Kerosin (180–250 °C). Diesel (250–350 °C) beginnt bei dieser Temperatur gerade erst zu sieden und ist noch nicht vollständig getrennt.'
+  },
+  {
+    icon: '📐',
+    instruction: 'Achte auf die <strong>Position der Abzweige</strong> an der Kolonne. Gas entweicht ganz oben, Heizöl weit unten.',
+    q: 'Warum ist der Abzweig für Benzin <em>höher</em> als der für Diesel?',
+    opts: ['Benzin ist schwerer und steigt deshalb höher.', 'Benzin hat einen niedrigeren Siedepunkt und kondensiert erst weit oben, wo es kühler ist.', 'Der Abzweig wird zufällig gesetzt.', 'Benzin wird oben eingefüllt.'],
+    correct: 1,
+    fb: 'Richtig! Die Kolonne ist unten heiß und oben kühl. Benzin-Dampf bleibt bis weit oben gasförmig, weil sein Siedepunkt niedrig ist. Erst in der kühlen oberen Zone kondensiert es — dort sitzt der passende Abzweig.'
+  },
+  {
+    icon: '🔬',
+    instruction: 'Wechsle zur Ansicht <strong>„Glockenboden im Detail"</strong> (oberer Toggle). Wähle den <strong>Diesel-Boden</strong>. Starte die Simulation bei 400 °C.',
+    q: 'Was passiert mit den braunen (Diesel-)Teilchen an diesem Boden?',
+    opts: ['Sie steigen weiter nach oben.', 'Sie kondensieren, werden zu Tropfen und sammeln sich auf dem Boden.', 'Sie verschwinden sofort.', 'Sie werden zu Benzin.'],
+    correct: 1,
+    fb: 'Genau! Die Diesel-Teilchen haben einen Siedepunkt, der zur Temperatur dieses Bodens passt. Sie geben Energie ab, werden flüssig (kondensieren) und sammeln sich als Flüssigkeit auf der Metallplatte.'
+  },
+  {
+    icon: '💨',
+    instruction: 'Bleibe in der Detailansicht am <strong>Diesel-Boden</strong> und beobachte die <strong>gelben (Benzin-)</strong> Teilchen.',
+    q: 'Was passiert mit den Benzin-Teilchen an diesem Boden?',
+    opts: ['Sie kondensieren ebenfalls.', 'Sie steigen als Blasen durch die Flüssigkeit und weiter nach oben.', 'Sie sinken nach unten ab.', 'Sie bleiben als Blase in der Flüssigkeit stecken.'],
+    correct: 1,
+    fb: 'Richtig! Benzin hat einen viel niedrigeren Siedepunkt als die Temperatur des Diesel-Bodens. Es bleibt gasförmig, durchquert die Flüssigkeitsschicht als Blase und steigt weiter auf — zum nächsthöheren, kühleren Boden.'
+  },
+  {
+    icon: '🔄',
+    instruction: 'Beobachte das <strong>Überlaufrohr</strong> rechts in der Detailansicht. Dort fließt die angesammelte Flüssigkeit ab.',
+    q: 'Wohin fließt die kondensierte Flüssigkeit über das Überlaufrohr?',
+    opts: ['Zum nächsthöheren Boden (kühler).', 'Zum nächsttieferen Boden (heißer).', 'Direkt aus der Kolonne heraus.', 'Zurück in die Heizung.'],
+    correct: 1,
+    fb: 'Richtig! Die Flüssigkeit fließt durch Schwerkraft nach unten. Auf dem heißeren Boden darunter kann sie teilweise wieder verdampfen — dieser Kreislauf sorgt für eine immer bessere Trennung. Man nennt das Gegenstrom-Prinzip.'
+  },
+  {
+    icon: '⚡',
+    instruction: 'Wechsle zurück zur <strong>Gesamtkolonne</strong>. Vergleiche: Stelle die Temperatur zuerst auf <strong>200 °C</strong>, dann auf <strong>450 °C</strong>.',
+    q: 'Was passiert, wenn die Heiztemperatur von 200 °C auf 450 °C erhöht wird?',
+    opts: ['Nur die leichteste Fraktion wird getrennt.', 'Weniger Fraktionen werden getrennt.', 'Zusätzlich werden Diesel und Heizöl abgetrennt — es wird mehr Energie benötigt.', 'Es ändert sich nichts.'],
+    correct: 2,
+    fb: 'Stimmt — höhere Temperatur bedeutet: mehr Fraktionen werden verdampft und getrennt, aber der Energiebedarf steigt enorm. In einer realen Raffinerie ist das ein Kostenfaktor.'
+  },
+  {
+    icon: '🎓',
+    instruction: 'Zusammenfassung: Du hast jetzt die Funktionsweise der fraktionierten Destillation erkundet.',
+    q: 'Welcher Satz fasst das Trennprinzip am besten zusammen?',
+    opts: [
+      'Erdöl wird durch chemische Reaktionen in seine Bestandteile zerlegt.',
+      'Erdöl wird durch Temperaturunterschiede in Fraktionen mit verschiedenen Siedepunkten getrennt — leichte Stoffe oben, schwere unten.',
+      'Erdöl wird durch Zentrifugation getrennt.',
+      'Erdöl wird durch Magnete in verschiedene Sorten aufgeteilt.'
+    ],
+    correct: 1,
+    fb: 'Perfekt! Die fraktionierte Destillation nutzt die unterschiedlichen Siedepunkte der Kohlenwasserstoffe. In der Kolonne herrscht ein Temperaturgradient: unten heiß, oben kühl. Jede Fraktion kondensiert auf der Höhe, die ihrer Siedetemperatur entspricht.'
+  }
+];
+
+let pathStep = 0;
+let pathAnswered = false;
+
+function renderPathStep() {
+  const s = LERNPFAD[pathStep];
+  document.getElementById('pathCounter').textContent = `Schritt ${pathStep + 1} / ${LERNPFAD.length}`;
+  document.getElementById('pathFill').style.width = ((pathStep + 1) / LERNPFAD.length * 100) + '%';
+  document.getElementById('pathIcon').textContent = s.icon;
+  document.getElementById('pathText').innerHTML = s.instruction;
+  document.getElementById('pathQ').innerHTML = s.q;
+  const optsDiv = document.getElementById('pathOpts');
+  optsDiv.innerHTML = '';
+  s.opts.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'task-opt';
+    b.textContent = opt;
+    b.addEventListener('click', () => answerPath(i, b));
+    optsDiv.appendChild(b);
+  });
+  document.getElementById('pathFb').classList.remove('show', 'ok', 'no');
+  document.getElementById('pathNextBtn').disabled = true;
+  document.getElementById('pathPrevBtn').disabled = pathStep === 0;
+  pathAnswered = false;
+}
+
+function answerPath(idx, btn) {
+  if (pathAnswered) return;
+  pathAnswered = true;
+  const s = LERNPFAD[pathStep];
+  const fb = document.getElementById('pathFb');
+  const allOpts = document.querySelectorAll('#pathOpts .task-opt');
+  allOpts.forEach(o => o.disabled = true);
+  if (idx === s.correct) {
+    btn.classList.add('correct');
+    fb.className = 'task-feedback show ok';
+    fb.innerHTML = '✓ ' + s.fb;
+  } else {
+    btn.classList.add('wrong');
+    allOpts[s.correct].classList.add('reveal');
+    fb.className = 'task-feedback show no';
+    fb.innerHTML = '✗ Nicht ganz. ' + s.fb;
+  }
+  document.getElementById('pathNextBtn').disabled = false;
+}
+
+document.getElementById('pathNextBtn').addEventListener('click', () => {
+  if (pathStep < LERNPFAD.length - 1) { pathStep++; renderPathStep(); }
+});
+document.getElementById('pathPrevBtn').addEventListener('click', () => {
+  if (pathStep > 0) { pathStep--; renderPathStep(); }
+});
+
+/* =========================================================================
+   VERTIEFUNG (5 freie Erkundungsaufträge, je 3 MC-Fragen)
+   ========================================================================= */
+const VERTIEFUNG = [
+  {
+    icon: '⚡', title: 'Energiebedarf', sub: '3 Fragen · Temperatur & Energie',
+    instruction: 'Vergleiche die Simulation bei <strong>200 °C</strong> und bei <strong>450 °C</strong>. Beobachte, wie viele Fraktionen jeweils abgetrennt werden.',
+    qs: [
+      { q: 'Bei welcher Temperatur werden mehr Fraktionen abgetrennt?', opts: ['200 °C', '450 °C', 'Bei beiden gleich viele.', 'Bei beiden keine.'], correct: 1, fb: 'Bei 450 °C werden fast alle Fraktionen abgetrennt, bei 200 °C nur die leichtesten.' },
+      { q: 'Was ist ein Nachteil einer sehr hohen Heiztemperatur?', opts: ['Die Trennung wird ungenauer.', 'Der Energieverbrauch steigt stark.', 'Es entstehen giftige Gase.', 'Die Kolonne schmilzt.'], correct: 1, fb: 'Richtig — mehr Wärme bedeutet mehr Energiekosten. Raffinerien optimieren daher genau, welche Temperaturen nötig sind.' },
+      { q: 'Warum reicht es in der Praxis nicht, nur auf 200 °C zu heizen?', opts: ['Weil sonst nur Gas und Benzin getrennt werden — Diesel und Heizöl bleiben im Rohöl.', 'Weil die Kolonne bei 200 °C nicht funktioniert.', 'Weil Benzin erst ab 300 °C siedet.', 'Weil Rohöl bei 200 °C fest wird.'], correct: 0, fb: 'Genau — die wertvollen schweren Fraktionen (Diesel, Heizöl) haben Siedepunkte über 250 °C und werden erst bei höheren Temperaturen getrennt.' }
+    ]
+  },
+  {
+    icon: '🔬', title: 'Zwei Böden vergleichen', sub: '3 Fragen · Glockenboden-Detail',
+    instruction: 'Wechsle in die <strong>Detailansicht</strong>. Schaue dir nacheinander den <strong>Benzin-Boden</strong> und den <strong>Heizöl-Boden</strong> an (bei 400 °C Heiztemperatur).',
+    qs: [
+      { q: 'Welche Teilchen kondensieren am Benzin-Boden?', opts: ['Nur die gelben (Benzin).', 'Die braunen (Diesel).', 'Alle gleichzeitig.', 'Keine — alles steigt weiter auf.'], correct: 0, fb: 'Richtig! Am Benzin-Boden herrscht die Temperatur, bei der Benzin-Moleküle kondensieren. Alle schwereren Fraktionen sind schon auf den unteren Böden kondensiert.' },
+      { q: 'Kommen am Benzin-Boden noch Diesel-Teilchen an?', opts: ['Ja, sie steigen von unten hoch.', 'Nein — Diesel kondensiert schon auf einem tieferen, heißeren Boden.', 'Ja, aber sie verdampfen sofort wieder.', 'Diesel gibt es in der Simulation nicht.'], correct: 1, fb: 'Genau! Der Diesel-Boden liegt tiefer und ist heißer. Diesel kondensiert dort, bevor es jemals den Benzin-Boden erreichen könnte.' },
+      { q: 'Warum ist der Heizöl-Boden heißer als der Benzin-Boden?', opts: ['Weil er näher an der Heizung (unten) liegt.', 'Weil Heizöl die Temperatur erhöht.', 'Zufall.', 'Weil Benzin die Kolonne abkühlt.'], correct: 0, fb: 'Richtig! Die Kolonne hat ein Temperaturgefälle: unten heiß (nahe der Heizung), oben kühl. Jeder Boden hat dadurch eine andere Temperatur.' }
+    ]
+  },
+  {
+    icon: '🎯', title: 'Optimale Betriebstemperatur', sub: '3 Fragen · Parameteroptimierung',
+    instruction: 'Finde heraus, ab welcher Mindest-Temperatur <strong>alle Fraktionen außer dem Rückstand</strong> abgetrennt werden. Benutze den Temperatur-Slider.',
+    qs: [
+      { q: 'Ab welcher Temperatur wird Schweres Heizöl (letzte Fraktion vor dem Rückstand) vollständig abgetrennt?', opts: ['Ab 250 °C', 'Ab 350 °C', 'Ab 400 °C', 'Ab 500 °C'], correct: 2, fb: 'Richtig — Schweres Heizöl siedet bis 400 °C. Ab dieser Temperatur ist es vollständig verdampft.' },
+      { q: 'Was passiert mit dem Rückstand bei 400 °C?', opts: ['Er verdampft auch.', 'Er bleibt flüssig am Kolonnenfuß.', 'Er wird zu Benzin.', 'Er verschwindet.'], correct: 1, fb: 'Stimmt — der Rückstand hat Siedepunkte über 400 °C. Bei normaler Destillation bleibt er flüssig am Boden zurück.' },
+      { q: 'Warum wird in der Praxis der Rückstand nicht einfach noch stärker erhitzt?', opts: ['Weil sich die Moleküle dann zersetzen (thermisches Cracken).', 'Weil es physikalisch unmöglich ist.', 'Weil Rückstand wertlos ist.', 'Weil die Heizung nur bis 400 °C geht.'], correct: 0, fb: 'Richtig! Bei sehr hohen Temperaturen zersetzen sich die großen Moleküle — das nennt man „Cracken". In Raffinerien wird das gezielt eingesetzt, um aus dem Rückstand noch wertvolle Produkte zu gewinnen.' }
+    ]
+  },
+  {
+    icon: '🌍', title: 'Umwelt und Nachhaltigkeit', sub: '3 Fragen · Alltagsbezug',
+    instruction: 'Überlege, welche Umweltaspekte mit der Erdöldestillation verbunden sind.',
+    qs: [
+      { q: 'Was ist der größte Umweltaspekt der Erdöl-Destillation?', opts: ['Wasserverbrauch.', 'Hoher Energiebedarf durch die notwendige Erhitzung.', 'Lärmbelastung.', 'Lichtverschmutzung.'], correct: 1, fb: 'Richtig — die Heizung der Kolonne braucht enorme Mengen Energie, die meist aus fossilen Quellen stammt. Das erzeugt CO₂-Emissionen.' },
+      { q: 'Welches Produkt der Destillation verursacht beim späteren Einsatz die meisten CO₂-Emissionen?', opts: ['Bitumen für den Straßenbau.', 'Schmieröl für Maschinen.', 'Benzin und Diesel als Kraftstoffe (Verbrennung in Motoren).', 'Flüssiggas zum Kochen.'], correct: 2, fb: 'Stimmt — Benzin und Diesel werden in Millionen von Motoren verbrannt und sind eine der größten Quellen für CO₂-Emissionen weltweit.' },
+      { q: 'Welche Alternative zur Erdöl-Destillation gibt es für Kraftstoffe?', opts: ['Es gibt keine Alternative.', 'Elektroantriebe, Biokraftstoffe, Wasserstoff.', 'Stärkere Destillation.', 'Mehr Bohrtürme bauen.'], correct: 1, fb: 'Genau — Elektrofahrzeuge, Biokraftstoffe und Wasserstoff sind Alternativen zu fossilen Kraftstoffen. Die Umstellung ist allerdings ein langer Prozess.' }
+    ]
+  },
+  {
+    icon: '🏭', title: 'Produkte im Alltag', sub: '3 Fragen · Verwendungszwecke',
+    instruction: 'Überlege, wo dir die einzelnen Fraktionen im Alltag begegnen.',
+    qs: [
+      { q: 'Welche Fraktion treibt Flugzeuge an?', opts: ['Benzin', 'Kerosin', 'Diesel', 'Schweröl'], correct: 1, fb: 'Richtig! Kerosin (auch Jet-A1 genannt) ist der Treibstoff für Düsentriebwerke. Es siedet im Bereich 180–250 °C.' },
+      { q: 'Woraus besteht der Asphalt auf Straßen hauptsächlich?', opts: ['Aus Benzin, das aushärtet.', 'Aus Kerosin.', 'Aus dem Destillations-Rückstand (Bitumen).', 'Aus Diesel.'], correct: 2, fb: 'Stimmt! Bitumen, der zähe Rückstand ganz unten in der Kolonne, wird mit Gestein gemischt und als Straßenbelag verwendet.' },
+      { q: 'Was passiert mit dem Raffineriegas (leichteste Fraktion)?', opts: ['Es wird verworfen.', 'Es wird zu Flüssiggas (LPG) verarbeitet oder als Heizgas verwendet.', 'Es wird zu Benzin.', 'Es wird in die Atmosphäre abgelassen.'], correct: 1, fb: 'Richtig — Raffineriegas wird entweder als Flüssiggas (LPG, z. B. Campinggas) verkauft oder intern in der Raffinerie als Brennstoff für die Heizung genutzt.' }
+    ]
+  }
+];
+
+let deepState = { taskIdx: -1, qIdx: 0, done: new Set() };
+
+function renderDeepList() {
+  const list = document.getElementById('deepList');
+  list.innerHTML = '';
+  VERTIEFUNG.forEach((v, i) => {
+    const item = document.createElement('button');
+    item.className = 'deep-item' + (deepState.done.has(i) ? ' done' : '');
+    item.innerHTML = `<span class="di-icon">${v.icon}</span><div><div class="di-title">${v.title}</div><div class="di-sub">${v.sub}</div></div><span class="di-badge">${deepState.done.has(i) ? '✓ erledigt' : v.qs.length + ' Fragen'}</span>`;
+    item.addEventListener('click', () => startDeepTask(i));
+    list.appendChild(item);
+  });
+}
+
+function startDeepTask(idx) {
+  deepState.taskIdx = idx;
+  deepState.qIdx = 0;
+  document.getElementById('deepList').style.display = 'none';
+  document.getElementById('deepTaskArea').style.display = 'block';
+  renderDeepQ();
+}
+
+function renderDeepQ() {
+  const v = VERTIEFUNG[deepState.taskIdx];
+  const q = v.qs[deepState.qIdx];
+  document.getElementById('deepIcon').textContent = v.icon;
+  document.getElementById('deepText').innerHTML = deepState.qIdx === 0 ? v.instruction : `Aufgabe „${v.title}" · Frage ${deepState.qIdx + 1} / ${v.qs.length}`;
+  document.getElementById('deepQ').innerHTML = q.q;
+  const optsDiv = document.getElementById('deepOpts');
+  optsDiv.innerHTML = '';
+  q.opts.forEach((opt, i) => {
+    const b = document.createElement('button');
+    b.className = 'task-opt';
+    b.textContent = opt;
+    b.addEventListener('click', () => answerDeep(i, b));
+    optsDiv.appendChild(b);
+  });
+  document.getElementById('deepFb').classList.remove('show', 'ok', 'no');
+  document.getElementById('deepNextQBtn').disabled = true;
+  document.getElementById('deepNextQBtn').textContent =
+    deepState.qIdx < v.qs.length - 1 ? 'Nächste Frage →' : '✓ Fertig';
+}
+
+function answerDeep(idx, btn) {
+  const q = VERTIEFUNG[deepState.taskIdx].qs[deepState.qIdx];
+  const fb = document.getElementById('deepFb');
+  const allOpts = document.querySelectorAll('#deepOpts .task-opt');
+  allOpts.forEach(o => o.disabled = true);
+  if (idx === q.correct) {
+    btn.classList.add('correct'); fb.className = 'task-feedback show ok'; fb.innerHTML = '✓ ' + q.fb;
+  } else {
+    btn.classList.add('wrong'); allOpts[q.correct].classList.add('reveal');
+    fb.className = 'task-feedback show no'; fb.innerHTML = '✗ Nicht ganz. ' + q.fb;
+  }
+  document.getElementById('deepNextQBtn').disabled = false;
+}
+
+document.getElementById('deepNextQBtn').addEventListener('click', () => {
+  const v = VERTIEFUNG[deepState.taskIdx];
+  if (deepState.qIdx < v.qs.length - 1) {
+    deepState.qIdx++;
+    renderDeepQ();
+  } else {
+    deepState.done.add(deepState.taskIdx);
+    document.getElementById('deepList').style.display = '';
+    document.getElementById('deepTaskArea').style.display = 'none';
+    renderDeepList();
+  }
+});
+
+document.getElementById('deepBackBtn').addEventListener('click', () => {
+  document.getElementById('deepList').style.display = '';
+  document.getElementById('deepTaskArea').style.display = 'none';
+});
+
+/* =========================================================================
+   QUIZ (20 Fragetypen, zufällig)
+   ========================================================================= */
+const QUIZ = [
+  // --- Siedepunkt-Zuordnung (dynamisch) ---
+  () => {
+    const f = FRAKTIONEN[1 + Math.floor(Math.random() * 4)];
+    return { q: `Bei welcher Temperatur wird <strong>${f.name}</strong> vollständig abgetrennt?`, opts: [`unter ${f.min} °C`, `zwischen ${f.min} und ${f.max} °C`, `ab ${f.max} °C`, `genau bei ${Math.round((f.min+f.max)/2)} °C`], correct: 2, fb: `${f.name} siedet im Bereich ${f.min}–${f.max} °C. Erst ab ${f.max} °C ist sie vollständig verdampft.` };
+  },
+  // --- Schwerste Fraktion bei gegebener Temp ---
+  () => {
+    const temps = [100, 200, 300, 400];
+    const temp = temps[Math.floor(Math.random() * temps.length)];
+    const aktiv = FRAKTIONEN.filter(f => temp >= f.max && f.id > 0);
+    const target = aktiv[aktiv.length - 1];
+    if (!target) return QUIZ[0]();
+    const wrong = FRAKTIONEN.filter(f => f.id !== target.id && f.id > 0).slice(0, 3);
+    const opts = [target, ...wrong].sort(() => Math.random() - 0.5);
+    return { q: `Bei <strong>${temp} °C</strong>: Welche ist die schwerste vollständig getrennte Fraktion?`, opts: opts.map(o => o.name), correct: opts.findIndex(o => o.id === target.id), fb: `${target.name} siedet bis ${target.max} °C und ist bei ${temp} °C gerade noch vollständig verdampft.` };
+  },
+  // --- Warum Benzin oben? ---
+  () => ({ q: 'Warum entweicht Benzin weiter oben als Diesel?', opts: ['Benzin ist schwerer.', 'Benzin hat einen niedrigeren Siedepunkt und kondensiert erst oben.', 'Diesel wird oben eingefüllt.', 'Die Kolonne ist oben heißer.'], correct: 1, fb: 'Benzin besteht aus leichteren Molekülen mit niedrigerem Siedepunkt. Es bleibt bis weit oben gasförmig.' }),
+  // --- Teilchenmodell: große Moleküle ---
+  () => ({ q: 'Was passiert mit großen Molekülen bei leichter Temperaturerhöhung?', opts: ['Sie verdampfen sofort.', 'Sie verdampfen kaum — der Siedepunkt ist nicht erreicht.', 'Sie werden zu kleinen Molekülen.', 'Sie fliegen nach oben heraus.'], correct: 1, fb: 'Große Moleküle haben stärkere Anziehungskräfte. Sie brauchen hohe Temperaturen zum Verdampfen.' }),
+  // --- Verwendung (dynamisch) ---
+  () => {
+    const f = FRAKTIONEN[1 + Math.floor(Math.random() * 4)];
+    const wrong = ['Zum Kühlen von Kolonnen.', 'Als Trinkwasser-Ersatz.', 'Zum Waschen von Kleidung.'];
+    const opts = [f.nutzung, ...wrong].sort(() => Math.random() - 0.5);
+    return { q: `Wofür wird <strong>${f.name}</strong> hauptsächlich verwendet?`, opts, correct: opts.indexOf(f.nutzung), fb: `${f.name} wird für ${f.nutzung.toLowerCase()} eingesetzt.` };
+  },
+  // --- Falsche Aussage finden ---
+  () => ({ q: 'Welche Aussage ist <strong>falsch</strong>?', opts: ['Die Kolonne ist unten heiß und oben kühl.', 'Jede Fraktion hat einen Siedebereich.', 'Alle Kohlenwasserstoffe haben den gleichen Siedepunkt.', 'Schwere Fraktionen werden unten abgezogen.'], correct: 2, fb: 'Kohlenwasserstoffe unterscheiden sich in Kettenlänge und damit im Siedepunkt.' }),
+  // --- Reihenfolge ---
+  () => ({ q: 'In welcher Reihenfolge werden die Fraktionen beim Aufheizen abgetrennt (zuerst → zuletzt)?', opts: ['Diesel → Benzin → Gas → Heizöl', 'Gas → Benzin → Kerosin → Diesel', 'Heizöl → Diesel → Kerosin → Gas', 'Benzin → Diesel → Gas → Kerosin'], correct: 1, fb: 'Die leichteste Fraktion (Gas) verdampft zuerst, dann folgen Benzin, Kerosin, Diesel — in aufsteigender Siedetemperatur.' }),
+  // --- Position in der Kolonne ---
+  () => ({ q: 'Ganz oben in der Kolonne wird abgezogen:', opts: ['Schweres Heizöl', 'Diesel', 'Raffineriegas', 'Rückstand'], correct: 2, fb: 'Raffineriegas hat den niedrigsten Siedepunkt und bleibt am längsten gasförmig — es steigt bis ganz nach oben.' }),
+  // --- Molekülgröße ---
+  () => ({ q: 'Welcher Zusammenhang besteht zwischen Molekülgröße und Siedepunkt?', opts: ['Größere Moleküle haben niedrigere Siedepunkte.', 'Größere Moleküle haben höhere Siedepunkte.', 'Es gibt keinen Zusammenhang.', 'Nur runde Moleküle sieden hoch.'], correct: 1, fb: 'Je größer und schwerer ein Kohlenwasserstoff-Molekül, desto stärker die Anziehungskräfte und desto höher der Siedepunkt.' }),
+  // --- Temperaturgradient ---
+  () => ({ q: 'Wie verändert sich die Temperatur in der Kolonne von unten nach oben?', opts: ['Sie bleibt überall gleich.', 'Sie nimmt von unten nach oben ab.', 'Sie nimmt von unten nach oben zu.', 'Sie schwankt zufällig.'], correct: 1, fb: 'Die Heizung sitzt unten. Je weiter oben, desto kühler — genau das ermöglicht die Trennung der Fraktionen.' }),
+  // --- Was ist Rohöl? ---
+  () => ({ q: 'Woraus besteht Rohöl?', opts: ['Aus reinem Benzin.', 'Aus einer einzigen chemischen Verbindung.', 'Aus einem Gemisch vieler Kohlenwasserstoffe mit verschiedenen Kettenlängen.', 'Aus Wasser und Öl.'], correct: 2, fb: 'Rohöl ist ein komplexes Gemisch aus Hunderten verschiedener Kohlenwasserstoffe — von kleinen Gasmolekülen bis zu riesigen Asphalt-Ketten.' }),
+  // --- Kondensation ---
+  () => ({ q: 'Was bedeutet „Kondensation" bei der Destillation?', opts: ['Ein Stoff wird fest.', 'Ein gasförmiger Stoff wird beim Abkühlen wieder flüssig.', 'Ein Stoff verschwindet.', 'Ein Stoff wird heißer.'], correct: 1, fb: 'Kondensation ist der Übergang von gasförmig zu flüssig. In der Kolonne kondensieren die Dämpfe auf dem Boden, dessen Temperatur zu ihrem Siedepunkt passt.' }),
+  // --- Glockenbodenm ---
+  () => ({ q: 'Welche Aufgabe hat der Glockenboden in der Kolonne?', opts: ['Er blockiert den Dampf vollständig.', 'Er sorgt dafür, dass Dampf und Flüssigkeit intensiv in Kontakt kommen.', 'Er heizt die Kolonne auf.', 'Er kühlt die Kolonne ab.'], correct: 1, fb: 'Der Glockenboden zwingt den aufsteigenden Dampf durch die Flüssigkeitsschicht. Beim Durchperlen findet Stoffaustausch statt: passende Fraktionen kondensieren.' }),
+  // --- Steigrohr ---
+  () => ({ q: 'Wozu dient das Steigrohr im Glockenboden?', opts: ['Es leitet den Dampf von unten durch die Metallplatte nach oben unter die Glocke.', 'Es pumpt Flüssigkeit nach oben.', 'Es misst die Temperatur.', 'Es ist nur zur Dekoration.'], correct: 0, fb: 'Das Steigrohr durchbricht die Metallplatte und führt den Dampf nach oben unter die Glocke. Von dort wird er seitlich durch die Flüssigkeit gedrückt.' }),
+  // --- Überlaufrohr ---
+  () => ({ q: 'Was passiert mit der kondensierten Flüssigkeit auf dem Boden?', opts: ['Sie bleibt für immer dort.', 'Sie fließt über das Überlaufrohr auf den nächsttieferen Boden.', 'Sie verdampft sofort wieder.', 'Sie wird nach oben gepumpt.'], correct: 1, fb: 'Die Flüssigkeit fließt durch Schwerkraft über das Überlaufrohr nach unten — dort kann sie erneut verdampfen, was die Trennschärfe verbessert.' }),
+  // --- Gegenstrom ---
+  () => ({ q: 'In der Kolonne strömen Dampf und Flüssigkeit in entgegengesetzte Richtungen. Was bewirkt das?', opts: ['Es macht die Trennung schlechter.', 'Es sorgt für eine besonders gründliche Trennung (Gegenstrom-Prinzip).', 'Es hat keinen Effekt.', 'Es erhöht den Druck.'], correct: 1, fb: 'Das Gegenstrom-Prinzip sorgt dafür, dass auf jedem Boden frischer Dampf auf frische Flüssigkeit trifft — das verbessert die Trennung enorm.' }),
+  // --- Welche Fraktion NICHT abgetrennt ---
+  () => {
+    const temp = [150, 250, 350][Math.floor(Math.random() * 3)];
+    const nichtAktiv = FRAKTIONEN.filter(f => temp < f.max && f.id > 0);
+    if (nichtAktiv.length === 0) return QUIZ[0]();
+    const target = nichtAktiv[0];
+    const aktiv = FRAKTIONEN.filter(f => temp >= f.max && f.id > 0).slice(-3);
+    const opts = [target, ...aktiv].sort(() => Math.random() - 0.5);
+    return { q: `Bei <strong>${temp} °C</strong>: Welche Fraktion ist noch <em>nicht</em> vollständig abgetrennt?`, opts: opts.map(o => o.name), correct: opts.findIndex(o => o.id === target.id), fb: `${target.name} siedet erst im Bereich ${target.min}–${target.max} °C. Bei ${temp} °C ist dieser Bereich noch nicht überschritten.` };
+  },
+  // --- Anzahl Böden ---
+  () => ({ q: 'Warum hat eine reale Kolonne viele Glockenböden statt nur einen?', opts: ['Damit sie stabiler steht.', 'Mehr Böden = mehr Kontaktstellen = bessere Trennung.', 'Weil ein Boden zu billig wäre.', 'Damit es schöner aussieht.'], correct: 1, fb: 'Jeder Boden ermöglicht einen weiteren Stoffaustausch zwischen Dampf und Flüssigkeit. Mehr Böden bedeuten schärfere Trennung der Fraktionen.' }),
+  // --- Was bleibt zurück? ---
+  () => ({ q: 'Was geschieht mit dem Rückstand am Kolonnenfuß?', opts: ['Er wird entsorgt.', 'Er wird z. B. zu Bitumen (Straßenbelag) oder Schmieröl weiterverarbeitet.', 'Er wird erneut destilliert und verschwindet.', 'Er wird zu Benzin.'], correct: 1, fb: 'Der Rückstand enthält die schwersten Moleküle. In Raffinerien wird er zu Bitumen, Schmieröl oder durch Cracken zu leichteren Produkten verarbeitet.' }),
+  // --- Physikalisch oder chemisch? ---
+  () => ({ q: 'Ist die fraktionierte Destillation ein physikalisches oder ein chemisches Verfahren?', opts: ['Chemisch — es entstehen neue Stoffe.', 'Physikalisch — es werden nur vorhandene Stoffe getrennt.', 'Beides gleichzeitig.', 'Weder noch.'], correct: 1, fb: 'Die Destillation trennt ein Gemisch in seine Bestandteile, ohne die Moleküle zu verändern. Es ist ein physikalisches Trennverfahren.' })
+];
+
+let currentQuiz = null;
+function newQuiz() {
+  currentQuiz = QUIZ[Math.floor(Math.random() * QUIZ.length)]();
+  if (currentQuiz.correctAnswer !== undefined) {
+    currentQuiz.correct = currentQuiz.opts.indexOf(currentQuiz.correctAnswer);
+  }
+  document.getElementById('quizQ').innerHTML = currentQuiz.q;
+  const optsDiv = document.getElementById('quizOpts');
+  optsDiv.innerHTML = '';
+  currentQuiz.opts.forEach((opt, idx) => {
+    const b = document.createElement('button');
+    b.className = 'task-opt';
+    b.textContent = opt;
+    b.addEventListener('click', () => answerQuiz(idx, b));
+    optsDiv.appendChild(b);
+  });
+  document.getElementById('quizFb').classList.remove('show', 'ok', 'no');
+}
+
+function answerQuiz(idx, btn) {
+  const fb = document.getElementById('quizFb');
+  const allOpts = document.querySelectorAll('#quizOpts .task-opt');
+  allOpts.forEach(o => o.disabled = true);
+  if (idx === currentQuiz.correct) {
+    btn.classList.add('correct'); fb.className = 'task-feedback show ok'; fb.innerHTML = '✓ ' + currentQuiz.fb;
+    state.stats.right++;
+  } else {
+    btn.classList.add('wrong'); allOpts[currentQuiz.correct].classList.add('reveal');
+    fb.className = 'task-feedback show no'; fb.innerHTML = '✗ Nicht ganz. ' + currentQuiz.fb;
+    state.stats.wrong++;
+  }
+  updateStats();
+}
+
+function updateStats() {
+  document.getElementById('statRight').textContent = state.stats.right;
+  document.getElementById('statWrong').textContent = state.stats.wrong;
+  const total = state.stats.right + state.stats.wrong;
+  document.getElementById('statRate').textContent = total === 0 ? '–' : Math.round(100 * state.stats.right / total) + '%';
+}
+
+document.getElementById('quizNewBtn').addEventListener('click', newQuiz);
+document.getElementById('quizHintBtn').addEventListener('click', () => {
+  const fb = document.getElementById('quizFb');
+  fb.className = 'task-feedback show';
+  fb.innerHTML = '💡 <strong>Tipp:</strong> Schaue dir die Legende und die Siedepunktbereiche an. Vergleiche die Angaben mit der Frage.';
+});
+
+/* =========================================================================
+   INIT
+   ========================================================================= */
+trayParticles = [];
+renderKolonne();
+drawTray();
+drawChart();
+renderPathStep();
+renderDeepList();
+newQuiz();
+requestAnimationFrame(simLoop);
+</script>
+</body>
+</html>
