@@ -1,0 +1,4600 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Shadowrun Anarchy - Kampftracker</title>
+<style>
+/* ============================================
+   SHADOWRUN ANARCHY KAMPFTRACKER
+   Cyberpunk Neon Theme
+   ============================================ */
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-secondary: #13131a;
+  --bg-tertiary: #1c1c28;
+  --bg-card: #1a1a26;
+  --bg-hover: #252538;
+  --border: #2a2a40;
+  --border-bright: #3a3a55;
+  --text-primary: #e8e8f0;
+  --text-secondary: #9090a8;
+  --text-muted: #5a5a75;
+  --neon-cyan: #00f0ff;
+  --neon-magenta: #ff00aa;
+  --neon-yellow: #f0ff00;
+  --neon-orange: #ff6b00;
+  --neon-red: #ff2e5a;
+  --neon-green: #00ff88;
+  --neon-purple: #b855ff;
+  --shadow-cyan: 0 0 20px rgba(0, 240, 255, 0.3);
+  --shadow-magenta: 0 0 20px rgba(255, 0, 170, 0.3);
+  --font-display: 'Orbitron', 'Rajdhani', sans-serif;
+  --font-body: 'Rajdhani', 'Arial', sans-serif;
+  --font-mono: 'Share Tech Mono', 'Courier New', monospace;
+}
+
+@import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;500;700;900&family=Rajdhani:wght@300;400;500;600;700&family=Share+Tech+Mono&display=swap');
+
+body {
+  font-family: var(--font-body);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  min-height: 100vh;
+  line-height: 1.5;
+  background-image:
+    linear-gradient(rgba(0, 240, 255, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 240, 255, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  overflow-x: hidden;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background:
+    radial-gradient(circle at 20% 30%, rgba(255, 0, 170, 0.08) 0%, transparent 50%),
+    radial-gradient(circle at 80% 70%, rgba(0, 240, 255, 0.08) 0%, transparent 50%);
+  pointer-events: none;
+  z-index: 0;
+}
+
+/* ============================================
+   HEADER & NAVIGATION
+   ============================================ */
+
+header {
+  position: relative;
+  z-index: 10;
+  background: linear-gradient(180deg, rgba(26, 26, 38, 0.95) 0%, rgba(10, 10, 15, 0.8) 100%);
+  border-bottom: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 30px rgba(0, 240, 255, 0.2);
+  padding: 1rem 2rem;
+  backdrop-filter: blur(10px);
+}
+
+.header-content {
+  max-width: 1600px;
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 1rem;
+}
+
+.logo {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: 1.8rem;
+  letter-spacing: 0.15em;
+  background: linear-gradient(135deg, var(--neon-cyan) 0%, var(--neon-magenta) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  text-shadow: 0 0 30px rgba(0, 240, 255, 0.5);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.logo::before {
+  content: '◆';
+  -webkit-text-fill-color: var(--neon-cyan);
+  font-size: 1.2rem;
+}
+
+.logo-sub {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  letter-spacing: 0.3em;
+  margin-top: -4px;
+}
+
+nav {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.nav-btn {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  padding: 0.65rem 1.2rem;
+  background: transparent;
+  color: var(--text-secondary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.2s ease;
+  position: relative;
+  overflow: hidden;
+}
+
+.nav-btn:hover {
+  color: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.nav-btn.active {
+  color: var(--bg-primary);
+  background: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+}
+
+/* ============================================
+   MAIN LAYOUT
+   ============================================ */
+
+main {
+  position: relative;
+  z-index: 1;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.view {
+  display: none;
+  animation: fadeIn 0.3s ease;
+}
+
+.view.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.section-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.3rem;
+  letter-spacing: 0.15em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.section-title::before {
+  content: '';
+  display: inline-block;
+  width: 6px;
+  height: 20px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.section-subtitle {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--neon-magenta);
+  margin: 1.5rem 0 0.75rem;
+}
+
+/* ============================================
+   BUTTONS
+   ============================================ */
+
+.btn {
+  font-family: var(--font-display);
+  font-weight: 500;
+  font-size: 0.85rem;
+  letter-spacing: 0.1em;
+  padding: 0.65rem 1.3rem;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: all 0.15s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.btn:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.05);
+}
+
+.btn-primary {
+  background: var(--neon-cyan);
+  color: var(--bg-primary);
+  border-color: var(--neon-cyan);
+  font-weight: 700;
+}
+
+.btn-primary:hover {
+  background: #5df5ff;
+  color: var(--bg-primary);
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.5);
+}
+
+.btn-danger {
+  border-color: var(--neon-red);
+  color: var(--neon-red);
+}
+
+.btn-danger:hover {
+  background: var(--neon-red);
+  color: var(--bg-primary);
+}
+
+.btn-success {
+  border-color: var(--neon-green);
+  color: var(--neon-green);
+}
+
+.btn-success:hover {
+  background: var(--neon-green);
+  color: var(--bg-primary);
+}
+
+.btn-small {
+  padding: 0.35rem 0.7rem;
+  font-size: 0.75rem;
+}
+
+.btn-icon {
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  justify-content: center;
+  font-size: 1rem;
+}
+
+/* ============================================
+   CARDS
+   ============================================ */
+
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1.25rem;
+  margin-bottom: 1rem;
+  position: relative;
+  transition: border-color 0.2s;
+}
+
+.card:hover {
+  border-color: var(--border-bright);
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 30px;
+  background: var(--neon-cyan);
+  box-shadow: 0 0 10px var(--neon-cyan);
+}
+
+.card.card-pc::before { background: var(--neon-green); box-shadow: 0 0 10px var(--neon-green); }
+.card.card-npc::before { background: var(--neon-magenta); box-shadow: 0 0 10px var(--neon-magenta); }
+.card.card-critter::before { background: var(--neon-orange); box-shadow: 0 0 10px var(--neon-orange); }
+.card.card-out::before { background: var(--text-muted); box-shadow: none; opacity: 0.5; }
+
+.card.card-out {
+  opacity: 0.6;
+  filter: grayscale(60%);
+}
+
+/* ============================================
+   FORM ELEMENTS
+   ============================================ */
+
+input, select, textarea {
+  font-family: var(--font-body);
+  font-size: 0.95rem;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  width: 100%;
+  transition: all 0.15s;
+}
+
+input:focus, select:focus, textarea:focus {
+  outline: none;
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 10px rgba(0, 240, 255, 0.2);
+}
+
+input[type="number"] {
+  text-align: center;
+  font-family: var(--font-mono);
+  font-weight: 700;
+}
+
+label {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  display: block;
+  margin-bottom: 0.25rem;
+}
+
+.form-group {
+  margin-bottom: 1rem;
+}
+
+.form-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+  gap: 0.75rem;
+}
+
+/* ============================================
+   ATTRIBUTE & STATS DISPLAY
+   ============================================ */
+
+.attributes-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 0.5rem;
+  margin: 1rem 0;
+}
+
+.attribute {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.5rem;
+  text-align: center;
+  position: relative;
+}
+
+.attribute-label {
+  font-family: var(--font-display);
+  font-size: 0.65rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.25rem;
+}
+
+.attribute-value {
+  font-family: var(--font-mono);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  line-height: 1;
+}
+
+.attribute input {
+  font-family: var(--font-mono);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--neon-cyan);
+  background: transparent;
+  border: none;
+  padding: 0;
+  text-align: center;
+}
+
+.attribute input:focus {
+  box-shadow: none;
+  background: var(--bg-tertiary);
+}
+
+/* ============================================
+   ZUSTANDSMONITOR (Health Tracker)
+   ============================================ */
+
+.monitors-container {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+  margin: 1rem 0;
+}
+
+.monitor-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+}
+
+.monitor-title {
+  font-family: var(--font-display);
+  font-size: 0.75rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 0.5rem;
+}
+
+.monitor-physical { color: var(--neon-red); }
+.monitor-stun { color: var(--neon-yellow); }
+
+.monitor-grid {
+  display: grid;
+  gap: 4px;
+}
+
+.monitor-row {
+  display: flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.monitor-row-label {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  color: var(--text-muted);
+  width: 28px;
+  text-align: right;
+  padding-right: 4px;
+}
+
+.monitor-circles {
+  display: flex;
+  gap: 3px;
+  flex-wrap: wrap;
+}
+
+.monitor-circle {
+  width: 16px;
+  height: 16px;
+  border: 1.5px solid var(--text-muted);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.15s;
+  background: transparent;
+  padding: 0;
+  flex-shrink: 0;
+}
+
+.monitor-circle:hover {
+  transform: scale(1.1);
+  border-color: var(--neon-cyan);
+}
+
+.monitor-circle.filled-physical {
+  background: var(--neon-red);
+  border-color: var(--neon-red);
+  box-shadow: 0 0 8px rgba(255, 46, 90, 0.5);
+}
+
+.monitor-circle.filled-stun {
+  background: var(--neon-yellow);
+  border-color: var(--neon-yellow);
+  box-shadow: 0 0 8px rgba(240, 255, 0, 0.5);
+}
+
+.monitor-circle.filled-armor {
+  background: var(--neon-cyan);
+  border-color: var(--neon-cyan);
+  box-shadow: 0 0 6px rgba(0, 240, 255, 0.4);
+}
+
+/* Malus Display */
+.wound-malus {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  font-size: 0.9rem;
+  padding: 2px 8px;
+  background: var(--bg-tertiary);
+  display: inline-block;
+  margin-left: 0.5rem;
+  border-left: 3px solid var(--neon-red);
+}
+
+.wound-malus.zero {
+  color: var(--text-muted);
+  border-left-color: var(--text-muted);
+}
+
+/* Armor */
+.armor-section {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  margin: 1rem 0;
+}
+
+.armor-section .monitor-circles {
+  margin-top: 0.5rem;
+}
+
+/* ============================================
+   RESOURCES (Edge, Plotpunkte, Karma)
+   ============================================ */
+
+.resources-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 0.75rem;
+  margin: 1rem 0;
+}
+
+.resource-box {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.75rem;
+  text-align: center;
+  position: relative;
+}
+
+.resource-label {
+  font-family: var(--font-display);
+  font-size: 0.7rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-secondary);
+  margin-bottom: 0.35rem;
+}
+
+.resource-controls {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+}
+
+.resource-btn {
+  width: 24px;
+  height: 24px;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border);
+  color: var(--text-primary);
+  cursor: pointer;
+  font-family: var(--font-mono);
+  font-size: 0.9rem;
+  font-weight: 700;
+  transition: all 0.15s;
+  padding: 0;
+  line-height: 1;
+}
+
+.resource-btn:hover {
+  border-color: var(--neon-cyan);
+  color: var(--neon-cyan);
+}
+
+.resource-value {
+  font-family: var(--font-mono);
+  font-size: 1.4rem;
+  font-weight: 700;
+  min-width: 2.5rem;
+}
+
+.resource-edge .resource-value { color: var(--neon-orange); }
+.resource-plot .resource-value { color: var(--neon-purple); }
+.resource-karma .resource-value { color: var(--neon-yellow); }
+.resource-essenz .resource-value { color: var(--neon-green); }
+
+/* ============================================
+   CHARACTER CARD (Combat View)
+   ============================================ */
+
+.combat-char {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.combat-char-header {
+  background: linear-gradient(90deg, var(--bg-tertiary) 0%, transparent 100%);
+  padding: 0.75rem 1rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid var(--border);
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.combat-char-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.05em;
+  color: var(--text-primary);
+}
+
+.combat-char-type {
+  font-family: var(--font-mono);
+  font-size: 0.7rem;
+  padding: 2px 8px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  border: 1px solid currentColor;
+}
+
+.combat-char-type.pc { color: var(--neon-green); }
+.combat-char-type.npc { color: var(--neon-magenta); }
+.combat-char-type.critter { color: var(--neon-orange); }
+
+.combat-char-actions {
+  display: flex;
+  gap: 0.35rem;
+}
+
+.combat-char-body {
+  padding: 1rem;
+}
+
+.combat-char-compact {
+  display: grid;
+  grid-template-columns: 2fr 3fr 1fr;
+  gap: 1rem;
+  align-items: start;
+}
+
+.combat-name-input {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid transparent;
+  padding: 0.25rem 0;
+}
+
+.combat-name-input:focus {
+  border-bottom-color: var(--neon-cyan);
+  background: transparent;
+}
+
+/* ============================================
+   WEAPONS & GEAR
+   ============================================ */
+
+.weapon-list {
+  margin: 0.5rem 0;
+}
+
+.weapon-row {
+  display: grid;
+  grid-template-columns: 2fr 1fr 3fr auto;
+  gap: 0.5rem;
+  align-items: center;
+  padding: 0.35rem 0;
+  border-bottom: 1px solid var(--border);
+  font-size: 0.85rem;
+}
+
+.weapon-row:last-child {
+  border-bottom: none;
+}
+
+.weapon-name {
+  font-weight: 600;
+}
+
+.weapon-damage {
+  font-family: var(--font-mono);
+  color: var(--neon-red);
+  font-weight: 700;
+  text-align: center;
+}
+
+.weapon-ranges {
+  font-family: var(--font-mono);
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+/* ============================================
+   MODALS
+   ============================================ */
+
+.modal-overlay {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0, 0, 0, 0.85);
+  backdrop-filter: blur(5px);
+  z-index: 100;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.modal-overlay.active {
+  display: flex;
+}
+
+.modal {
+  background: var(--bg-card);
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 40px rgba(0, 240, 255, 0.3);
+  max-width: 900px;
+  width: 100%;
+  max-height: 90vh;
+  overflow-y: auto;
+  animation: modalIn 0.25s ease;
+}
+
+@keyframes modalIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.modal-header {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: var(--bg-tertiary);
+}
+
+.modal-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1.1rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--neon-cyan);
+}
+
+.modal-body {
+  padding: 1.5rem;
+}
+
+.modal-close {
+  background: transparent;
+  border: none;
+  color: var(--text-secondary);
+  cursor: pointer;
+  font-size: 1.5rem;
+  width: 32px;
+  height: 32px;
+  line-height: 1;
+  transition: color 0.15s;
+}
+
+.modal-close:hover {
+  color: var(--neon-red);
+}
+
+/* ============================================
+   LIBRARY GRID
+   ============================================ */
+
+.library-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1rem;
+}
+
+.library-item {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  cursor: pointer;
+  transition: all 0.2s;
+  position: relative;
+}
+
+.library-item::before {
+  content: '';
+  position: absolute;
+  top: 0; left: 0;
+  width: 3px;
+  height: 100%;
+  background: var(--neon-magenta);
+  transition: all 0.2s;
+}
+
+.library-item.critter::before {
+  background: var(--neon-orange);
+}
+
+.library-item:hover {
+  border-color: var(--neon-cyan);
+  transform: translateX(3px);
+}
+
+.library-item-name {
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.05em;
+  margin-bottom: 0.5rem;
+}
+
+.library-item-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0.35rem;
+  font-size: 0.8rem;
+  font-family: var(--font-mono);
+}
+
+.library-item-stat {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+}
+
+.library-item-stat strong {
+  color: var(--text-primary);
+}
+
+/* ============================================
+   SCENE MANAGEMENT
+   ============================================ */
+
+.scenes-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.scene-selector {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  flex: 1;
+  min-width: 250px;
+}
+
+.scene-selector select {
+  flex: 1;
+  font-family: var(--font-display);
+  font-size: 0.9rem;
+}
+
+.scene-empty {
+  text-align: center;
+  padding: 4rem 2rem;
+  color: var(--text-muted);
+  border: 1px dashed var(--border);
+}
+
+.scene-empty .big {
+  font-size: 2rem;
+  font-family: var(--font-display);
+  color: var(--text-secondary);
+  margin-bottom: 1rem;
+  letter-spacing: 0.2em;
+}
+
+/* ============================================
+   PC LOGIN / SAVE SECTION
+   ============================================ */
+
+.pc-login {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.pc-login-card {
+  background: var(--bg-card);
+  border: 1px solid var(--neon-green);
+  padding: 2rem;
+  margin-bottom: 1.5rem;
+  box-shadow: 0 0 30px rgba(0, 255, 136, 0.1);
+}
+
+.code-display {
+  background: var(--bg-primary);
+  border: 1px solid var(--border);
+  padding: 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.85rem;
+  word-break: break-all;
+  max-height: 200px;
+  overflow-y: auto;
+  margin: 0.5rem 0;
+  color: var(--neon-cyan);
+}
+
+/* ============================================
+   SKILLS LIST
+   ============================================ */
+
+.skills-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 0.5rem;
+  margin: 0.5rem 0;
+}
+
+.skill-item {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 0.35rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.35rem 0.5rem;
+  align-items: center;
+  font-size: 0.85rem;
+}
+
+.skill-item input[type="text"] {
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-size: 0.85rem;
+}
+
+.skill-item .skill-dice {
+  width: 50px;
+  text-align: center;
+  font-family: var(--font-mono);
+  color: var(--neon-cyan);
+}
+
+.skill-item select {
+  width: 50px;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  padding: 0.2rem;
+}
+
+/* ============================================
+   BOOSTERS / GEAR LIST
+   ============================================ */
+
+.booster-list {
+  margin: 0.5rem 0;
+}
+
+.booster-item {
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  padding: 0.5rem 0.75rem;
+  margin-bottom: 0.35rem;
+  font-size: 0.85rem;
+  display: grid;
+  grid-template-columns: 1fr auto;
+  gap: 0.5rem;
+  align-items: start;
+}
+
+.booster-item strong {
+  color: var(--neon-magenta);
+  display: block;
+  margin-bottom: 0.15rem;
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+}
+
+.booster-item-desc {
+  color: var(--text-secondary);
+  font-size: 0.8rem;
+}
+
+/* ============================================
+   COLLAPSIBLE DETAILS
+   ============================================ */
+
+.details-toggle {
+  cursor: pointer;
+  user-select: none;
+  padding: 0.5rem 0;
+  color: var(--neon-cyan);
+  font-family: var(--font-display);
+  font-size: 0.8rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  transition: color 0.15s;
+}
+
+.details-toggle:hover {
+  color: var(--text-primary);
+}
+
+.details-toggle::before {
+  content: '▶ ';
+  display: inline-block;
+  transition: transform 0.2s;
+}
+
+.details-toggle.open::before {
+  transform: rotate(90deg);
+}
+
+.details-content {
+  display: none;
+  padding-top: 0.5rem;
+}
+
+.details-content.open {
+  display: block;
+}
+
+/* ============================================
+   TOAST NOTIFICATIONS
+   ============================================ */
+
+#toast-container {
+  position: fixed;
+  top: 20px;
+  right: 20px;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.toast {
+  background: var(--bg-card);
+  border: 1px solid var(--neon-cyan);
+  padding: 0.75rem 1rem;
+  box-shadow: 0 0 20px rgba(0, 240, 255, 0.3);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  letter-spacing: 0.05em;
+  animation: slideIn 0.3s ease;
+  max-width: 350px;
+}
+
+.toast.error {
+  border-color: var(--neon-red);
+  box-shadow: 0 0 20px rgba(255, 46, 90, 0.3);
+}
+
+.toast.success {
+  border-color: var(--neon-green);
+  box-shadow: 0 0 20px rgba(0, 255, 136, 0.3);
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(50px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* ============================================
+   CLOUD STATUS INDICATOR
+   ============================================ */
+
+.cloud-status {
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--text-muted);
+  margin-right: 0.4rem;
+  vertical-align: middle;
+  box-shadow: 0 0 4px currentColor;
+}
+.cloud-status.connected {
+  background: var(--neon-green);
+  color: var(--neon-green);
+  animation: pulse-green 2s ease-in-out infinite;
+}
+@keyframes pulse-green {
+  0%, 100% { box-shadow: 0 0 4px var(--neon-green); }
+  50% { box-shadow: 0 0 10px var(--neon-green); }
+}
+
+/* ============================================
+   QR CODE DISPLAY
+   ============================================ */
+
+.qr-wrapper {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border);
+  margin: 1rem 0;
+}
+
+.qr-wrapper canvas, .qr-wrapper img {
+  border: 8px solid white;
+  background: white;
+  max-width: 100%;
+  height: auto;
+}
+
+.qr-wrapper .shortcode-display {
+  font-family: var(--font-mono);
+  font-size: 1.8rem;
+  font-weight: 700;
+  letter-spacing: 0.3em;
+  color: var(--neon-cyan);
+  margin-top: 1rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--neon-cyan);
+  box-shadow: 0 0 15px rgba(0, 240, 255, 0.2);
+  text-shadow: 0 0 10px currentColor;
+}
+
+.shortcode-badge {
+  font-family: var(--font-mono);
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+  color: var(--neon-cyan);
+  padding: 0.15rem 0.5rem;
+  border: 1px solid var(--neon-cyan);
+  background: rgba(0, 240, 255, 0.08);
+}
+
+/* QR Scanner */
+#qr-scanner-region {
+  width: 100%;
+  max-width: 400px;
+  margin: 1rem auto;
+  border: 2px solid var(--neon-magenta);
+  box-shadow: 0 0 20px rgba(255, 0, 170, 0.3);
+}
+
+/* Tab strip inside modals */
+.tab-strip {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--border);
+  margin-bottom: 1.5rem;
+}
+.tab-strip button {
+  flex: 1;
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-secondary);
+  font-family: var(--font-display);
+  font-size: 0.85rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 0.75rem 0.5rem;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+.tab-strip button:hover {
+  color: var(--text-primary);
+}
+.tab-strip button.active {
+  color: var(--neon-cyan);
+  border-bottom-color: var(--neon-cyan);
+}
+
+.tab-content { display: none; }
+.tab-content.active { display: block; }
+
+/* ============================================
+   RESPONSIVE
+   ============================================ */
+
+@media (max-width: 768px) {
+  header {
+    padding: 0.75rem 1rem;
+  }
+  .logo { font-size: 1.3rem; }
+  main { padding: 1rem; }
+  .attributes-grid { grid-template-columns: repeat(3, 1fr); }
+  .monitors-container { grid-template-columns: 1fr; }
+  .combat-char-compact { grid-template-columns: 1fr; }
+  .weapon-row { grid-template-columns: 1fr; gap: 0.25rem; }
+}
+
+/* ============================================
+   UTILITY
+   ============================================ */
+
+.text-center { text-align: center; }
+.text-muted { color: var(--text-muted); }
+.text-small { font-size: 0.85rem; }
+.text-mono { font-family: var(--font-mono); }
+
+.flex { display: flex; }
+.flex-gap { gap: 0.5rem; }
+.flex-between { justify-content: space-between; }
+.flex-center { justify-content: center; align-items: center; }
+.flex-wrap { flex-wrap: wrap; }
+
+.mt-1 { margin-top: 0.5rem; }
+.mt-2 { margin-top: 1rem; }
+.mt-3 { margin-top: 1.5rem; }
+.mb-1 { margin-bottom: 0.5rem; }
+.mb-2 { margin-bottom: 1rem; }
+.mb-3 { margin-bottom: 1.5rem; }
+
+.glow-text {
+  text-shadow: 0 0 10px currentColor;
+}
+
+.hidden { display: none !important; }
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+::-webkit-scrollbar-thumb {
+  background: var(--border-bright);
+}
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-cyan);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="header-content">
+    <div>
+      <div class="logo">SHADOWRUN: ANARCHY</div>
+      <div class="logo-sub">// COMBAT TRACKER v1.0</div>
+    </div>
+    <nav>
+      <button class="nav-btn active" data-view="sl">Spielleiter</button>
+      <button class="nav-btn" data-view="sc">Spieler</button>
+      <button class="nav-btn" data-view="library">Bibliothek</button>
+      <button class="nav-btn" data-view="help">Hilfe</button>
+      <button class="nav-btn" id="btn-open-settings" title="Cloud-Einstellungen">⚙</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- ==================== SL VIEW ==================== -->
+<section id="view-sl" class="view active">
+  <div class="scenes-header">
+    <div class="scene-selector">
+      <label style="margin: 0; white-space: nowrap;">Kampfszene:</label>
+      <select id="scene-select"></select>
+      <button class="btn btn-primary btn-small" id="btn-new-scene">+ Neu</button>
+      <button class="btn btn-danger btn-small" id="btn-delete-scene">Löschen</button>
+    </div>
+    <div class="flex flex-gap">
+      <button class="btn btn-small" id="btn-add-npc-from-lib">+ NSC aus Bibliothek</button>
+      <button class="btn btn-small" id="btn-add-pc-manual">+ Manueller Eintrag</button>
+      <button class="btn btn-small" id="btn-import-pc-code">+ Spielercode importieren</button>
+    </div>
+  </div>
+
+  <div id="combat-list">
+    <div class="scene-empty">
+      <div class="big">◆ KEINE SZENE AKTIV ◆</div>
+      <div>Erstelle eine neue Kampfszene oder wähle eine bestehende aus.</div>
+    </div>
+  </div>
+</section>
+
+<!-- ==================== SC VIEW ==================== -->
+<section id="view-sc" class="view">
+  <div id="pc-login-view" class="pc-login">
+    <div class="pc-login-card">
+      <h2 class="section-title" style="color: var(--neon-green); border-color: var(--neon-green);">
+        Spieler-Charakter
+      </h2>
+      <p class="text-muted mb-2">
+        Erstelle einen neuen Charakter oder lade einen bestehenden.
+      </p>
+      <div class="flex flex-gap flex-wrap mb-3">
+        <button class="btn btn-success" id="btn-create-pc">+ Neuen Charakter erstellen</button>
+      </div>
+
+      <h3 class="section-subtitle">Charakter laden</h3>
+
+      <div class="tab-strip">
+        <button class="active" data-tab="shortcode">8-Zeichen-Code</button>
+        <button data-tab="qrscan">QR scannen</button>
+        <button data-tab="longcode">Langer Code</button>
+      </div>
+
+      <div class="tab-content active" data-tab-content="shortcode">
+        <p class="text-small text-muted mb-2">Gib den 8-stelligen Code ein (z.B. NOVA3R7X). Cloud muss konfiguriert sein.</p>
+        <div class="form-group">
+          <input type="text" id="pc-shortcode-input" placeholder="ABCD2345" maxlength="8" style="font-family: var(--font-mono); font-size: 1.3rem; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;">
+        </div>
+        <button class="btn btn-primary" id="btn-load-pc-shortcode">Aus Cloud laden</button>
+      </div>
+
+      <div class="tab-content" data-tab-content="qrscan">
+        <p class="text-small mb-2">Scanne den QR-Code eines anderen Geräts mit der Kamera dieses Geräts.</p>
+        <div style="background: var(--bg-secondary); border-left: 3px solid var(--neon-yellow); padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;">
+          <strong style="color: var(--neon-yellow); display: block; margin-bottom: 0.25rem;">⚠ Kamera-Zugriff nötig</strong>
+          <span style="color: var(--text-muted);">Beim ersten Scan fragt der Browser nach Berechtigung für die Kamera. Auf iOS/Safari funktioniert das nur über HTTPS (GitHub Pages erfüllt das).</span>
+        </div>
+        <button class="btn btn-primary" id="btn-start-qr-scan">📷 Scan starten</button>
+        <div id="qr-scanner-region"></div>
+      </div>
+
+      <div class="tab-content" data-tab-content="longcode">
+        <p class="text-small text-muted mb-2">Langer Base64-Code (funktioniert auch ohne Cloud):</p>
+        <div class="form-group">
+          <textarea id="pc-load-code" rows="3" placeholder="Füge hier den langen Code ein..."></textarea>
+        </div>
+        <button class="btn btn-primary" id="btn-load-pc-code">Charakter laden</button>
+      </div>
+
+      <h3 class="section-subtitle">Im Browser gespeicherte Charaktere</h3>
+      <div id="saved-pcs-list"></div>
+    </div>
+  </div>
+
+  <div id="pc-edit-view" style="display: none;">
+    <div class="scenes-header">
+      <div class="flex flex-gap" style="align-items: center;">
+        <button class="btn btn-small" id="btn-back-to-pc-list">◀ Zurück</button>
+        <h2 class="section-title" style="border: none; margin: 0; padding: 0;">Charakterbogen</h2>
+        <span id="pc-shortcode-badge"></span>
+      </div>
+      <div class="flex flex-gap flex-wrap">
+        <button class="btn btn-success btn-small" id="btn-save-pc">💾 Speichern</button>
+        <button class="btn btn-primary btn-small" id="btn-cloud-save-pc">☁ In Cloud</button>
+        <button class="btn btn-small" id="btn-show-qr-pc">📱 QR / Code</button>
+        <button class="btn btn-danger btn-small" id="btn-delete-pc">🗑 Löschen</button>
+      </div>
+    </div>
+    <div id="pc-edit-content"></div>
+  </div>
+</section>
+
+<!-- ==================== LIBRARY VIEW ==================== -->
+<section id="view-library" class="view">
+  <div class="scenes-header">
+    <h2 class="section-title" style="margin: 0; border: none; padding: 0;">NSC- & Kreaturen-Bibliothek</h2>
+    <div class="flex flex-gap">
+      <input type="text" id="library-search" placeholder="Suchen..." style="width: 200px;">
+      <button class="btn btn-primary btn-small" id="btn-add-library-entry">+ Eintrag hinzufügen</button>
+      <button class="btn btn-small" id="btn-reset-library">⟲ Regelwerk-NSCs laden</button>
+    </div>
+  </div>
+  <div id="library-grid" class="library-grid"></div>
+</section>
+
+<!-- ==================== HELP VIEW ==================== -->
+<section id="view-help" class="view">
+  <div class="card">
+    <h2 class="section-title">Bedienungsanleitung</h2>
+
+    <h3 class="section-subtitle">Für den Spielleiter</h3>
+    <p class="mb-2">
+      Erstelle eine <strong>Kampfszene</strong> über "+ Neu". Füge anschließend NSCs aus der Bibliothek hinzu oder
+      importiere Spielercharaktere über ihre Codes. Für jeden Charakter kannst du:
+    </p>
+    <ul style="margin-left: 2rem; color: var(--text-secondary);">
+      <li>Schaden austeilen (klicke auf die Zustandsmonitor-Kreise)</li>
+      <li>Panzerung verwalten (blaue Kreise)</li>
+      <li>Würfelmali werden automatisch berechnet</li>
+      <li>Edge, Plotpunkte und Karma tracken</li>
+      <li>Werte jederzeit anpassen</li>
+    </ul>
+
+    <h3 class="section-subtitle">Für Spieler</h3>
+    <p class="mb-2">
+      Erstelle deinen Charakter im Spieler-Tab. Er wird im Browser gespeichert und bekommt automatisch einen
+      <strong>8-Zeichen-Code</strong> (z.B. <code style="color: var(--neon-cyan);">NOVA3R7X</code>).
+    </p>
+    <p class="mb-2">
+      Du kannst deinen Charakter auf drei Arten teilen:
+    </p>
+    <ul style="margin-left: 2rem; color: var(--text-secondary);">
+      <li><strong>8-Zeichen-Code</strong> - kurz und tippbar. Braucht Cloud-Anbindung (siehe ⚙ Einstellungen).</li>
+      <li><strong>QR-Code</strong> - auf dem anderen Gerät einscannen. Funktioniert offline zwischen Geräten in der Nähe.</li>
+      <li><strong>Langer Code</strong> - Base64-String zum Kopieren. Funktioniert ohne Cloud, z.B. per Chat.</li>
+    </ul>
+
+    <h3 class="section-subtitle">Cloud-Einrichtung (optional, für 8-Zeichen-Codes)</h3>
+    <p class="mb-2">
+      Damit die kurzen Codes zwischen Geräten funktionieren, brauchst du einen kostenlosen Account bei
+      <a href="https://jsonbin.io" target="_blank" style="color: var(--neon-cyan);">JSONBin.io</a>.
+      Klicke oben auf ⚙ und folge den Schritten dort. Die Einrichtung ist einmalig, dauert 2 Minuten,
+      und alle Spieler können denselben Key verwenden.
+    </p>
+    <p class="mb-2">
+      <strong>Ohne Cloud</strong> funktionieren weiterhin QR-Codes und der lange Code - Charaktere bleiben dann aber nur lokal.
+    </p>
+
+    <h3 class="section-subtitle">Bibliothek</h3>
+    <p class="mb-2">
+      Hier findest du generische NSCs aus dem Regelwerk (Ganger, Soldaten, Geister, Critter etc.).
+      Du kannst eigene Einträge hinzufügen oder bestehende anpassen.
+    </p>
+
+    <h3 class="section-subtitle">Zustandsmonitore</h3>
+    <p class="mb-2">
+      <strong style="color: var(--neon-red);">Körperlicher Schaden</strong> (K) = rote Kreise<br>
+      <strong style="color: var(--neon-yellow);">Geistiger Schaden</strong> (G) = gelbe Kreise<br>
+      <strong style="color: var(--neon-cyan);">Panzerung</strong> = cyan Kreise (Schaden geht zuerst auf die Panzerung)
+    </p>
+    <p class="mb-2">
+      Jede volle Reihe (3 Kreise) ergibt einen Würfelmalus: Reihe 1 → −1, Reihe 2 → −2, usw.
+      Die Malusse aus <strong>beiden</strong> Monitoren werden addiert. Voller Monitor = Außer Gefecht.
+    </p>
+
+    <h3 class="section-subtitle">Daten-Speicherung</h3>
+    <p class="mb-2">
+      Alle Daten werden lokal im Browser gespeichert (LocalStorage). Wenn du den Browser-Cache leerst, sind die Daten weg.
+      Nutze den <strong>Export-Code</strong> um Backups anzulegen.
+    </p>
+  </div>
+</section>
+
+</main>
+
+<!-- Modals -->
+<div class="modal-overlay" id="modal-overlay">
+  <div class="modal" id="modal">
+    <div class="modal-header">
+      <div class="modal-title" id="modal-title">Titel</div>
+      <button class="modal-close" id="modal-close">×</button>
+    </div>
+    <div class="modal-body" id="modal-body"></div>
+  </div>
+</div>
+
+<div id="toast-container"></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+<script>
+// ============================================
+// SHADOWRUN ANARCHY COMBAT TRACKER
+// Single-file Application Logic
+// ============================================
+
+'use strict';
+
+// ============================================
+// DATA MODELS & DEFAULTS
+// ============================================
+
+const ATTRIBUTES = ['staerke', 'geschick', 'willenskraft', 'logik', 'charisma', 'edge'];
+const ATTRIBUTE_LABELS = {
+  staerke: 'Stärke',
+  geschick: 'Geschickl.',
+  willenskraft: 'Willenskraft',
+  logik: 'Logik',
+  charisma: 'Charisma',
+  edge: 'Edge'
+};
+const ATTRIBUTE_ABBR = {
+  staerke: 'S',
+  geschick: 'G',
+  willenskraft: 'W',
+  logik: 'L',
+  charisma: 'C',
+  edge: 'E'
+};
+
+// Factory for creating a blank character
+function createBlankCharacter(type = 'pc') {
+  return {
+    id: generateId(),
+    shortCode: type === 'pc' ? generateShortCode() : null,
+    type: type, // 'pc', 'npc', 'critter'
+    name: type === 'pc' ? 'Neuer Charakter' : 'Neuer NSC',
+    concept: '',
+    awakened: false,
+    digitalAwakened: false,
+    attributes: {
+      staerke: 3,
+      geschick: 3,
+      willenskraft: 3,
+      logik: 3,
+      charisma: 3,
+      edge: 2
+    },
+    essenz: 6,
+    essenzNote: '',
+    karma: 0,
+    gesamtkarma: 0,
+    plotpunkte: 0,
+    edgeUsed: 0,
+    skills: [],
+    boosters: [],
+    weapons: [],
+    equipment: '',
+    connections: '',
+    notes: '',
+    vorNachteile: '',
+    zitate: '',
+    // Combat state
+    armor: { max: 9, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    extraMalus: 0 // additional modifier (environment etc)
+  };
+}
+
+function generateId() {
+  return 'id_' + Math.random().toString(36).slice(2, 10) + Date.now().toString(36);
+}
+
+// 8-character short code using unambiguous alphabet (no 0/O, 1/I/L)
+const SHORTCODE_ALPHABET = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789';
+function generateShortCode() {
+  let code = '';
+  for (let i = 0; i < 8; i++) {
+    code += SHORTCODE_ALPHABET.charAt(Math.floor(Math.random() * SHORTCODE_ALPHABET.length));
+  }
+  return code;
+}
+function isValidShortCode(code) {
+  if (typeof code !== 'string') return false;
+  const clean = code.trim().toUpperCase();
+  if (clean.length !== 8) return false;
+  for (const ch of clean) if (SHORTCODE_ALPHABET.indexOf(ch) === -1) return false;
+  return true;
+}
+function normalizeShortCode(code) {
+  return (code || '').trim().toUpperCase().replace(/[^A-Z0-9]/g, '');
+}
+
+// ============================================
+// NSC LIBRARY - from Shadowrun Anarchy rulebook
+// ============================================
+
+const DEFAULT_LIBRARY = [
+  // --- GANGER & KRIMINELLE ---
+  {
+    id: 'lib_ganger',
+    type: 'npc',
+    name: 'Ganger',
+    concept: 'Straßengangmitglied',
+    attributes: { staerke: 4, geschick: 4, willenskraft: 3, logik: 2, charisma: 2, edge: 2 },
+    essenz: 5,
+    essenzNote: '–1 Modifikator bei magiebezogenen Proben und Heilung',
+    skills: [
+      { name: 'Athletik', dice: 3, attr: 'geschick' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' },
+      { name: 'Überreden', dice: 2, attr: 'charisma' },
+      { name: 'Feuerwaffen', dice: 3, attr: 'geschick' },
+      { name: 'Einschüchtern', dice: 2, attr: 'charisma' },
+      { name: 'Bodenfahrzeuge', dice: 2, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Cyberarm 1', desc: 'Cyberware. 1 Würfel ohne Erfolg bei Proben mit Geschicklichkeit neu werfen. Waffenlose Angriffe können Körperlichen statt Geistigen Schaden verursachen.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Remington Roomsweeper', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' },
+      { name: 'Kampfmesser', damage: '3K', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    equipment: 'Panzerweste',
+    notes: 'Standard-Straßengang. Aus Regelwerk S. 157.'
+  },
+  {
+    id: 'lib_mietbulle',
+    type: 'npc',
+    name: 'Mietbulle',
+    concept: 'Konzern-Sicherheit',
+    attributes: { staerke: 4, geschick: 4, willenskraft: 4, logik: 3, charisma: 2, edge: 2 },
+    essenz: 5,
+    essenzNote: '–1 Modifikator bei magiebezogenen Proben und Heilung',
+    skills: [
+      { name: 'Athletik', dice: 4, attr: 'geschick' },
+      { name: 'Nahkampf', dice: 4, attr: 'geschick' },
+      { name: 'Überreden', dice: 1, attr: 'charisma' },
+      { name: 'Feuerwaffen', dice: 4, attr: 'geschick' },
+      { name: 'Einschüchtern', dice: 2, attr: 'charisma' },
+      { name: 'Bodenfahrzeuge', dice: 2, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Reaktionsverbesserung', desc: 'Cyberware. +1 Plotpunkt zu Beginn eines Kampfes. –1 Essenz' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Ares Predator V', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' },
+      { name: 'Betäubungsschlagstock', damage: '7G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 12, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    equipment: 'Panzerjacke',
+    notes: 'Standard-Konzernwache. Aus Regelwerk S. 161.'
+  },
+  {
+    id: 'lib_soldat',
+    type: 'npc',
+    name: 'Soldat',
+    concept: 'Militär-/Söldnersoldat',
+    attributes: { staerke: 4, geschick: 5, willenskraft: 5, logik: 3, charisma: 2, edge: 2 },
+    essenz: 5,
+    essenzNote: '–1 Modifikator bei magiebezogenen Proben und Heilung',
+    skills: [
+      { name: 'Athletik', dice: 2, attr: 'geschick' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' },
+      { name: 'Feuerwaffen', dice: 4, attr: 'geschick' },
+      { name: 'Einschüchtern', dice: 2, attr: 'charisma' },
+      { name: 'Schwere Waffen', dice: 2, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Kompositknochen 2', desc: 'Cyberware. Erlittener Schaden wird um 2 gesenkt. –1 Essenz' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Ares Predator V', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' },
+      { name: 'Ares Alpha', damage: '8K', nah: 'OK', mittel: 'OK', weit: '–2' }
+    ],
+    armor: { max: 12, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Panzerjacke',
+    notes: 'Für ELITESOLDATEN: Nahkampf, Feuerwaffen und Schwere Waffen jeweils +1. Aus Regelwerk S. 162.'
+  },
+  {
+    id: 'lib_johnson_konzern',
+    type: 'npc',
+    name: 'Mr Johnson (Konzern)',
+    concept: 'Konzern-Verhandlungsführer',
+    attributes: { staerke: 3, geschick: 3, willenskraft: 5, logik: 4, charisma: 5, edge: 3 },
+    essenz: 5,
+    essenzNote: '–1 Modifikator bei magiebezogenen Proben und Heilung',
+    skills: [
+      { name: 'Überreden', dice: 4, attr: 'charisma' },
+      { name: 'Verhandlung', dice: 4, attr: 'charisma' },
+      { name: 'Feuerwaffen', dice: 3, attr: 'geschick' },
+      { name: 'Einschüchtern', dice: 2, attr: 'charisma' },
+      { name: 'Elektronik', dice: 2, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Synapsenbeschleuniger 1', desc: 'Bioware, +1 Angriffshandlung. –0,5 Essenz' },
+      { name: 'Maßgeschneiderte Pheromone 2', desc: 'Bioware. Darf 2 Würfel ohne Erfolge bei Charisma-Proben neu werfen. –0,5 Essenz' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Ares Predator V', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' },
+      { name: 'Betäubungsschlagstock', damage: '7G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 6, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Panzerkleidung',
+    notes: 'Aus Regelwerk S. 161. Fertigkeiten: 6 nach Wahl.'
+  },
+  {
+    id: 'lib_johnson_strasse',
+    type: 'npc',
+    name: 'Mr Johnson (Straße)',
+    concept: 'Fixer / Mittelsmann',
+    attributes: { staerke: 4, geschick: 4, willenskraft: 4, logik: 3, charisma: 4, edge: 3 },
+    essenz: 4.5,
+    essenzNote: '–1 Modifikator bei magiebezogenen Proben und Heilung',
+    skills: [
+      { name: 'Überreden', dice: 3, attr: 'charisma' },
+      { name: 'Verhandlung', dice: 3, attr: 'charisma' },
+      { name: 'Feuerwaffen', dice: 3, attr: 'geschick' },
+      { name: 'Einschüchtern', dice: 1, attr: 'charisma' },
+      { name: 'Bodenfahrzeuge', dice: 2, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Reaktionsverbesserung', desc: 'Cyberware. +1 Plotpunkt zu Beginn eines Kampfes. –1 Essenz' },
+      { name: 'Maßgeschneiderte Pheromone 1', desc: 'Bioware. Darf 1 Würfel ohne Erfolg bei Charisma-Proben neu werfen. –0,5 Essenz' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Ruger Super Warhawk', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' },
+      { name: 'Totschläger', damage: '4G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 6, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    equipment: 'Panzerkleidung',
+    notes: 'Aus Regelwerk S. 161. Fertigkeiten: 6 nach Wahl.'
+  },
+  {
+    id: 'lib_sicherheitsspinne',
+    type: 'npc',
+    name: 'Sicherheitsspinne',
+    concept: 'Decker / Matrix-Sicherheit',
+    attributes: { staerke: 2, geschick: 3, willenskraft: 4, logik: 5, charisma: 3, edge: 2 },
+    essenz: 5,
+    essenzNote: '–1 Modifikator bei magiebezogenen Proben und Heilung',
+    skills: [
+      { name: 'Elektronik', dice: 4, attr: 'logik' },
+      { name: 'Feuerwaffen', dice: 1, attr: 'geschick' },
+      { name: 'Hacking', dice: 5, attr: 'logik' },
+      { name: 'Spurenlesen', dice: 3, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Cyberdeck 3', desc: 'Darf 2 Würfel bei Matrixhandlungen neu werfen, Firewall 3, Zustandsmonitor 9, 1 Programm zugleich ausführen.' },
+      { name: 'Datenbuchse und Headware', desc: 'Cyberware. Kann die Matrix mit VR benutzen. +1 Würfel bei Matrix-Handlungen. –1 Essenz' },
+      { name: 'Ausnutzen (Programm)', desc: 'Darf 2 Würfel ohne Erfolge bei Hacking-Proben außerhalb des Matrixkampfs neu werfen.' },
+      { name: 'Hammer (Programm)', desc: '+2 Schaden im Matrixkampf.' },
+      { name: 'Aufspüren (Programm)', desc: 'Darf 2 Würfel ohne Erfolge bei Spurenlesen-Proben in der Matrix neu werfen.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '1G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Colt America L36', damage: '5K', nah: 'OK', mittel: '–2', weit: '—' }
+    ],
+    armor: { max: 6, damage: 0 },
+    physical: { max: 9, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    equipment: 'Panzerkleidung, Cyberdeck',
+    notes: 'Aus Regelwerk S. 161.'
+  },
+  {
+    id: 'lib_feindlicher_magier',
+    type: 'npc',
+    name: 'Feindlicher Magier',
+    concept: 'Magier / Zauberer',
+    attributes: { staerke: 3, geschick: 4, willenskraft: 6, logik: 5, charisma: 4, edge: 2 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 4, attr: 'willenskraft' },
+      { name: 'Athletik', dice: 2, attr: 'geschick' },
+      { name: 'Nahkampf', dice: 2, attr: 'geschick' },
+      { name: 'Beschwören', dice: 4, attr: 'willenskraft' },
+      { name: 'Feuerwaffen', dice: 3, attr: 'geschick' },
+      { name: 'Hexerei', dice: 5, attr: 'willenskraft' },
+      { name: 'Heimlichkeit', dice: 2, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Erwacht', desc: 'Kann magische Schattenbooster benutzen.' },
+      { name: 'Gedanken beherrschen 3 (Zauber)', desc: 'Wirkung. +3 Würfel auf Einschüchtern- und Verhandlung-Proben.' },
+      { name: 'Feuerball (Zauber)', desc: 'Kampf. Schaden 6K. Verteidigung Geschicklichkeit + Logik. Schädigt mehrere Ziele.' },
+      { name: 'Verbesserte Unsichtbarkeit (Zauber)', desc: 'Wirkung. Massenunsichtbarkeit; 2 Würfel Heimlichkeit neu werfen.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Uzi IV', damage: '6K', nah: 'OK', mittel: 'OK', weit: '—' },
+      { name: 'Kampfmesser', damage: '3K', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Gefütterter Mantel',
+    notes: 'Aus Regelwerk S. 157. Fertigkeiten: 6 nach Wahl.'
+  },
+  {
+    id: 'lib_drohne_klein',
+    type: 'npc',
+    name: 'Feindliche Drohne (Klein)',
+    concept: 'Kleine Kampfdrohne',
+    attributes: { staerke: 4, geschick: 10, willenskraft: 0, logik: 6, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' },
+      { name: 'Schwere Waffen', dice: 3, attr: 'geschick' },
+      { name: 'Fahrzeugwaffen', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Panzerplatten', desc: 'Erlittener Schaden wird um 1 gesenkt.' },
+      { name: 'Audio-Analysator', desc: 'Verbesserte Wahrnehmung.' },
+      { name: 'Fliegen', desc: 'Optional - falls flugfähig.' }
+    ],
+    weapons: [
+      { name: 'Nahkampfangriff', damage: '8K', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Montiertes Sturmgewehr', damage: '8K', nah: 'OK', mittel: 'OK', weit: '–2' },
+      { name: 'Montierte Automatikpistole', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' },
+      { name: 'Montierter Granatwerfer', damage: '12K', nah: 'OK*', mittel: 'OK*', weit: 'OK' }
+    ],
+    armor: { max: 6, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 0, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 156. *Granatwerfer kann auch die Drohne selbst beschädigen. Nur eine Waffe auswählen.'
+  },
+  {
+    id: 'lib_drohne_mittel',
+    type: 'npc',
+    name: 'Feindliche Drohne (Mittel)',
+    concept: 'Mittlere Kampfdrohne',
+    attributes: { staerke: 6, geschick: 8, willenskraft: 0, logik: 6, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' },
+      { name: 'Schwere Waffen', dice: 3, attr: 'geschick' },
+      { name: 'Fahrzeugwaffen', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Panzerplatten', desc: 'Erlittener Schaden wird um 1 gesenkt.' },
+      { name: 'Audio-Analysator', desc: 'Verbesserte Wahrnehmung.' }
+    ],
+    weapons: [
+      { name: 'Nahkampfangriff', damage: '8K', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Montiertes Sturmgewehr', damage: '8K', nah: 'OK', mittel: 'OK', weit: '–2' },
+      { name: 'Montierte Maschinenpistole', damage: '6K', nah: 'OK', mittel: 'OK', weit: '—' },
+      { name: 'Montierter Granatwerfer', damage: '12K', nah: 'OK*', mittel: 'OK*', weit: 'OK' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 11, damage: 0 },
+    stun: { max: 0, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 156. Nur eine Waffe auswählen.'
+  },
+  {
+    id: 'lib_drohne_schwer',
+    type: 'npc',
+    name: 'Feindliche Drohne (Schwer)',
+    concept: 'Schwere Kampfdrohne',
+    attributes: { staerke: 10, geschick: 6, willenskraft: 0, logik: 6, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' },
+      { name: 'Schwere Waffen', dice: 3, attr: 'geschick' },
+      { name: 'Fahrzeugwaffen', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Panzerplatten', desc: 'Erlittener Schaden wird um 1 gesenkt.' },
+      { name: 'Audio-Analysator', desc: 'Verbesserte Wahrnehmung.' }
+    ],
+    weapons: [
+      { name: 'Nahkampfangriff', damage: '8K', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Montiertes Sturmgewehr', damage: '8K', nah: 'OK', mittel: 'OK', weit: '–2' },
+      { name: 'Montiertes Maschinengewehr', damage: '8K', nah: 'OK', mittel: 'OK', weit: 'OK' },
+      { name: 'Montierter Granatwerfer', damage: '12K', nah: 'OK*', mittel: 'OK*', weit: 'OK' }
+    ],
+    armor: { max: 12, damage: 0 },
+    physical: { max: 13, damage: 0 },
+    stun: { max: 0, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 157. Nur eine Waffe auswählen.'
+  },
+  // --- GEISTER ---
+  {
+    id: 'lib_geist_mensch',
+    type: 'critter',
+    name: 'Geist des Menschen',
+    concept: 'Mentor-/Hauptgeist',
+    attributes: { staerke: 6, geschick: 7, willenskraft: 6, logik: 7, charisma: 6, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 3, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Critterkraft: Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Unfall (Critterkraft)', desc: 'Jede Runde (Willenskraft) Proben mit einem Schicksalswürfel modifizieren, der keinen Glücksfall ergeben kann.' },
+      { name: 'Gedanken beherrschen (Critterkraft)', desc: '+3 Würfel auf Einschüchtern- und Verhandlung-Proben.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '3G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 11, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 157.'
+  },
+  {
+    id: 'lib_geist_tier',
+    type: 'critter',
+    name: 'Geist des Tieres',
+    concept: 'Tiergeist',
+    attributes: { staerke: 8, geschick: 7, willenskraft: 6, logik: 6, charisma: 6, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 3, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Natürliche Waffe (Critterkraft)', desc: 'Natürliche Waffe (Krallen, Fänge, Schwanz) mit Schaden (STR/2 + 3) K.' },
+      { name: 'Tierbeherrschung (Critterkraft)', desc: 'Mundane Tiere in Reichweite Mittel gehorchen einfachen Befehlen.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '4G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Natürliche Waffe', damage: '7K', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 12, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 158. In Großer Gestalt: alle Attribute +2, Immunität +2, Schaden +2.'
+  },
+  {
+    id: 'lib_erdgeist',
+    type: 'critter',
+    name: 'Erdgeist',
+    concept: 'Elementargeist Erde',
+    attributes: { staerke: 10, geschick: 4, willenskraft: 6, logik: 5, charisma: 6, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 3, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Verschlingen (Critterkraft)', desc: 'Schaden 4G/PV. Verteidigung Stärke + Willenskraft. Ziel kann sich nicht bewegen.' },
+      { name: 'Elementarer Angriff (Erde)', desc: 'Schaden 8K. Verteidigung Geschicklichkeit + Logik.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '5G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 12, damage: 0 },
+    physical: { max: 13, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 158. In Großer Gestalt: alle Attribute +2, Immunität +2, Schaden +2.'
+  },
+  {
+    id: 'lib_feuergeist',
+    type: 'critter',
+    name: 'Feuergeist',
+    concept: 'Elementargeist Feuer',
+    attributes: { staerke: 6, geschick: 9, willenskraft: 6, logik: 6, charisma: 6, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 3, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Elementarer Angriff (Feuer)', desc: 'Schaden 6K/PV. Verteidigung Geschicklichkeit + Logik. +2 Schaden an Panzerung.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '3G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 6, damage: 0 },
+    physical: { max: 11, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 159. In Großer Gestalt: alle Attribute +2, Immunität +2, Schaden +2.'
+  },
+  {
+    id: 'lib_wassergeist',
+    type: 'critter',
+    name: 'Wassergeist',
+    concept: 'Elementargeist Wasser',
+    attributes: { staerke: 6, geschick: 8, willenskraft: 6, logik: 6, charisma: 6, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 3, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Elementarer Angriff (Wasser)', desc: 'Schaden 8G. Verteidigung Geschicklichkeit + Logik.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '3G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 11, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 159. In Großer Gestalt: alle Attribute +2, Immunität +2, Schaden +2.'
+  },
+  {
+    id: 'lib_luftgeist',
+    type: 'critter',
+    name: 'Luftgeist',
+    concept: 'Elementargeist Luft',
+    attributes: { staerke: 4, geschick: 10, willenskraft: 6, logik: 6, charisma: 6, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 3, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Elementarer Angriff (Elektrizität)', desc: 'Schaden 6K/PV. Verteidigung Stärke + Willenskraft.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '2G', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 6, damage: 0 },
+    physical: { max: 10, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 159. In Großer Gestalt: alle Attribute +2, Immunität +2, Schaden +2.'
+  },
+  // --- CRITTER ---
+  {
+    id: 'lib_teufelsratte',
+    type: 'critter',
+    name: 'Teufelsratte',
+    concept: 'Paracritter',
+    attributes: { staerke: 2, geschick: 5, willenskraft: 3, logik: 2, charisma: 5, edge: 2 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    skills: [
+      { name: 'Athletik', dice: 5, attr: 'geschick' },
+      { name: 'Nahkampf', dice: 5, attr: 'geschick' },
+      { name: 'Heimlichkeit', dice: 6, attr: 'geschick' },
+      { name: 'Spurenlesen', dice: 5, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Ungezieferbeherrschung (Ratten)', desc: 'Critterkraft. Darf bis zu 25 Ratten innerhalb der Reichweite Mittel befehligen.' },
+      { name: 'Verschleierung (Critterkraft)', desc: 'Darf bei Heimlichkeitsproben 3 Würfel ohne Erfolge neu werfen, solange sie sich nicht bewegt.' }
+    ],
+    weapons: [
+      { name: 'Biss', damage: '2K', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Krallen', damage: '1K', nah: 'OK', mittel: '—', weit: '—' }
+    ],
+    armor: { max: 0, damage: 0 },
+    physical: { max: 9, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    equipment: '',
+    notes: 'Aus Regelwerk S. 162. Keine Panzerung.'
+  },
+  {
+    id: 'lib_vampir',
+    type: 'critter',
+    name: 'Vampir',
+    concept: 'HMHVV-Infizierter',
+    attributes: { staerke: 5, geschick: 5, willenskraft: 5, logik: 5, charisma: 5, edge: 3 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 4, attr: 'willenskraft' },
+      { name: 'Athletik', dice: 3, attr: 'geschick' },
+      { name: 'Nahkampf', dice: 3, attr: 'geschick' },
+      { name: 'Einschüchtern', dice: 4, attr: 'charisma' },
+      { name: 'Heimlichkeit', dice: 5, attr: 'geschick' },
+      { name: 'Hexerei', dice: 6, attr: 'willenskraft' }
+    ],
+    boosters: [
+      { name: 'Erwacht', desc: 'Kann magische Schattenbooster benutzen.' },
+      { name: 'Essenzentzug (Critterkraft)', desc: 'Gegen außer Gefecht gesetzte Gegner: sinkt deren Essenz permanent um 1.' },
+      { name: 'Vampirische Immunität', desc: 'Leidet unter keinen Wirkungen von Alter, Krankheiten oder Toxinen.' },
+      { name: 'Regeneration (Critterkraft)', desc: 'Erhält jede Runde 2 Punkte Schaden in der Reihenfolge Geistig, Körperlich, Panzerung zurück.' },
+      { name: 'Nebelgestalt (Critterkraft)', desc: 'Kann durch Öffnungen schlüpfen.' },
+      { name: 'Gedanken beherrschen (Critterkraft)', desc: '+3 Würfel auf Einschüchtern- und Verhandlung-Proben.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '3G', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Biss', damage: '6K', nah: 'OK', mittel: '—', weit: '—' },
+      { name: 'Ares Predator V', damage: '6K', nah: 'OK', mittel: '–2', weit: '—' }
+    ],
+    armor: { max: 9, damage: 0 },
+    physical: { max: 11, damage: 0 },
+    stun: { max: 11, damage: 0 },
+    equipment: 'Gefütterter Mantel',
+    notes: 'Aus Regelwerk S. 162. Schwere Allergien: Sonnenlicht (4K/Runde), Holz (+4 Schaden). Nahrungsbedarf: metamenschliches Blut. Fertigkeiten: 6 nach Wahl.'
+  },
+  {
+    id: 'lib_junger_drache',
+    type: 'critter',
+    name: 'Junger Drache',
+    concept: 'Drache',
+    attributes: { staerke: 15, geschick: 10, willenskraft: 9, logik: 9, charisma: 9, edge: 6 },
+    essenz: 6,
+    essenzNote: 'keine Modifikatoren',
+    awakened: true,
+    skills: [
+      { name: 'Astralkampf', dice: 6, attr: 'willenskraft' },
+      { name: 'Nahkampf', dice: 6, attr: 'geschick' },
+      { name: 'Beschwören', dice: 6, attr: 'willenskraft' },
+      { name: 'Einschüchtern', dice: 4, attr: 'charisma' },
+      { name: 'Projektilwaffen', dice: 6, attr: 'geschick' },
+      { name: 'Hexerei', dice: 8, attr: 'willenskraft' }
+    ],
+    boosters: [
+      { name: 'Critter', desc: 'Hat Zugang zu Critterkräften.' },
+      { name: 'Immunität (Normale Waffen) 3', desc: 'Schaden durch nichtmagische Angriffe wird um 3 gesenkt.' },
+      { name: 'Elementarer Angriff (Feuer)', desc: 'Schaden 6K/PV. Verteidigung Geschicklichkeit + Logik. +2 Schaden an Panzerung.' },
+      { name: 'Natürliche Waffe (Critterkraft)', desc: 'Krallen, Fänge, Schwanz - Schaden (STR/2 + 3) K.' },
+      { name: 'Drachensprache (Critterkraft)', desc: 'Telepathische Kommunikation.' },
+      { name: 'Gesteigerte Sinne (Critterkraft)', desc: '+3 Würfel bei Wahrnehmungsproben.' },
+      { name: 'Grauen (Critterkraft)', desc: 'Darf 2 Würfel ohne Erfolge bei Einschüchtern-Proben neu werfen.' },
+      { name: 'Drachenhexerei (Critterkraft)', desc: 'Kann beliebige Zauber wählen.' }
+    ],
+    weapons: [
+      { name: 'Waffenlos', damage: '8G', nah: 'OK', mittel: 'OK', weit: '—' },
+      { name: 'Natürliche Waffe', damage: '11K', nah: 'OK', mittel: 'OK', weit: '—' }
+    ],
+    armor: { max: 15, damage: 0 },
+    physical: { max: 16, damage: 0 },
+    stun: { max: 13, damage: 0 },
+    equipment: 'Natürliche Panzerung',
+    notes: 'Aus Regelwerk S. 156. Sehr gefährlicher Gegner!'
+  },
+  {
+    id: 'lib_ic_1',
+    type: 'npc',
+    name: 'IC Stufe 1',
+    concept: 'Matrix-Abwehrprogramm',
+    attributes: { staerke: 0, geschick: 0, willenskraft: 0, logik: 1, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Hacking', dice: 3, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Firewall', desc: 'Firewall 2 (Stufe x 2).' }
+    ],
+    weapons: [],
+    armor: { max: 0, damage: 0 },
+    physical: { max: 0, damage: 0 },
+    stun: { max: 2, damage: 0 },
+    equipment: '',
+    notes: 'Intrusion Countermeasures Stufe 1. Aus Regelwerk S. 160.'
+  },
+  {
+    id: 'lib_ic_3',
+    type: 'npc',
+    name: 'IC Stufe 3',
+    concept: 'Matrix-Abwehrprogramm',
+    attributes: { staerke: 0, geschick: 0, willenskraft: 0, logik: 3, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Hacking', dice: 3, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Firewall', desc: 'Firewall 6 (Stufe x 2).' }
+    ],
+    weapons: [],
+    armor: { max: 0, damage: 0 },
+    physical: { max: 0, damage: 0 },
+    stun: { max: 6, damage: 0 },
+    equipment: '',
+    notes: 'Intrusion Countermeasures Stufe 3. Aus Regelwerk S. 160.'
+  },
+  {
+    id: 'lib_ic_5',
+    type: 'npc',
+    name: 'IC Stufe 5',
+    concept: 'Hochstufiges Matrix-Abwehrprogramm',
+    attributes: { staerke: 0, geschick: 0, willenskraft: 0, logik: 5, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Hacking', dice: 3, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Firewall', desc: 'Firewall 10 (Stufe x 2).' }
+    ],
+    weapons: [],
+    armor: { max: 0, damage: 0 },
+    physical: { max: 0, damage: 0 },
+    stun: { max: 10, damage: 0 },
+    equipment: '',
+    notes: 'Intrusion Countermeasures Stufe 5. Aus Regelwerk S. 160.'
+  },
+  {
+    id: 'lib_einfacher_sprite',
+    type: 'npc',
+    name: 'Einfacher Sprite',
+    concept: 'Matrix-Entität',
+    attributes: { staerke: 0, geschick: 0, willenskraft: 0, logik: 2, charisma: 0, edge: 0 },
+    essenz: 0,
+    essenzNote: 'kann nicht geheilt werden',
+    skills: [
+      { name: 'Elektronik', dice: 3, attr: 'logik' },
+      { name: 'Tasken', dice: 3, attr: 'logik' },
+      { name: 'Spurenlesen', dice: 3, attr: 'logik' }
+    ],
+    boosters: [
+      { name: 'Firewall 6', desc: 'Firewall-Wert.' },
+      { name: 'Technomancer-Booster', desc: 'Ein Technomancer-Booster nach Wahl.' }
+    ],
+    weapons: [],
+    armor: { max: 0, damage: 0 },
+    physical: { max: 0, damage: 0 },
+    stun: { max: 9, damage: 0 },
+    equipment: '',
+    notes: 'Aus Regelwerk S. 162.'
+  }
+];
+
+// Export for use in global scope (since we're inline)
+if (typeof window !== 'undefined') {
+  window.DEFAULT_LIBRARY = DEFAULT_LIBRARY;
+  window.createBlankCharacter = createBlankCharacter;
+  window.generateId = generateId;
+  window.generateShortCode = generateShortCode;
+  window.isValidShortCode = isValidShortCode;
+  window.normalizeShortCode = normalizeShortCode;
+  window.SHORTCODE_ALPHABET = SHORTCODE_ALPHABET;
+  window.ATTRIBUTES = ATTRIBUTES;
+  window.ATTRIBUTE_LABELS = ATTRIBUTE_LABELS;
+  window.ATTRIBUTE_ABBR = ATTRIBUTE_ABBR;
+}
+// ============================================
+// APP STATE & STORAGE
+// ============================================
+
+const STORAGE_KEYS = {
+  SCENES: 'sra_scenes',
+  LIBRARY: 'sra_library',
+  PCS: 'sra_pcs',
+  ACTIVE_SCENE: 'sra_active_scene',
+  ACTIVE_PC: 'sra_active_pc'
+};
+
+const State = {
+  scenes: [],        // [{id, name, characters: []}]
+  library: [],       // [character templates]
+  pcs: [],           // [player characters saved]
+  activeSceneId: null,
+  activePcId: null,
+  currentView: 'sl'
+};
+
+// ============================================
+// STORAGE HELPERS
+// ============================================
+
+function saveState() {
+  try {
+    localStorage.setItem(STORAGE_KEYS.SCENES, JSON.stringify(State.scenes));
+    localStorage.setItem(STORAGE_KEYS.LIBRARY, JSON.stringify(State.library));
+    localStorage.setItem(STORAGE_KEYS.PCS, JSON.stringify(State.pcs));
+    if (State.activeSceneId) localStorage.setItem(STORAGE_KEYS.ACTIVE_SCENE, State.activeSceneId);
+    if (State.activePcId) localStorage.setItem(STORAGE_KEYS.ACTIVE_PC, State.activePcId);
+  } catch (e) {
+    showToast('Fehler beim Speichern: ' + e.message, 'error');
+  }
+}
+
+function loadState() {
+  try {
+    const scenesRaw = localStorage.getItem(STORAGE_KEYS.SCENES);
+    State.scenes = scenesRaw ? JSON.parse(scenesRaw) : [];
+
+    const libRaw = localStorage.getItem(STORAGE_KEYS.LIBRARY);
+    State.library = libRaw ? JSON.parse(libRaw) : deepClone(DEFAULT_LIBRARY);
+
+    const pcsRaw = localStorage.getItem(STORAGE_KEYS.PCS);
+    State.pcs = pcsRaw ? JSON.parse(pcsRaw) : [];
+
+    // Migrate: ensure all PCs have a shortCode
+    let migrated = false;
+    State.pcs.forEach(pc => {
+      if (!pc.shortCode) { pc.shortCode = generateShortCode(); migrated = true; }
+    });
+    if (migrated) localStorage.setItem(STORAGE_KEYS.PCS, JSON.stringify(State.pcs));
+
+    State.activeSceneId = localStorage.getItem(STORAGE_KEYS.ACTIVE_SCENE) || null;
+    State.activePcId = localStorage.getItem(STORAGE_KEYS.ACTIVE_PC) || null;
+
+    // Verify active IDs still exist
+    if (State.activeSceneId && !State.scenes.find(s => s.id === State.activeSceneId)) {
+      State.activeSceneId = State.scenes[0]?.id || null;
+    }
+  } catch (e) {
+    showToast('Fehler beim Laden: ' + e.message, 'error');
+    State.scenes = [];
+    State.library = deepClone(DEFAULT_LIBRARY);
+    State.pcs = [];
+  }
+}
+
+function deepClone(obj) {
+  return JSON.parse(JSON.stringify(obj));
+}
+
+// ============================================
+// CHARACTER LOGIC (combat math, etc.)
+// ============================================
+
+function calcWoundMalus(char) {
+  // Physical monitor: every full row of 3 gives -1 cumulative within that monitor,
+  // but only the HIGHEST row malus counts for each monitor, then both monitors ADD together.
+  const physMalus = Math.min(Math.floor(char.physical.damage / 3), 4);
+  const stunMalus = Math.min(Math.floor(char.stun.damage / 3), 4);
+  return -(physMalus + stunMalus);
+}
+
+function calcEssenzMalus(char) {
+  // Essenz < 1 = -2 per 1 point missing? Rule: low essenz gives malus on magic and healing
+  // Simplified: store as explicit note on character; no automatic calc unless specified
+  return 0;
+}
+
+function getTotalMalus(char) {
+  return calcWoundMalus(char) + (char.extraMalus || 0);
+}
+
+function isOutOfAction(char) {
+  return char.physical.damage >= char.physical.max || char.stun.damage >= char.stun.max;
+}
+
+function isDead(char) {
+  return char.physical.damage >= char.physical.max;
+}
+
+// Apply damage to a character: first armor absorbs, then monitor
+function applyDamage(char, amount, type /* 'physical' | 'stun' */) {
+  let remaining = amount;
+
+  // Armor absorbs first (but only for external sources - left for SL to decide)
+  // Actually in Anarchy: armor takes damage before monitors, always.
+  if (char.armor && char.armor.max > 0) {
+    const armorAvailable = char.armor.max - char.armor.damage;
+    const toArmor = Math.min(remaining, armorAvailable);
+    char.armor.damage += toArmor;
+    remaining -= toArmor;
+  }
+
+  if (remaining > 0 && char[type]) {
+    char[type].damage = Math.min(char[type].damage + remaining, char[type].max);
+  }
+}
+
+// ============================================
+// UI HELPERS
+// ============================================
+
+function $(selector) { return document.querySelector(selector); }
+function $$(selector) { return Array.from(document.querySelectorAll(selector)); }
+
+function el(tag, attrs, ...children) {
+  const node = document.createElement(tag);
+  for (const [k, v] of Object.entries(attrs || {})) {
+    if (k === 'class') node.className = v;
+    else if (k === 'style') node.style.cssText = v;
+    else if (k.startsWith('on')) node.addEventListener(k.slice(2).toLowerCase(), v);
+    else if (k === 'dataset') Object.assign(node.dataset, v);
+    else if (k === 'html') node.innerHTML = v;
+    else node.setAttribute(k, v);
+  }
+  for (const child of children.flat()) {
+    if (child == null) continue;
+    if (typeof child === 'string' || typeof child === 'number') {
+      node.appendChild(document.createTextNode(child));
+    } else {
+      node.appendChild(child);
+    }
+  }
+  return node;
+}
+
+function showToast(message, type = 'info') {
+  const container = $('#toast-container');
+  const toast = el('div', { class: 'toast ' + type }, message);
+  container.appendChild(toast);
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
+}
+
+// ============================================
+// MODAL
+// ============================================
+
+function openModal(title, contentElement) {
+  $('#modal-title').textContent = title;
+  $('#modal-body').innerHTML = '';
+  $('#modal-body').appendChild(contentElement);
+  $('#modal-overlay').classList.add('active');
+}
+
+function closeModal() {
+  $('#modal-overlay').classList.remove('active');
+}
+
+// ============================================
+// VIEW SWITCHING
+// ============================================
+
+function switchView(viewName) {
+  State.currentView = viewName;
+  $$('.view').forEach(v => v.classList.remove('active'));
+  $('#view-' + viewName).classList.add('active');
+  $$('.nav-btn').forEach(b => b.classList.toggle('active', b.dataset.view === viewName));
+
+  if (viewName === 'sl') renderSLView();
+  if (viewName === 'sc') renderSCView();
+  if (viewName === 'library') renderLibrary();
+}
+
+// ============================================
+// CODE EXPORT/IMPORT (Base64 encoded JSON)
+// ============================================
+
+function encodeCharacter(char) {
+  // Strip runtime-only UI flags (prefix `_`) before serialisation
+  const clean = {};
+  for (const [k, v] of Object.entries(char)) {
+    if (k.startsWith('_')) continue;
+    clean[k] = v;
+  }
+  const json = JSON.stringify(clean);
+  // Use modern encoding (UTF-8 safe)
+  const bytes = new TextEncoder().encode(json);
+  let binary = '';
+  for (const b of bytes) binary += String.fromCharCode(b);
+  return btoa(binary);
+}
+
+function decodeCharacter(code) {
+  try {
+    const binary = atob(code.trim());
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    const json = new TextDecoder().decode(bytes);
+    const char = JSON.parse(json);
+    if (!char.id || !char.name || !char.attributes) throw new Error('Ungültige Charakter-Daten');
+    return char;
+  } catch (e) {
+    throw new Error('Code ungültig: ' + e.message);
+  }
+}
+
+function copyToClipboard(text) {
+  if (navigator.clipboard) {
+    navigator.clipboard.writeText(text).then(
+      () => showToast('In Zwischenablage kopiert', 'success'),
+      () => fallbackCopy(text)
+    );
+  } else {
+    fallbackCopy(text);
+  }
+}
+
+function fallbackCopy(text) {
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.position = 'fixed';
+  ta.style.opacity = '0';
+  document.body.appendChild(ta);
+  ta.select();
+  try {
+    document.execCommand('copy');
+    showToast('In Zwischenablage kopiert', 'success');
+  } catch (e) {
+    showToast('Kopieren fehlgeschlagen. Bitte manuell markieren.', 'error');
+  }
+  document.body.removeChild(ta);
+}
+
+// ============================================
+// CLOUD STORAGE (JSONBin.io)
+// ============================================
+// We use a single Collection on JSONBin. Each character = one Bin.
+// The 8-char shortCode is stored as the Bin's X-Bin-Name header and
+// we use the collection's bin-listing endpoint to resolve shortCode -> binId.
+//
+// The user needs to supply a JSONBin "Master Key" and a "Collection ID"
+// via the settings modal. Both are stored in localStorage on the device.
+//
+// A small local lookup cache (shortCode -> binId) avoids redundant lookups.
+
+const CLOUD_CONFIG_KEY = 'sra_cloud_config';
+const CLOUD_LOOKUP_KEY = 'sra_cloud_lookup'; // { SHORTCODE: binId }
+const JSONBIN_BASE = 'https://api.jsonbin.io/v3';
+
+const Cloud = {
+  config: null,   // { apiKey, collectionId }
+  lookup: {}      // shortCode -> binId cache
+};
+
+function loadCloudConfig() {
+  try {
+    const raw = localStorage.getItem(CLOUD_CONFIG_KEY);
+    Cloud.config = raw ? JSON.parse(raw) : null;
+    const lraw = localStorage.getItem(CLOUD_LOOKUP_KEY);
+    Cloud.lookup = lraw ? JSON.parse(lraw) : {};
+  } catch (e) {
+    Cloud.config = null;
+    Cloud.lookup = {};
+  }
+}
+
+function saveCloudConfig(cfg) {
+  Cloud.config = cfg;
+  if (cfg) localStorage.setItem(CLOUD_CONFIG_KEY, JSON.stringify(cfg));
+  else localStorage.removeItem(CLOUD_CONFIG_KEY);
+}
+
+function saveCloudLookup() {
+  localStorage.setItem(CLOUD_LOOKUP_KEY, JSON.stringify(Cloud.lookup));
+}
+
+function cloudConfigured() {
+  return !!(Cloud.config && Cloud.config.apiKey && Cloud.config.collectionId);
+}
+
+function cloudHeaders(extra) {
+  const h = {
+    'Content-Type': 'application/json',
+    'X-Master-Key': Cloud.config.apiKey,
+    'X-Collection-Id': Cloud.config.collectionId
+  };
+  return Object.assign(h, extra || {});
+}
+
+// Upload or update a character by its shortCode.
+// Returns a promise resolving to the binId.
+async function cloudSaveCharacter(char) {
+  if (!cloudConfigured()) throw new Error('Cloud nicht konfiguriert. Einstellungen öffnen.');
+  if (!char.shortCode || !isValidShortCode(char.shortCode)) {
+    throw new Error('Charakter hat keinen gültigen 8-Zeichen-Code.');
+  }
+  const code = char.shortCode;
+
+  // Strip runtime UI flags (prefix _) before upload
+  const payload = {};
+  for (const [k, v] of Object.entries(char)) {
+    if (k.startsWith('_')) continue;
+    payload[k] = v;
+  }
+
+  // Try to find existing bin
+  let existingBinId = Cloud.lookup[code];
+  if (!existingBinId) {
+    existingBinId = await cloudFindBinIdByCode(code);
+  }
+
+  if (existingBinId) {
+    // Update
+    const resp = await fetch(JSONBIN_BASE + '/b/' + existingBinId, {
+      method: 'PUT',
+      headers: cloudHeaders(),
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) {
+      const txt = await resp.text();
+      throw new Error('Cloud-Update fehlgeschlagen: ' + resp.status + ' ' + txt.slice(0, 200));
+    }
+    Cloud.lookup[code] = existingBinId;
+    saveCloudLookup();
+    return existingBinId;
+  }
+
+  // Create new
+  const resp = await fetch(JSONBIN_BASE + '/b', {
+    method: 'POST',
+    headers: cloudHeaders({ 'X-Bin-Name': code, 'X-Bin-Private': 'false' }),
+    body: JSON.stringify(payload)
+  });
+  if (!resp.ok) {
+    const txt = await resp.text();
+    throw new Error('Cloud-Upload fehlgeschlagen: ' + resp.status + ' ' + txt.slice(0, 200));
+  }
+  const data = await resp.json();
+  const binId = data.metadata && data.metadata.id;
+  if (!binId) throw new Error('Antwort ohne Bin-ID.');
+  Cloud.lookup[code] = binId;
+  saveCloudLookup();
+  return binId;
+}
+
+// List bins in collection and find the one with matching name (= shortCode).
+// JSONBin pages results. We walk up to ~5 pages (500 bins) before giving up.
+async function cloudFindBinIdByCode(code) {
+  if (!cloudConfigured()) throw new Error('Cloud nicht konfiguriert.');
+  const collId = Cloud.config.collectionId;
+  let lastId = null;
+  for (let page = 0; page < 10; page++) {
+    const url = JSONBIN_BASE + '/c/' + collId + '/bins' + (lastId ? '/' + lastId : '');
+    const resp = await fetch(url, { headers: cloudHeaders() });
+    if (!resp.ok) throw new Error('Cloud-Suche fehlgeschlagen: ' + resp.status);
+    const list = await resp.json();
+    if (!Array.isArray(list) || list.length === 0) return null;
+    for (const entry of list) {
+      if ((entry.name || '').toUpperCase() === code) {
+        return entry.record;
+      }
+    }
+    lastId = list[list.length - 1].record;
+    if (list.length < 10) return null;
+  }
+  return null;
+}
+
+// Load a character by shortCode.
+async function cloudLoadCharacter(shortCode) {
+  if (!cloudConfigured()) throw new Error('Cloud nicht konfiguriert. Einstellungen öffnen.');
+  const code = normalizeShortCode(shortCode);
+  if (!isValidShortCode(code)) throw new Error('Ungültiger Code-Format (8 Zeichen, A-Z/2-9).');
+
+  let binId = Cloud.lookup[code];
+  if (!binId) {
+    binId = await cloudFindBinIdByCode(code);
+    if (!binId) throw new Error('Kein Charakter mit Code ' + code + ' in der Cloud gefunden.');
+    Cloud.lookup[code] = binId;
+    saveCloudLookup();
+  }
+
+  const resp = await fetch(JSONBIN_BASE + '/b/' + binId + '/latest', {
+    method: 'GET',
+    headers: cloudHeaders()
+  });
+  if (!resp.ok) {
+    // Maybe the bin was deleted; clear cache and retry once
+    if (resp.status === 404) {
+      delete Cloud.lookup[code];
+      saveCloudLookup();
+      throw new Error('Charakter mit Code ' + code + ' wurde in der Cloud nicht gefunden.');
+    }
+    throw new Error('Cloud-Abruf fehlgeschlagen: ' + resp.status);
+  }
+  const data = await resp.json();
+  const char = data.record;
+  if (!char || !char.attributes) throw new Error('Ungültige Charakter-Daten in der Cloud.');
+  return char;
+}
+
+async function cloudDeleteCharacter(shortCode) {
+  if (!cloudConfigured()) throw new Error('Cloud nicht konfiguriert.');
+  const code = normalizeShortCode(shortCode);
+  let binId = Cloud.lookup[code];
+  if (!binId) {
+    binId = await cloudFindBinIdByCode(code);
+  }
+  if (!binId) return false;
+  const resp = await fetch(JSONBIN_BASE + '/b/' + binId, {
+    method: 'DELETE',
+    headers: cloudHeaders()
+  });
+  if (!resp.ok && resp.status !== 404) {
+    throw new Error('Cloud-Löschung fehlgeschlagen: ' + resp.status);
+  }
+  delete Cloud.lookup[code];
+  saveCloudLookup();
+  return true;
+}
+
+// Make available globally
+if (typeof window !== 'undefined') {
+  window.State = State;
+  window.saveState = saveState;
+  window.loadState = loadState;
+  window.$ = $;
+  window.$$ = $$;
+  window.el = el;
+  window.showToast = showToast;
+  window.openModal = openModal;
+  window.closeModal = closeModal;
+  window.switchView = switchView;
+  window.deepClone = deepClone;
+  window.calcWoundMalus = calcWoundMalus;
+  window.getTotalMalus = getTotalMalus;
+  window.isOutOfAction = isOutOfAction;
+  window.isDead = isDead;
+  window.applyDamage = applyDamage;
+  window.encodeCharacter = encodeCharacter;
+  window.decodeCharacter = decodeCharacter;
+  window.copyToClipboard = copyToClipboard;
+  window.Cloud = Cloud;
+  window.loadCloudConfig = loadCloudConfig;
+  window.saveCloudConfig = saveCloudConfig;
+  window.cloudConfigured = cloudConfigured;
+  window.cloudSaveCharacter = cloudSaveCharacter;
+  window.cloudLoadCharacter = cloudLoadCharacter;
+  window.cloudDeleteCharacter = cloudDeleteCharacter;
+}
+// ============================================
+// RENDER: Character Card (reusable)
+// ============================================
+//
+// Options:
+//   onChange: callback
+//   onRemove: callback
+//   readonly: bool
+//   defaultExpanded: bool - if true, show full details. Otherwise compact.
+//
+// When defaultExpanded is false (SL tracker view), only the essentials are
+// shown (name, monitors, armor, edge, plot points) until the user clicks
+// the expand button.
+
+function renderCombatCharacter(char, options = {}) {
+  const { onChange, onRemove, readonly = false, defaultExpanded = false } = options;
+
+  // Per-character UI state: expanded or collapsed. Persists across re-renders
+  // on the same object reference.
+  if (char._expanded === undefined) char._expanded = defaultExpanded;
+
+  const totalMalus = getTotalMalus(char);
+  const outOfAction = isOutOfAction(char);
+  const dead = isDead(char);
+
+  const typeClass = char.type === 'pc' ? 'card-pc' : char.type === 'critter' ? 'card-critter' : 'card-npc';
+  const typeLabel = char.type === 'pc' ? 'SC' : char.type === 'critter' ? 'Critter' : 'NSC';
+  const typeColor = char.type === 'pc' ? 'pc' : char.type === 'critter' ? 'critter' : 'npc';
+
+  const card = el('div', { class: 'combat-char ' + typeClass + (outOfAction ? ' card-out' : '') });
+
+  // --- HEADER ---
+  const expandBtn = el('button', {
+    class: 'btn btn-small',
+    title: char._expanded ? 'Einklappen' : 'Details anzeigen',
+    onclick: (e) => {
+      e.stopPropagation();
+      char._expanded = !char._expanded;
+      if (onChange) onChange();
+    }
+  }, char._expanded ? '▲' : '▼');
+
+  const header = el('div', { class: 'combat-char-header', style: 'cursor: pointer;' },
+    el('div', { class: 'flex flex-gap', style: 'align-items: center; flex: 1; min-width: 0;' },
+      readonly
+        ? el('div', { class: 'combat-char-name' }, char.name)
+        : el('input', {
+            class: 'combat-name-input',
+            type: 'text',
+            value: char.name,
+            onclick: (e) => e.stopPropagation(),
+            oninput: (e) => { char.name = e.target.value; if (onChange) onChange(); }
+          }),
+      el('span', { class: 'combat-char-type ' + typeColor }, typeLabel),
+      outOfAction ? el('span', {
+        class: 'combat-char-type',
+        style: 'color: var(--neon-red); border-color: var(--neon-red);'
+      }, dead ? 'TOT / KO' : 'KO') : null,
+      totalMalus < 0 ? el('span', { class: 'wound-malus' }, totalMalus + ' Mali') : null
+    ),
+    el('div', { class: 'combat-char-actions' },
+      expandBtn,
+      readonly ? null : el('button', {
+        class: 'btn btn-small',
+        title: 'Details bearbeiten',
+        onclick: (e) => { e.stopPropagation(); openCharacterEditor(char, onChange); }
+      }, '✎'),
+      readonly ? null : el('button', {
+        class: 'btn btn-small btn-danger',
+        title: 'Entfernen',
+        onclick: (e) => {
+          e.stopPropagation();
+          if (confirm('Charakter "' + char.name + '" aus der Szene entfernen?') && onRemove) onRemove();
+        }
+      }, '✕')
+    )
+  );
+  // Clicking the header (but not inputs/buttons) also toggles expand
+  header.addEventListener('click', (e) => {
+    if (e.target.closest('button') || e.target.closest('input')) return;
+    char._expanded = !char._expanded;
+    if (onChange) onChange();
+  });
+  card.appendChild(header);
+
+  // --- BODY ---
+  const body = el('div', { class: 'combat-char-body' });
+
+  // ---- ALWAYS-VISIBLE CORE SECTION ----
+  // Monitors + Armor + Edge/Plot
+
+  // Compact armor bar
+  if (char.armor && char.armor.max > 0) {
+    body.appendChild(renderArmorCompact(char, onChange));
+  }
+
+  // Monitors (always shown - this is the main combat tool)
+  const monitorsContainer = el('div', { class: 'monitors-container' });
+  monitorsContainer.appendChild(renderMonitor({
+    char, type: 'physical', label: 'Körperlich', onChange, colorClass: 'monitor-physical'
+  }));
+  monitorsContainer.appendChild(renderMonitor({
+    char, type: 'stun', label: 'Geistig', onChange, colorClass: 'monitor-stun'
+  }));
+  body.appendChild(monitorsContainer);
+
+  // Essential resources (Edge + Plot) - always visible
+  const essentialResources = el('div', { class: 'resources-grid' });
+  const edgeAvailable = (char.attributes.edge || 0) - (char.edgeUsed || 0);
+  essentialResources.appendChild(renderResourceBox({
+    label: 'Edge',
+    value: edgeAvailable,
+    maxValue: char.attributes.edge,
+    cssClass: 'resource-edge',
+    onPlus: () => { if (char.edgeUsed > 0) { char.edgeUsed--; if (onChange) onChange(); } },
+    onMinus: () => { if (edgeAvailable > 0) { char.edgeUsed = (char.edgeUsed || 0) + 1; if (onChange) onChange(); } }
+  }));
+  essentialResources.appendChild(renderResourceBox({
+    label: 'Plotpunkte',
+    value: char.plotpunkte || 0,
+    cssClass: 'resource-plot',
+    onPlus: () => { char.plotpunkte = (char.plotpunkte || 0) + 1; if (onChange) onChange(); },
+    onMinus: () => { if ((char.plotpunkte || 0) > 0) { char.plotpunkte--; if (onChange) onChange(); } }
+  }));
+  essentialResources.appendChild(renderResourceBox({
+    label: 'Umg. Malus',
+    value: char.extraMalus || 0,
+    cssClass: '',
+    onPlus: () => { char.extraMalus = Math.min((char.extraMalus || 0) + 1, 5); if (onChange) onChange(); },
+    onMinus: () => { char.extraMalus = Math.max((char.extraMalus || 0) - 1, -10); if (onChange) onChange(); }
+  }));
+  body.appendChild(essentialResources);
+
+  // ---- EXPANDED SECTION (attributes, skills, weapons, etc) ----
+  if (char._expanded) {
+    const expanded = el('div', { class: 'combat-char-expanded', style: 'border-top: 1px solid var(--border); padding-top: 1rem; margin-top: 1rem;' });
+
+    // Attributes
+    const attrsGrid = el('div', { class: 'attributes-grid' });
+    ATTRIBUTES.forEach(attr => {
+      attrsGrid.appendChild(el('div', { class: 'attribute' },
+        el('div', { class: 'attribute-label' }, ATTRIBUTE_LABELS[attr]),
+        el('input', {
+          type: 'number',
+          value: char.attributes[attr] ?? 0,
+          min: '0',
+          max: '99',
+          onchange: (e) => { char.attributes[attr] = parseInt(e.target.value) || 0; if (onChange) onChange(); }
+        })
+      ));
+    });
+    expanded.appendChild(attrsGrid);
+
+    // Additional resources: Karma, Essenz
+    const addResources = el('div', { class: 'resources-grid' });
+    addResources.appendChild(renderResourceBox({
+      label: 'Karma',
+      value: char.karma || 0,
+      cssClass: 'resource-karma',
+      onPlus: () => { char.karma = (char.karma || 0) + 1; if (onChange) onChange(); },
+      onMinus: () => { if ((char.karma || 0) > 0) { char.karma--; if (onChange) onChange(); } }
+    }));
+    addResources.appendChild(renderResourceBox({
+      label: 'Essenz',
+      value: char.essenz ?? 6,
+      cssClass: 'resource-essenz',
+      onPlus: () => { char.essenz = Math.min((char.essenz ?? 6) + 0.5, 6); if (onChange) onChange(); },
+      onMinus: () => { char.essenz = Math.max((char.essenz ?? 6) - 0.5, 0); if (onChange) onChange(); }
+    }));
+    expanded.appendChild(addResources);
+
+    // Weapons
+    if (char.weapons && char.weapons.length > 0) {
+      const wToggle = el('div', { class: 'details-toggle open' }, 'Waffen (' + char.weapons.length + ')');
+      const wContent = el('div', { class: 'details-content open' });
+      wToggle.addEventListener('click', () => {
+        wToggle.classList.toggle('open');
+        wContent.classList.toggle('open');
+      });
+      const weaponList = el('div', { class: 'weapon-list' });
+      char.weapons.forEach(w => {
+        weaponList.appendChild(el('div', { class: 'weapon-row' },
+          el('div', { class: 'weapon-name' }, w.name || '–'),
+          el('div', { class: 'weapon-damage' }, w.damage || '–'),
+          el('div', { class: 'weapon-ranges' },
+            'Nah: ' + (w.nah || '–') + ' | Mittel: ' + (w.mittel || '–') + ' | Weit: ' + (w.weit || '–')
+          )
+        ));
+      });
+      wContent.appendChild(weaponList);
+      expanded.appendChild(wToggle);
+      expanded.appendChild(wContent);
+    }
+
+    // Skills
+    if (char.skills && char.skills.length > 0) {
+      const sToggle = el('div', { class: 'details-toggle open' }, 'Fertigkeiten (' + char.skills.length + ')');
+      const sContent = el('div', { class: 'details-content open' });
+      sToggle.addEventListener('click', () => {
+        sToggle.classList.toggle('open');
+        sContent.classList.toggle('open');
+      });
+      const skillList = el('div', { class: 'skills-list' });
+      char.skills.forEach(s => {
+        const attrVal = char.attributes[s.attr] || 0;
+        const totalDice = s.dice + attrVal + totalMalus;
+        skillList.appendChild(el('div', { class: 'skill-item' },
+          el('div', null, s.name),
+          el('div', { class: 'skill-dice' }, s.dice + '+' + (ATTRIBUTE_ABBR[s.attr] || '?')),
+          el('div', {
+            class: 'skill-dice',
+            style: 'color: ' + (totalDice > 0 ? 'var(--neon-green)' : 'var(--neon-red)') + ';',
+            title: 'Gesamtwürfel (mit Mali)'
+          }, '=' + totalDice)
+        ));
+      });
+      sContent.appendChild(skillList);
+      expanded.appendChild(sToggle);
+      expanded.appendChild(sContent);
+    }
+
+    // Boosters
+    if (char.boosters && char.boosters.length > 0) {
+      const bToggle = el('div', { class: 'details-toggle' }, 'Schattenbooster (' + char.boosters.length + ')');
+      const bContent = el('div', { class: 'details-content' });
+      bToggle.addEventListener('click', () => {
+        bToggle.classList.toggle('open');
+        bContent.classList.toggle('open');
+      });
+      const bList = el('div', { class: 'booster-list' });
+      char.boosters.forEach(b => {
+        bList.appendChild(el('div', { class: 'booster-item' },
+          el('div', null,
+            el('strong', null, b.name),
+            el('span', { class: 'booster-item-desc' }, b.desc || '')
+          )
+        ));
+      });
+      bContent.appendChild(bList);
+      expanded.appendChild(bToggle);
+      expanded.appendChild(bContent);
+    }
+
+    // Notes / Equipment
+    if (char.equipment || char.notes || char.connections) {
+      const nToggle = el('div', { class: 'details-toggle' }, 'Ausrüstung & Notizen');
+      const nContent = el('div', { class: 'details-content' });
+      nToggle.addEventListener('click', () => {
+        nToggle.classList.toggle('open');
+        nContent.classList.toggle('open');
+      });
+      if (char.equipment) {
+        nContent.appendChild(el('div', { class: 'mb-1' },
+          el('strong', { style: 'color: var(--neon-cyan); font-size: 0.85rem;' }, 'Ausrüstung: '),
+          el('span', { class: 'text-small' }, char.equipment)
+        ));
+      }
+      if (char.connections) {
+        nContent.appendChild(el('div', { class: 'mb-1' },
+          el('strong', { style: 'color: var(--neon-cyan); font-size: 0.85rem;' }, 'Connections: '),
+          el('span', { class: 'text-small' }, char.connections)
+        ));
+      }
+      if (char.notes) {
+        nContent.appendChild(el('div', { class: 'mb-1 text-small text-muted' }, char.notes));
+      }
+      expanded.appendChild(nToggle);
+      expanded.appendChild(nContent);
+    }
+
+    body.appendChild(expanded);
+  }
+
+  card.appendChild(body);
+  return card;
+}
+
+// Compact armor display for collapsed view
+function renderArmorCompact(char, onChange) {
+  const armorSec = el('div', { class: 'armor-section' });
+
+  const header = el('div', { class: 'flex flex-between flex-gap', style: 'align-items: center; margin-bottom: 0.35rem;' },
+    el('div', { class: 'monitor-title', style: 'color: var(--neon-cyan); margin: 0; text-align: left;' }, 'Panzerung'),
+    el('div', { class: 'flex flex-gap', style: 'align-items: center;' },
+      el('label', { style: 'margin: 0; font-size: 0.7rem;' }, 'Max:'),
+      el('input', {
+        type: 'number',
+        value: char.armor.max,
+        min: '0',
+        max: '99',
+        style: 'width: 50px; padding: 0.2rem;',
+        onclick: (e) => e.stopPropagation(),
+        onchange: (e) => {
+          char.armor.max = parseInt(e.target.value) || 0;
+          if (char.armor.damage > char.armor.max) char.armor.damage = char.armor.max;
+          if (onChange) onChange();
+        }
+      }),
+      el('span', { class: 'text-mono text-small text-muted' },
+        (char.armor.max - char.armor.damage) + '/' + char.armor.max
+      )
+    )
+  );
+  armorSec.appendChild(header);
+
+  const circles = el('div', { class: 'monitor-circles' });
+  for (let i = 0; i < char.armor.max; i++) {
+    const filled = i < (char.armor.max - char.armor.damage);
+    const circle = el('button', {
+      class: 'monitor-circle' + (filled ? ' filled-armor' : ''),
+      onclick: (e) => {
+        e.stopPropagation();
+        if (filled) {
+          char.armor.damage = char.armor.max - i;
+        } else {
+          char.armor.damage = char.armor.max - i - 1;
+        }
+        if (onChange) onChange();
+      }
+    });
+    circles.appendChild(circle);
+  }
+  armorSec.appendChild(circles);
+
+  return armorSec;
+}
+
+// ============================================
+// RENDER: Resource Box
+// ============================================
+
+function renderResourceBox({ label, value, maxValue, cssClass, onPlus, onMinus }) {
+  return el('div', { class: 'resource-box ' + (cssClass || '') },
+    el('div', { class: 'resource-label' }, label),
+    el('div', { class: 'resource-controls' },
+      onMinus ? el('button', { class: 'resource-btn', onclick: onMinus }, '−') : null,
+      el('div', { class: 'resource-value' },
+        value + (maxValue != null ? ' / ' + maxValue : '')
+      ),
+      onPlus ? el('button', { class: 'resource-btn', onclick: onPlus }, '+') : null
+    )
+  );
+}
+
+// ============================================
+// RENDER: Zustandsmonitor
+// ============================================
+
+function renderMonitor({ char, type, label, colorClass, onChange }) {
+  const data = char[type];
+  const box = el('div', { class: 'monitor-box' });
+
+  const titleRow = el('div', { class: 'flex flex-between', style: 'align-items: center; margin-bottom: 0.5rem;' },
+    el('div', { class: 'monitor-title ' + colorClass, style: 'margin: 0;' }, label),
+    el('div', { class: 'flex flex-gap', style: 'align-items: center;' },
+      el('label', { style: 'margin: 0; font-size: 0.7rem;' }, 'Max:'),
+      el('input', {
+        type: 'number',
+        value: data.max,
+        min: '0',
+        max: '99',
+        style: 'width: 50px; padding: 0.2rem;',
+        onchange: (e) => {
+          data.max = parseInt(e.target.value) || 0;
+          if (data.damage > data.max) data.damage = data.max;
+          if (onChange) onChange();
+        }
+      })
+    )
+  );
+  box.appendChild(titleRow);
+
+  // Monitor grid (rows of 3)
+  const grid = el('div', { class: 'monitor-grid' });
+  const rowsNeeded = Math.ceil(data.max / 3);
+  for (let row = 0; row < rowsNeeded; row++) {
+    const rowDiv = el('div', { class: 'monitor-row' });
+    const rowLabel = '−' + (row + 1);
+    rowDiv.appendChild(el('div', { class: 'monitor-row-label' }, rowLabel));
+    const circlesDiv = el('div', { class: 'monitor-circles' });
+    for (let i = 0; i < 3; i++) {
+      const absIdx = row * 3 + i;
+      if (absIdx >= data.max) break;
+      const filled = absIdx < data.damage;
+      const fillClass = type === 'physical' ? 'filled-physical' : 'filled-stun';
+      const circle = el('button', {
+        class: 'monitor-circle' + (filled ? ' ' + fillClass : ''),
+        onclick: () => {
+          // Click sets damage to this position (+1 if clicking empty, removes if clicking last filled)
+          if (filled && absIdx === data.damage - 1) {
+            // last filled: uncheck
+            data.damage = absIdx;
+          } else if (filled) {
+            data.damage = absIdx;
+          } else {
+            data.damage = absIdx + 1;
+          }
+          if (onChange) onChange();
+        }
+      });
+      circlesDiv.appendChild(circle);
+    }
+    rowDiv.appendChild(circlesDiv);
+    grid.appendChild(rowDiv);
+  }
+  box.appendChild(grid);
+
+  // Damage counter
+  box.appendChild(el('div', {
+    class: 'text-small text-muted',
+    style: 'text-align: center; margin-top: 0.5rem; font-family: var(--font-mono);'
+  }, 'Schaden: ' + data.damage + ' / ' + data.max));
+
+  return box;
+}
+
+// Expose
+if (typeof window !== 'undefined') {
+  window.renderCombatCharacter = renderCombatCharacter;
+  window.renderMonitor = renderMonitor;
+}
+// ============================================
+// SL VIEW (Spielleiter)
+// ============================================
+
+function renderSLView() {
+  renderSceneSelector();
+  renderActiveScene();
+}
+
+function renderSceneSelector() {
+  const select = $('#scene-select');
+  select.innerHTML = '';
+  if (State.scenes.length === 0) {
+    const opt = el('option', { value: '' }, '-- Keine Szene --');
+    select.appendChild(opt);
+    return;
+  }
+  State.scenes.forEach(scene => {
+    const opt = el('option', { value: scene.id }, scene.name);
+    if (scene.id === State.activeSceneId) opt.selected = true;
+    select.appendChild(opt);
+  });
+}
+
+function renderActiveScene() {
+  const container = $('#combat-list');
+  container.innerHTML = '';
+
+  const scene = getActiveScene();
+  if (!scene) {
+    container.appendChild(el('div', { class: 'scene-empty' },
+      el('div', { class: 'big' }, '◆ KEINE SZENE AKTIV ◆'),
+      el('div', null, 'Erstelle eine neue Kampfszene oder wähle eine bestehende aus.')
+    ));
+    return;
+  }
+
+  if (scene.characters.length === 0) {
+    container.appendChild(el('div', { class: 'scene-empty' },
+      el('div', { class: 'big' }, '◇ SZENE IST LEER ◇'),
+      el('div', null, 'Füge NSCs aus der Bibliothek oder Spielercharaktere über ihren Code hinzu.')
+    ));
+    return;
+  }
+
+  scene.characters.forEach((char, idx) => {
+    container.appendChild(renderCombatCharacter(char, {
+      onChange: () => {
+        saveState();
+        // Re-render just this card
+        renderActiveScene();
+      },
+      onRemove: () => {
+        scene.characters.splice(idx, 1);
+        saveState();
+        renderActiveScene();
+      }
+    }));
+  });
+}
+
+function getActiveScene() {
+  return State.scenes.find(s => s.id === State.activeSceneId) || null;
+}
+
+function createNewScene() {
+  const defaultName = 'Szene ' + (State.scenes.length + 1);
+
+  const content = el('div');
+  content.appendChild(el('p', { class: 'mb-2 text-muted' },
+    'Gib einen Namen für die neue Kampfszene ein.'
+  ));
+
+  const input = el('input', {
+    type: 'text',
+    value: defaultName,
+    placeholder: 'Name der Szene',
+    style: 'margin-bottom: 1rem;'
+  });
+  content.appendChild(input);
+
+  function submit() {
+    const name = input.value.trim();
+    if (!name) {
+      showToast('Bitte einen Namen eingeben', 'error');
+      return;
+    }
+    const scene = {
+      id: generateId(),
+      name: name,
+      characters: []
+    };
+    State.scenes.push(scene);
+    State.activeSceneId = scene.id;
+    saveState();
+    closeModal();
+    renderSLView();
+    showToast('Szene "' + scene.name + '" erstellt', 'success');
+  }
+
+  input.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); submit(); }
+  });
+
+  content.appendChild(el('div', { class: 'flex flex-gap' },
+    el('button', { class: 'btn btn-primary', onclick: submit }, 'Erstellen'),
+    el('button', { class: 'btn', onclick: closeModal }, 'Abbrechen')
+  ));
+
+  openModal('Neue Kampfszene', content);
+
+  // Fokus + Selektion nach Modal-Animation
+  setTimeout(() => { input.focus(); input.select(); }, 100);
+}
+
+function deleteActiveScene() {
+  const scene = getActiveScene();
+  if (!scene) {
+    showToast('Keine Szene ausgewählt', 'error');
+    return;
+  }
+  if (!confirm('Szene "' + scene.name + '" wirklich löschen?')) return;
+  State.scenes = State.scenes.filter(s => s.id !== scene.id);
+  State.activeSceneId = State.scenes[0]?.id || null;
+  saveState();
+  renderSLView();
+  showToast('Szene gelöscht', 'success');
+}
+
+// ============================================
+// ADD CHARACTERS TO SCENE
+// ============================================
+
+function openAddNpcFromLibrary() {
+  const scene = getActiveScene();
+  if (!scene) { showToast('Erst eine Szene erstellen', 'error'); return; }
+
+  const content = el('div');
+  content.appendChild(el('p', { class: 'mb-2 text-muted' },
+    'Wähle einen NSC oder Critter aus der Bibliothek. Er wird als Kopie zur Szene hinzugefügt und kann dann angepasst werden.'
+  ));
+
+  const searchInput = el('input', {
+    type: 'text',
+    placeholder: 'Suchen...',
+    style: 'margin-bottom: 1rem;'
+  });
+  content.appendChild(searchInput);
+
+  const list = el('div', { class: 'library-grid' });
+
+  function renderList() {
+    list.innerHTML = '';
+    const term = searchInput.value.toLowerCase();
+    const filtered = State.library.filter(c => !term || c.name.toLowerCase().includes(term) || (c.concept || '').toLowerCase().includes(term));
+    if (filtered.length === 0) {
+      list.appendChild(el('div', { class: 'text-muted text-center' }, 'Keine Einträge gefunden'));
+      return;
+    }
+    filtered.forEach(template => {
+      const item = el('div', {
+        class: 'library-item' + (template.type === 'critter' ? ' critter' : ''),
+        onclick: () => {
+          const copy = deepClone(template);
+          copy.id = generateId();
+          // Reset combat state
+          copy.physical.damage = 0;
+          copy.stun.damage = 0;
+          copy.armor.damage = 0;
+          copy.edgeUsed = 0;
+          copy.plotpunkte = 0;
+          copy.extraMalus = 0;
+          scene.characters.push(copy);
+          saveState();
+          closeModal();
+          renderActiveScene();
+          showToast(copy.name + ' hinzugefügt', 'success');
+        }
+      },
+        el('div', { class: 'library-item-name' }, template.name),
+        template.concept ? el('div', {
+          class: 'text-small text-muted mb-1'
+        }, template.concept) : null,
+        el('div', { class: 'library-item-stats' },
+          el('div', { class: 'library-item-stat' },
+            el('span', null, 'STR'), el('strong', null, template.attributes.staerke)
+          ),
+          el('div', { class: 'library-item-stat' },
+            el('span', null, 'GES'), el('strong', null, template.attributes.geschick)
+          ),
+          el('div', { class: 'library-item-stat' },
+            el('span', null, 'WIL'), el('strong', null, template.attributes.willenskraft)
+          ),
+          el('div', { class: 'library-item-stat' },
+            el('span', null, 'Pnz'), el('strong', null, template.armor.max)
+          ),
+          el('div', { class: 'library-item-stat' },
+            el('span', null, 'K'), el('strong', null, template.physical.max)
+          ),
+          el('div', { class: 'library-item-stat' },
+            el('span', null, 'G'), el('strong', null, template.stun.max)
+          )
+        )
+      );
+      list.appendChild(item);
+    });
+  }
+
+  searchInput.addEventListener('input', renderList);
+  renderList();
+  content.appendChild(list);
+
+  openModal('NSC aus Bibliothek hinzufügen', content);
+}
+
+function openAddPcManual() {
+  const scene = getActiveScene();
+  if (!scene) { showToast('Erst eine Szene erstellen', 'error'); return; }
+  const blank = createBlankCharacter('pc');
+  blank.name = 'Neuer Charakter';
+  scene.characters.push(blank);
+  saveState();
+  renderActiveScene();
+  showToast('Leerer Charakter hinzugefügt - jetzt bearbeiten', 'success');
+}
+
+function openImportPcCode() {
+  const scene = getActiveScene();
+  if (!scene) { showToast('Erst eine Szene erstellen', 'error'); return; }
+
+  const content = el('div');
+
+  const tabStrip = el('div', { class: 'tab-strip' },
+    el('button', { class: 'active', dataset: { tab: 'sc' } }, '8-Zeichen-Code'),
+    el('button', { dataset: { tab: 'qr' } }, 'QR scannen'),
+    el('button', { dataset: { tab: 'lc' } }, 'Langer Code')
+  );
+  content.appendChild(tabStrip);
+
+  // Tab 1: short code
+  const tabSc = el('div', { class: 'tab-content active', dataset: { tabContent: 'sc' } });
+  tabSc.appendChild(el('p', { class: 'text-small text-muted mb-2' },
+    'Gib den 8-Zeichen-Code des Spielers ein. Cloud muss konfiguriert sein (Einstellungen ⚙).'
+  ));
+  const scInput = el('input', {
+    type: 'text',
+    placeholder: 'ABCD2345',
+    maxlength: '8',
+    style: 'font-family: var(--font-mono); font-size: 1.3rem; letter-spacing: 0.3em; text-align: center; text-transform: uppercase;'
+  });
+  tabSc.appendChild(scInput);
+  const scBtn = el('button', {
+    class: 'btn btn-primary mt-2',
+    onclick: async () => {
+      try {
+        scBtn.disabled = true;
+        scBtn.textContent = 'Lädt...';
+        const char = await cloudLoadCharacter(scInput.value);
+        char.id = generateId();
+        resetCombatState(char);
+        scene.characters.push(char);
+        saveState();
+        closeModal();
+        renderActiveScene();
+        showToast('Charakter "' + char.name + '" aus Cloud importiert', 'success');
+      } catch (e) {
+        showToast(e.message, 'error');
+      } finally {
+        scBtn.disabled = false;
+        scBtn.textContent = 'Aus Cloud laden';
+      }
+    }
+  }, 'Aus Cloud laden');
+  tabSc.appendChild(scBtn);
+  content.appendChild(tabSc);
+
+  // Tab 2: QR scan
+  const tabQr = el('div', { class: 'tab-content', dataset: { tabContent: 'qr' } });
+  tabQr.appendChild(el('p', { class: 'text-small mb-2' },
+    'Lass dir den QR-Code des Spielers zeigen und scanne ihn mit der Kamera dieses Geräts.'
+  ));
+  tabQr.appendChild(el('div', {
+    style: 'background: var(--bg-secondary); border-left: 3px solid var(--neon-yellow); padding: 0.75rem; margin-bottom: 1rem; font-size: 0.85rem;'
+  },
+    el('strong', { style: 'color: var(--neon-yellow); display: block; margin-bottom: 0.25rem;' }, '⚠ Kamera-Zugriff nötig'),
+    el('span', { class: 'text-muted' },
+      'Beim ersten Scan fragt der Browser nach Kamera-Berechtigung. Auf iOS/Safari funktioniert das nur über HTTPS (GitHub Pages erfüllt das). Wenn du versehentlich "Blockieren" gewählt hast, kannst du es in den Browser-Einstellungen dieser Seite ändern.'
+    )
+  ));
+  const qrStartBtn = el('button', { class: 'btn btn-primary' }, '📷 Scan starten');
+  const qrRegion = el('div', { id: 'qr-scanner-region-modal', style: 'width: 100%; max-width: 400px; margin: 1rem auto; border: 2px solid var(--neon-magenta);' });
+  let scannerInstance = null;
+  qrStartBtn.addEventListener('click', () => {
+    if (typeof Html5Qrcode === 'undefined') {
+      showToast('QR-Scanner-Bibliothek nicht geladen. Internetverbindung?', 'error');
+      return;
+    }
+    if (scannerInstance) { try { scannerInstance.stop(); } catch(e){} scannerInstance = null; }
+    qrStartBtn.disabled = true;
+    qrStartBtn.textContent = '📷 Kamera wird gestartet...';
+    scannerInstance = new Html5Qrcode('qr-scanner-region-modal');
+    scannerInstance.start(
+      { facingMode: 'environment' },
+      { fps: 10, qrbox: 250 },
+      (decoded) => {
+        try {
+          const char = decodeCharacter(decoded);
+          char.id = generateId();
+          resetCombatState(char);
+          scene.characters.push(char);
+          saveState();
+          scannerInstance.stop().then(() => {
+            scannerInstance = null;
+            closeModal();
+            renderActiveScene();
+            showToast('Charakter "' + char.name + '" via QR importiert', 'success');
+          });
+        } catch (e) {
+          showToast('Ungültiger QR-Code: ' + e.message, 'error');
+        }
+      },
+      () => {}
+    ).then(() => {
+      qrStartBtn.textContent = '⏹ Scan stoppen';
+      qrStartBtn.disabled = false;
+      qrStartBtn.classList.add('btn-danger');
+      qrStartBtn.classList.remove('btn-primary');
+      qrStartBtn.onclick = () => {
+        if (scannerInstance) {
+          scannerInstance.stop().then(() => {
+            scannerInstance = null;
+            qrStartBtn.textContent = '📷 Scan starten';
+            qrStartBtn.classList.remove('btn-danger');
+            qrStartBtn.classList.add('btn-primary');
+          });
+        }
+      };
+    }).catch(err => {
+      qrStartBtn.disabled = false;
+      qrStartBtn.textContent = '📷 Scan starten';
+      const msg = String(err);
+      if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
+        showToast('Kamera-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.', 'error');
+      } else if (msg.includes('NotFound') || msg.includes('not found')) {
+        showToast('Keine Kamera gefunden.', 'error');
+      } else if (msg.includes('NotReadable') || msg.includes('in use')) {
+        showToast('Kamera wird bereits von einer anderen App benutzt.', 'error');
+      } else {
+        showToast('Kamera-Fehler: ' + msg, 'error');
+      }
+    });
+  });
+  tabQr.appendChild(qrStartBtn);
+  tabQr.appendChild(qrRegion);
+  content.appendChild(tabQr);
+
+  // Tab 3: long code
+  const tabLc = el('div', { class: 'tab-content', dataset: { tabContent: 'lc' } });
+  tabLc.appendChild(el('p', { class: 'text-small text-muted mb-2' },
+    'Langer Base64-Code (funktioniert offline):'
+  ));
+  const lcTa = el('textarea', {
+    rows: '6',
+    placeholder: 'Code einfügen...',
+    style: 'font-family: var(--font-mono); font-size: 0.8rem;'
+  });
+  tabLc.appendChild(lcTa);
+  const lcBtn = el('button', {
+    class: 'btn btn-primary mt-2',
+    onclick: () => {
+      try {
+        const char = decodeCharacter(lcTa.value);
+        char.id = generateId();
+        resetCombatState(char);
+        scene.characters.push(char);
+        saveState();
+        closeModal();
+        renderActiveScene();
+        showToast('Charakter "' + char.name + '" importiert', 'success');
+      } catch (e) {
+        showToast(e.message, 'error');
+      }
+    }
+  }, 'Importieren');
+  tabLc.appendChild(lcBtn);
+  content.appendChild(tabLc);
+
+  // Tab switching (cleanup scanner on switch)
+  tabStrip.querySelectorAll('button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (scannerInstance) { try { scannerInstance.stop(); } catch(e){} scannerInstance = null; }
+      tabStrip.querySelectorAll('button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      content.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+      content.querySelector('[data-tab-content="' + btn.dataset.tab + '"]').classList.add('active');
+    });
+  });
+
+  openModal('Spieler-Charakter importieren', content);
+}
+
+// Helper: reset damage / volatile state when importing
+function resetCombatState(char) {
+  if (!char.armor) char.armor = { max: 0, damage: 0 };
+  if (!char.physical) char.physical = { max: 10, damage: 0 };
+  if (!char.stun) char.stun = { max: 10, damage: 0 };
+  char.physical.damage = 0;
+  char.stun.damage = 0;
+  char.armor.damage = 0;
+  char.edgeUsed = 0;
+  char.plotpunkte = 0;
+  char.extraMalus = 0;
+}
+
+// ============================================
+// CHARACTER EDITOR (full)
+// ============================================
+
+function openCharacterEditor(char, onChange, options = {}) {
+  const content = buildCharacterEditor(char, onChange, options);
+  openModal('Charakterbogen bearbeiten', content);
+}
+
+function buildCharacterEditor(char, onChange, options = {}) {
+  const wrapper = el('div');
+
+  // Basic info
+  const basicSection = el('div', { class: 'form-row' },
+    el('div', { class: 'form-group', style: 'grid-column: span 2;' },
+      el('label', null, 'Name'),
+      el('input', {
+        type: 'text', value: char.name || '',
+        oninput: (e) => { char.name = e.target.value; if (onChange) onChange(); }
+      })
+    ),
+    el('div', { class: 'form-group' },
+      el('label', null, 'Konzept / Rolle'),
+      el('input', {
+        type: 'text', value: char.concept || '',
+        placeholder: 'z.B. Straßensamurai',
+        oninput: (e) => { char.concept = e.target.value; if (onChange) onChange(); }
+      })
+    )
+  );
+  wrapper.appendChild(basicSection);
+
+  // Shortcode display/regenerate for PCs
+  if (char.type === 'pc') {
+    if (!char.shortCode) char.shortCode = generateShortCode();
+    const scRow = el('div', {
+      class: 'flex flex-gap mb-2',
+      style: 'align-items: center; padding: 0.5rem; background: var(--bg-secondary); border: 1px solid var(--border);'
+    },
+      el('span', { style: 'font-family: var(--font-display); font-size: 0.75rem; letter-spacing: 0.1em; color: var(--text-secondary); text-transform: uppercase;' }, '8-Zeichen-Code:'),
+      el('span', { class: 'shortcode-badge', id: 'editor-shortcode-display' }, char.shortCode),
+      el('button', {
+        class: 'btn btn-small',
+        onclick: () => copyToClipboard(char.shortCode)
+      }, '📋'),
+      el('button', {
+        class: 'btn btn-small btn-danger',
+        title: 'Neuen Code erzeugen (alter Code wird ungültig)',
+        onclick: () => {
+          if (!confirm('Neuen Code erzeugen? Der alte Code wird ungültig und ein Cloud-Upload erstellt einen neuen Eintrag.')) return;
+          char.shortCode = generateShortCode();
+          const display = document.getElementById('editor-shortcode-display');
+          if (display) display.textContent = char.shortCode;
+          if (onChange) onChange();
+        }
+      }, '⟲')
+    );
+    wrapper.appendChild(scRow);
+  }
+
+  // Awakened toggles
+  const awakRow = el('div', { class: 'flex flex-gap mb-2', style: 'align-items: center;' },
+    el('label', { class: 'flex flex-gap', style: 'margin: 0; align-items: center; cursor: pointer;' },
+      el('input', {
+        type: 'checkbox',
+        style: 'width: auto;',
+        checked: char.awakened ? 'checked' : null,
+        onchange: (e) => { char.awakened = e.target.checked; if (onChange) onChange(); }
+      }),
+      el('span', null, 'Erwacht')
+    ),
+    el('label', { class: 'flex flex-gap', style: 'margin: 0; align-items: center; cursor: pointer;' },
+      el('input', {
+        type: 'checkbox',
+        style: 'width: auto;',
+        checked: char.digitalAwakened ? 'checked' : null,
+        onchange: (e) => { char.digitalAwakened = e.target.checked; if (onChange) onChange(); }
+      }),
+      el('span', null, 'Digital Erwacht')
+    )
+  );
+  wrapper.appendChild(awakRow);
+
+  // Attributes
+  wrapper.appendChild(el('h3', { class: 'section-subtitle' }, 'Attribute'));
+  const attrGrid = el('div', { class: 'attributes-grid' });
+  ATTRIBUTES.forEach(attr => {
+    attrGrid.appendChild(el('div', { class: 'attribute' },
+      el('div', { class: 'attribute-label' }, ATTRIBUTE_LABELS[attr]),
+      el('input', {
+        type: 'number',
+        value: char.attributes[attr],
+        min: '0',
+        onchange: (e) => { char.attributes[attr] = parseInt(e.target.value) || 0; if (onChange) onChange(); }
+      })
+    ));
+  });
+  wrapper.appendChild(attrGrid);
+
+  // Essenz + notes
+  wrapper.appendChild(el('div', { class: 'form-row mt-2' },
+    el('div', { class: 'form-group' },
+      el('label', null, 'Essenz'),
+      el('input', {
+        type: 'number', step: '0.5', value: char.essenz ?? 6, min: '0', max: '6',
+        onchange: (e) => { char.essenz = parseFloat(e.target.value) || 0; if (onChange) onChange(); }
+      })
+    ),
+    el('div', { class: 'form-group', style: 'grid-column: span 2;' },
+      el('label', null, 'Essenz-Modifikator'),
+      el('input', {
+        type: 'text', value: char.essenzNote || '',
+        placeholder: 'z.B. keine Modifikatoren / –1 bei magischen Proben',
+        oninput: (e) => { char.essenzNote = e.target.value; if (onChange) onChange(); }
+      })
+    )
+  ));
+
+  // Armor max + Monitors max
+  wrapper.appendChild(el('h3', { class: 'section-subtitle' }, 'Panzerung & Zustandsmonitore'));
+  wrapper.appendChild(el('div', { class: 'form-row' },
+    el('div', { class: 'form-group' },
+      el('label', null, 'Panzerung max'),
+      el('input', {
+        type: 'number', value: char.armor.max, min: '0',
+        onchange: (e) => { char.armor.max = parseInt(e.target.value) || 0; if (onChange) onChange(); }
+      })
+    ),
+    el('div', { class: 'form-group' },
+      el('label', null, 'Körperlich max'),
+      el('input', {
+        type: 'number', value: char.physical.max, min: '0',
+        onchange: (e) => { char.physical.max = parseInt(e.target.value) || 0; if (onChange) onChange(); }
+      })
+    ),
+    el('div', { class: 'form-group' },
+      el('label', null, 'Geistig max'),
+      el('input', {
+        type: 'number', value: char.stun.max, min: '0',
+        onchange: (e) => { char.stun.max = parseInt(e.target.value) || 0; if (onChange) onChange(); }
+      })
+    )
+  ));
+
+  // Skills
+  wrapper.appendChild(el('h3', { class: 'section-subtitle' }, 'Fertigkeiten'));
+  const skillsContainer = el('div');
+  function renderSkills() {
+    skillsContainer.innerHTML = '';
+    if (!char.skills) char.skills = [];
+    char.skills.forEach((s, idx) => {
+      skillsContainer.appendChild(el('div', { class: 'skill-item', style: 'margin-bottom: 0.25rem;' },
+        el('input', {
+          type: 'text', value: s.name || '',
+          placeholder: 'Name',
+          oninput: (e) => { s.name = e.target.value; if (onChange) onChange(); }
+        }),
+        el('input', {
+          type: 'number', class: 'skill-dice', value: s.dice || 0, min: '0',
+          onchange: (e) => { s.dice = parseInt(e.target.value) || 0; if (onChange) onChange(); }
+        }),
+        el('select', {
+          onchange: (e) => { s.attr = e.target.value; if (onChange) onChange(); }
+        },
+          ...ATTRIBUTES.map(a => el('option', {
+            value: a,
+            selected: s.attr === a ? 'selected' : null
+          }, ATTRIBUTE_ABBR[a]))
+        ),
+        el('button', {
+          class: 'btn btn-small btn-danger',
+          onclick: () => { char.skills.splice(idx, 1); renderSkills(); if (onChange) onChange(); }
+        }, '✕')
+      ));
+    });
+    skillsContainer.appendChild(el('button', {
+      class: 'btn btn-small mt-1',
+      onclick: () => {
+        char.skills.push({ name: '', dice: 0, attr: 'geschick' });
+        renderSkills();
+        if (onChange) onChange();
+      }
+    }, '+ Fertigkeit'));
+  }
+  renderSkills();
+  wrapper.appendChild(skillsContainer);
+
+  // Weapons
+  wrapper.appendChild(el('h3', { class: 'section-subtitle' }, 'Waffen'));
+  const weaponsContainer = el('div');
+  function renderWeapons() {
+    weaponsContainer.innerHTML = '';
+    if (!char.weapons) char.weapons = [];
+    char.weapons.forEach((w, idx) => {
+      weaponsContainer.appendChild(el('div', {
+        class: 'flex flex-gap',
+        style: 'margin-bottom: 0.35rem; align-items: center;'
+      },
+        el('input', {
+          type: 'text', value: w.name || '',
+          placeholder: 'Waffenname',
+          style: 'flex: 2;',
+          oninput: (e) => { w.name = e.target.value; if (onChange) onChange(); }
+        }),
+        el('input', {
+          type: 'text', value: w.damage || '',
+          placeholder: 'Schaden (z.B. 4K)',
+          style: 'flex: 1;',
+          oninput: (e) => { w.damage = e.target.value; if (onChange) onChange(); }
+        }),
+        el('input', {
+          type: 'text', value: w.nah || '',
+          placeholder: 'Nah',
+          style: 'width: 60px;',
+          oninput: (e) => { w.nah = e.target.value; if (onChange) onChange(); }
+        }),
+        el('input', {
+          type: 'text', value: w.mittel || '',
+          placeholder: 'Mittel',
+          style: 'width: 60px;',
+          oninput: (e) => { w.mittel = e.target.value; if (onChange) onChange(); }
+        }),
+        el('input', {
+          type: 'text', value: w.weit || '',
+          placeholder: 'Weit',
+          style: 'width: 60px;',
+          oninput: (e) => { w.weit = e.target.value; if (onChange) onChange(); }
+        }),
+        el('button', {
+          class: 'btn btn-small btn-danger',
+          onclick: () => { char.weapons.splice(idx, 1); renderWeapons(); if (onChange) onChange(); }
+        }, '✕')
+      ));
+    });
+    weaponsContainer.appendChild(el('button', {
+      class: 'btn btn-small mt-1',
+      onclick: () => {
+        char.weapons.push({ name: '', damage: '', nah: 'OK', mittel: '—', weit: '—' });
+        renderWeapons();
+        if (onChange) onChange();
+      }
+    }, '+ Waffe'));
+  }
+  renderWeapons();
+  wrapper.appendChild(weaponsContainer);
+
+  // Boosters
+  wrapper.appendChild(el('h3', { class: 'section-subtitle' }, 'Schattenbooster / Fähigkeiten'));
+  const boostersContainer = el('div');
+  function renderBoosters() {
+    boostersContainer.innerHTML = '';
+    if (!char.boosters) char.boosters = [];
+    char.boosters.forEach((b, idx) => {
+      boostersContainer.appendChild(el('div', {
+        style: 'margin-bottom: 0.5rem; background: var(--bg-secondary); padding: 0.5rem; border: 1px solid var(--border);'
+      },
+        el('div', { class: 'flex flex-gap', style: 'align-items: center; margin-bottom: 0.25rem;' },
+          el('input', {
+            type: 'text', value: b.name || '',
+            placeholder: 'Name',
+            style: 'flex: 1;',
+            oninput: (e) => { b.name = e.target.value; if (onChange) onChange(); }
+          }),
+          el('button', {
+            class: 'btn btn-small btn-danger',
+            onclick: () => { char.boosters.splice(idx, 1); renderBoosters(); if (onChange) onChange(); }
+          }, '✕')
+        ),
+        el('textarea', {
+          rows: '2',
+          placeholder: 'Beschreibung',
+          oninput: (e) => { b.desc = e.target.value; if (onChange) onChange(); }
+        }, b.desc || '')
+      ));
+    });
+    boostersContainer.appendChild(el('button', {
+      class: 'btn btn-small mt-1',
+      onclick: () => {
+        char.boosters.push({ name: '', desc: '' });
+        renderBoosters();
+        if (onChange) onChange();
+      }
+    }, '+ Booster'));
+  }
+  renderBoosters();
+  wrapper.appendChild(boostersContainer);
+
+  // Notes
+  wrapper.appendChild(el('h3', { class: 'section-subtitle' }, 'Weitere Details'));
+  wrapper.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'Ausrüstung'),
+    el('textarea', {
+      rows: '2',
+      oninput: (e) => { char.equipment = e.target.value; if (onChange) onChange(); }
+    }, char.equipment || '')
+  ));
+  wrapper.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'Connections'),
+    el('textarea', {
+      rows: '2',
+      oninput: (e) => { char.connections = e.target.value; if (onChange) onChange(); }
+    }, char.connections || '')
+  ));
+  wrapper.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'Zitate'),
+    el('textarea', {
+      rows: '2',
+      oninput: (e) => { char.zitate = e.target.value; if (onChange) onChange(); }
+    }, char.zitate || '')
+  ));
+  wrapper.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'Vor- und Nachteile'),
+    el('textarea', {
+      rows: '2',
+      oninput: (e) => { char.vorNachteile = e.target.value; if (onChange) onChange(); }
+    }, char.vorNachteile || '')
+  ));
+  wrapper.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'Notizen'),
+    el('textarea', {
+      rows: '3',
+      oninput: (e) => { char.notes = e.target.value; if (onChange) onChange(); }
+    }, char.notes || '')
+  ));
+
+  // Close button
+  wrapper.appendChild(el('div', { class: 'mt-3 text-center' },
+    el('button', { class: 'btn btn-primary', onclick: closeModal }, 'Fertig')
+  ));
+
+  return wrapper;
+}
+
+// ============================================
+// LIBRARY VIEW
+// ============================================
+
+function renderLibrary() {
+  const grid = $('#library-grid');
+  grid.innerHTML = '';
+  const term = ($('#library-search').value || '').toLowerCase();
+
+  const filtered = State.library.filter(c => !term ||
+    c.name.toLowerCase().includes(term) ||
+    (c.concept || '').toLowerCase().includes(term)
+  );
+
+  if (filtered.length === 0) {
+    grid.appendChild(el('div', { class: 'text-muted text-center', style: 'grid-column: 1/-1; padding: 2rem;' },
+      'Keine Einträge gefunden'
+    ));
+    return;
+  }
+
+  filtered.forEach(entry => {
+    const item = el('div', { class: 'library-item' + (entry.type === 'critter' ? ' critter' : '') },
+      el('div', { class: 'flex flex-between', style: 'align-items: flex-start; margin-bottom: 0.5rem;' },
+        el('div', null,
+          el('div', { class: 'library-item-name' }, entry.name),
+          entry.concept ? el('div', { class: 'text-small text-muted' }, entry.concept) : null
+        ),
+        el('div', { class: 'flex flex-gap' },
+          el('button', {
+            class: 'btn btn-small',
+            onclick: (e) => { e.stopPropagation(); editLibraryEntry(entry); }
+          }, '✎'),
+          el('button', {
+            class: 'btn btn-small btn-danger',
+            onclick: (e) => {
+              e.stopPropagation();
+              if (confirm('Eintrag "' + entry.name + '" aus der Bibliothek löschen?')) {
+                State.library = State.library.filter(x => x.id !== entry.id);
+                saveState();
+                renderLibrary();
+              }
+            }
+          }, '✕')
+        )
+      ),
+      el('div', { class: 'library-item-stats' },
+        el('div', { class: 'library-item-stat' },
+          el('span', null, 'STR'), el('strong', null, entry.attributes.staerke)
+        ),
+        el('div', { class: 'library-item-stat' },
+          el('span', null, 'GES'), el('strong', null, entry.attributes.geschick)
+        ),
+        el('div', { class: 'library-item-stat' },
+          el('span', null, 'WIL'), el('strong', null, entry.attributes.willenskraft)
+        ),
+        el('div', { class: 'library-item-stat' },
+          el('span', null, 'Pnz'), el('strong', null, entry.armor.max)
+        ),
+        el('div', { class: 'library-item-stat' },
+          el('span', null, 'K'), el('strong', null, entry.physical.max)
+        ),
+        el('div', { class: 'library-item-stat' },
+          el('span', null, 'G'), el('strong', null, entry.stun.max)
+        )
+      )
+    );
+    grid.appendChild(item);
+  });
+}
+
+function editLibraryEntry(entry) {
+  const content = buildCharacterEditor(entry, () => {
+    saveState();
+    renderLibrary();
+  });
+  openModal('Bibliothekseintrag: ' + entry.name, content);
+}
+
+function addNewLibraryEntry() {
+  // Ask for type
+  const content = el('div',
+    el('p', { class: 'mb-2' }, 'Welchen Typ möchtest du hinzufügen?'),
+    el('div', { class: 'flex flex-gap flex-wrap' },
+      el('button', {
+        class: 'btn',
+        onclick: () => {
+          const n = createBlankCharacter('npc');
+          n.name = 'Neuer NSC';
+          State.library.push(n);
+          saveState();
+          closeModal();
+          renderLibrary();
+          editLibraryEntry(n);
+        }
+      }, 'NSC'),
+      el('button', {
+        class: 'btn',
+        onclick: () => {
+          const n = createBlankCharacter('critter');
+          n.name = 'Neuer Critter';
+          State.library.push(n);
+          saveState();
+          closeModal();
+          renderLibrary();
+          editLibraryEntry(n);
+        }
+      }, 'Critter')
+    )
+  );
+  openModal('Neuer Bibliothekseintrag', content);
+}
+
+function resetLibraryToDefaults() {
+  if (!confirm('Alle eigenen Bibliothekseinträge werden durch die Standard-NSCs aus dem Regelwerk ersetzt. Fortfahren?')) return;
+  State.library = deepClone(DEFAULT_LIBRARY);
+  saveState();
+  renderLibrary();
+  showToast('Bibliothek zurückgesetzt', 'success');
+}
+
+// ============================================
+// SC VIEW (Spieler)
+// ============================================
+
+function renderSCView() {
+  if (State.activePcId) {
+    const pc = State.pcs.find(p => p.id === State.activePcId);
+    if (pc) {
+      renderPcEditView(pc);
+      return;
+    }
+    State.activePcId = null;
+  }
+  renderPcListView();
+}
+
+function renderPcListView() {
+  $('#pc-login-view').style.display = 'block';
+  $('#pc-edit-view').style.display = 'none';
+
+  const listContainer = $('#saved-pcs-list');
+  listContainer.innerHTML = '';
+
+  if (State.pcs.length === 0) {
+    listContainer.appendChild(el('div', { class: 'text-muted text-small' },
+      'Noch keine Charaktere gespeichert.'
+    ));
+    return;
+  }
+
+  State.pcs.forEach(pc => {
+    listContainer.appendChild(el('div', {
+      class: 'card card-pc',
+      style: 'cursor: pointer;'
+    },
+      el('div', { class: 'flex flex-between', style: 'align-items: center;' },
+        el('div', {
+          style: 'flex: 1;',
+          onclick: () => { State.activePcId = pc.id; saveState(); renderSCView(); }
+        },
+          el('div', { class: 'flex flex-gap', style: 'align-items: center;' },
+            el('span', { style: 'font-family: var(--font-display); font-weight: 700; font-size: 1rem;' }, pc.name),
+            pc.shortCode ? el('span', { class: 'shortcode-badge' }, pc.shortCode) : null
+          ),
+          pc.concept ? el('div', { class: 'text-small text-muted' }, pc.concept) : null
+        ),
+        el('div', { class: 'flex flex-gap' },
+          el('button', {
+            class: 'btn btn-small',
+            onclick: () => { State.activePcId = pc.id; saveState(); renderSCView(); }
+          }, 'Öffnen'),
+          el('button', {
+            class: 'btn btn-small btn-danger',
+            onclick: () => {
+              if (confirm('Charakter "' + pc.name + '" löschen?')) {
+                State.pcs = State.pcs.filter(p => p.id !== pc.id);
+                saveState();
+                renderSCView();
+              }
+            }
+          }, '✕')
+        )
+      )
+    ));
+  });
+}
+
+function renderPcEditView(pc) {
+  $('#pc-login-view').style.display = 'none';
+  $('#pc-edit-view').style.display = 'block';
+
+  // Ensure pc has a shortCode
+  if (!pc.shortCode) { pc.shortCode = generateShortCode(); saveState(); }
+
+  const badge = $('#pc-shortcode-badge');
+  if (badge) {
+    badge.innerHTML = '';
+    badge.appendChild(el('span', { class: 'shortcode-badge', title: '8-Zeichen-Code dieses Charakters' }, pc.shortCode));
+  }
+
+  const content = $('#pc-edit-content');
+  content.innerHTML = '';
+
+  // Render the combat character card (same interface as in scenes), always expanded
+  content.appendChild(renderCombatCharacter(pc, {
+    defaultExpanded: true,
+    onChange: () => {
+      saveState();
+      renderPcEditView(pc);
+    }
+  }));
+}
+
+function createNewPc() {
+  const pc = createBlankCharacter('pc');
+  pc.name = 'Mein Charakter';
+  State.pcs.push(pc);
+  State.activePcId = pc.id;
+  saveState();
+  renderSCView();
+  showToast('Neuer Charakter erstellt. Jetzt anpassen!', 'success');
+  // Auto-open editor
+  setTimeout(() => openCharacterEditor(pc, () => {
+    saveState();
+    renderPcEditView(pc);
+  }), 100);
+}
+
+function loadPcFromCode() {
+  const code = $('#pc-load-code').value.trim();
+  if (!code) {
+    showToast('Bitte einen Code einfügen', 'error');
+    return;
+  }
+  try {
+    const pc = decodeCharacter(code);
+    pc.id = generateId(); // New local ID
+    pc.type = 'pc';
+    State.pcs.push(pc);
+    State.activePcId = pc.id;
+    saveState();
+    $('#pc-load-code').value = '';
+    renderSCView();
+    showToast('Charakter "' + pc.name + '" geladen', 'success');
+  } catch (e) {
+    showToast(e.message, 'error');
+  }
+}
+
+function showPcQrAndCode() {
+  const pc = State.pcs.find(p => p.id === State.activePcId);
+  if (!pc) return;
+  if (!pc.shortCode) { pc.shortCode = generateShortCode(); saveState(); }
+
+  const longCode = encodeCharacter(pc);
+
+  const content = el('div');
+
+  // Short code prominently displayed
+  content.appendChild(el('div', { class: 'qr-wrapper' },
+    el('div', { id: 'qr-display', style: 'width: 240px; height: 240px;' }),
+    el('div', { class: 'shortcode-display' }, pc.shortCode)
+  ));
+
+  content.appendChild(el('p', { class: 'text-small text-muted text-center mb-2' },
+    'Scanne den QR-Code mit einem anderen Gerät, oder gib den 8-Zeichen-Code ein (Cloud erforderlich).'
+  ));
+
+  // Action buttons
+  const actions = el('div', { class: 'flex flex-gap flex-wrap mb-2', style: 'justify-content: center;' },
+    el('button', {
+      class: 'btn btn-small',
+      onclick: () => copyToClipboard(pc.shortCode)
+    }, '📋 Code kopieren'),
+    el('button', {
+      class: 'btn btn-small',
+      onclick: () => copyToClipboard(longCode)
+    }, '📋 Langen Code kopieren')
+  );
+  content.appendChild(actions);
+
+  // Collapsible long code
+  const toggle = el('div', { class: 'details-toggle' }, 'Langer Code (für Offline-Transfer ohne Cloud)');
+  const ccontent = el('div', { class: 'details-content' });
+  toggle.addEventListener('click', () => {
+    toggle.classList.toggle('open');
+    ccontent.classList.toggle('open');
+  });
+  ccontent.appendChild(el('div', { class: 'code-display' }, longCode));
+  content.appendChild(toggle);
+  content.appendChild(ccontent);
+
+  openModal('Charakter teilen: ' + pc.name, content);
+
+  // Render QR (needs to happen after DOM is in place)
+  setTimeout(() => {
+    const qrEl = document.getElementById('qr-display');
+    if (!qrEl) return;
+    if (typeof QRCode === 'undefined') {
+      qrEl.innerHTML = '<div style="padding:2rem; text-align:center; color:var(--neon-red);">QR-Bibliothek nicht geladen.<br>Internetverbindung prüfen.</div>';
+      return;
+    }
+    qrEl.innerHTML = '';
+    new QRCode(qrEl, {
+      text: longCode,
+      width: 240,
+      height: 240,
+      colorDark: '#000000',
+      colorLight: '#ffffff',
+      correctLevel: QRCode.CorrectLevel.L  // Lowest correction for max capacity
+    });
+  }, 50);
+}
+
+async function cloudSaveActivePc() {
+  const pc = State.pcs.find(p => p.id === State.activePcId);
+  if (!pc) return;
+  if (!cloudConfigured()) {
+    if (confirm('Cloud ist nicht konfiguriert. Jetzt einrichten?')) {
+      openCloudSettings();
+    }
+    return;
+  }
+  if (!pc.shortCode) { pc.shortCode = generateShortCode(); saveState(); }
+
+  const btn = $('#btn-cloud-save-pc');
+  const originalText = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = '☁ Lädt hoch...'; }
+    await cloudSaveCharacter(pc);
+    showToast('Charakter in Cloud gespeichert als ' + pc.shortCode, 'success');
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = originalText; }
+  }
+}
+
+async function loadPcFromShortcode() {
+  const raw = $('#pc-shortcode-input').value;
+  const code = normalizeShortCode(raw);
+  if (!isValidShortCode(code)) {
+    showToast('Code muss 8 Zeichen (A-Z, 2-9) sein', 'error');
+    return;
+  }
+  if (!cloudConfigured()) {
+    if (confirm('Cloud ist nicht konfiguriert. Jetzt einrichten?')) {
+      openCloudSettings();
+    }
+    return;
+  }
+  const btn = $('#btn-load-pc-shortcode');
+  const original = btn ? btn.textContent : '';
+  try {
+    if (btn) { btn.disabled = true; btn.textContent = 'Lädt...'; }
+    const char = await cloudLoadCharacter(code);
+    char.id = generateId();
+    char.type = 'pc';
+    resetCombatState(char);
+    // Avoid duplicates: if a PC with same shortCode exists, ask
+    const existing = State.pcs.find(p => p.shortCode === char.shortCode);
+    if (existing) {
+      if (!confirm('Ein Charakter mit Code ' + char.shortCode + ' ist bereits lokal gespeichert. Überschreiben?')) {
+        return;
+      }
+      State.pcs = State.pcs.filter(p => p.id !== existing.id);
+    }
+    State.pcs.push(char);
+    State.activePcId = char.id;
+    $('#pc-shortcode-input').value = '';
+    saveState();
+    renderSCView();
+    showToast('Charakter "' + char.name + '" geladen', 'success');
+  } catch (e) {
+    showToast(e.message, 'error');
+  } finally {
+    if (btn) { btn.disabled = false; btn.textContent = original; }
+  }
+}
+
+// QR scan in SC view
+let scScannerInstance = null;
+function startScPlayerQrScan() {
+  const region = document.getElementById('qr-scanner-region');
+  if (!region) return;
+  if (typeof Html5Qrcode === 'undefined') {
+    showToast('QR-Bibliothek nicht geladen. Internetverbindung?', 'error');
+    return;
+  }
+  const btn = $('#btn-start-qr-scan');
+
+  // If already scanning, stop
+  if (scScannerInstance) {
+    scScannerInstance.stop().then(() => {
+      scScannerInstance = null;
+      if (btn) {
+        btn.textContent = '📷 Scan starten';
+        btn.classList.remove('btn-danger');
+        btn.classList.add('btn-primary');
+      }
+    });
+    return;
+  }
+
+  if (btn) { btn.disabled = true; btn.textContent = '📷 Kamera wird gestartet...'; }
+  scScannerInstance = new Html5Qrcode('qr-scanner-region');
+  scScannerInstance.start(
+    { facingMode: 'environment' },
+    { fps: 10, qrbox: 250 },
+    (decoded) => {
+      try {
+        const char = decodeCharacter(decoded);
+        char.id = generateId();
+        char.type = 'pc';
+        resetCombatState(char);
+        const existing = State.pcs.find(p => p.shortCode && p.shortCode === char.shortCode);
+        if (existing) {
+          if (!confirm('Charakter mit diesem Code existiert schon lokal. Überschreiben?')) {
+            scScannerInstance.stop().then(() => { scScannerInstance = null; });
+            return;
+          }
+          State.pcs = State.pcs.filter(p => p.id !== existing.id);
+        }
+        State.pcs.push(char);
+        State.activePcId = char.id;
+        saveState();
+        scScannerInstance.stop().then(() => {
+          scScannerInstance = null;
+          renderSCView();
+          showToast('Charakter "' + char.name + '" via QR geladen', 'success');
+        });
+      } catch (e) {
+        showToast('Ungültiger QR-Code: ' + e.message, 'error');
+      }
+    },
+    () => {}
+  ).then(() => {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '⏹ Scan stoppen';
+      btn.classList.remove('btn-primary');
+      btn.classList.add('btn-danger');
+    }
+  }).catch(err => {
+    if (btn) {
+      btn.disabled = false;
+      btn.textContent = '📷 Scan starten';
+    }
+    const msg = String(err);
+    if (msg.includes('NotAllowed') || msg.includes('Permission') || msg.includes('denied')) {
+      showToast('Kamera-Zugriff verweigert. Bitte in den Browser-Einstellungen erlauben.', 'error');
+    } else if (msg.includes('NotFound') || msg.includes('not found')) {
+      showToast('Keine Kamera gefunden.', 'error');
+    } else if (msg.includes('NotReadable') || msg.includes('in use')) {
+      showToast('Kamera wird bereits von einer anderen App benutzt.', 'error');
+    } else {
+      showToast('Kamera-Fehler: ' + msg, 'error');
+    }
+    scScannerInstance = null;
+  });
+}
+
+// ============================================
+// CLOUD SETTINGS MODAL
+// ============================================
+
+function openCloudSettings() {
+  const cfg = Cloud.config || { apiKey: '', collectionId: '' };
+
+  const content = el('div');
+
+  content.appendChild(el('p', { class: 'mb-2' },
+    'Damit 8-Zeichen-Codes zwischen Geräten funktionieren, brauchst du einen kostenlosen ',
+    el('a', { href: 'https://jsonbin.io', target: '_blank', style: 'color: var(--neon-cyan);' }, 'JSONBin.io'),
+    '-Account.'
+  ));
+
+  const details = el('div', { class: 'details-content open', style: 'background: var(--bg-secondary); padding: 0.75rem; margin-bottom: 1rem; border: 1px solid var(--border);' },
+    el('strong', { style: 'color: var(--neon-cyan); display: block; margin-bottom: 0.5rem;' }, 'Einrichtung (einmalig):'),
+    el('ol', { style: 'margin-left: 1.5rem; font-size: 0.9rem; line-height: 1.8;' },
+      el('li', null, 'Gehe zu jsonbin.io und erstelle einen kostenlosen Account'),
+      el('li', null, 'Hole deinen "Master Key" unter API Keys'),
+      el('li', null, 'Erstelle eine "Collection" (z.B. "Shadowrun") und kopiere ihre ID'),
+      el('li', null, 'Trage beides unten ein - alle Spieler können denselben Key benutzen')
+    )
+  );
+  content.appendChild(details);
+
+  content.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'JSONBin Master Key (X-Master-Key)'),
+    el('input', {
+      type: 'password',
+      id: 'cloud-apikey-input',
+      value: cfg.apiKey || '',
+      placeholder: '$2a$10$...',
+      style: 'font-family: var(--font-mono); font-size: 0.85rem;'
+    })
+  ));
+
+  content.appendChild(el('div', { class: 'form-group' },
+    el('label', null, 'Collection ID'),
+    el('input', {
+      type: 'text',
+      id: 'cloud-collection-input',
+      value: cfg.collectionId || '',
+      placeholder: '65a...',
+      style: 'font-family: var(--font-mono); font-size: 0.85rem;'
+    })
+  ));
+
+  content.appendChild(el('div', { class: 'flex flex-gap mt-2 flex-wrap' },
+    el('button', {
+      class: 'btn btn-primary',
+      onclick: async () => {
+        const apiKey = document.getElementById('cloud-apikey-input').value.trim();
+        const collectionId = document.getElementById('cloud-collection-input').value.trim();
+        if (!apiKey || !collectionId) {
+          showToast('Beide Felder ausfüllen', 'error');
+          return;
+        }
+        saveCloudConfig({ apiKey, collectionId });
+        showToast('Cloud-Einstellungen gespeichert', 'success');
+        updateCloudStatusIndicator();
+        closeModal();
+      }
+    }, '💾 Speichern'),
+    el('button', {
+      class: 'btn',
+      onclick: async () => {
+        const apiKey = document.getElementById('cloud-apikey-input').value.trim();
+        const collectionId = document.getElementById('cloud-collection-input').value.trim();
+        if (!apiKey || !collectionId) {
+          showToast('Erst beide Felder ausfüllen', 'error');
+          return;
+        }
+        // Testspeichern
+        const prev = Cloud.config;
+        Cloud.config = { apiKey, collectionId };
+        try {
+          const resp = await fetch(JSONBIN_BASE + '/c/' + collectionId + '/bins', {
+            headers: cloudHeaders()
+          });
+          if (resp.ok) {
+            showToast('Verbindung OK!', 'success');
+          } else {
+            showToast('Fehler: ' + resp.status + ' - Key oder Collection-ID prüfen', 'error');
+            Cloud.config = prev;
+          }
+        } catch (e) {
+          showToast('Netzwerk-Fehler: ' + e.message, 'error');
+          Cloud.config = prev;
+        }
+      }
+    }, '🔌 Verbindung testen'),
+    cloudConfigured() ? el('button', {
+      class: 'btn btn-danger',
+      onclick: () => {
+        if (!confirm('Cloud-Einstellungen löschen?')) return;
+        saveCloudConfig(null);
+        Cloud.lookup = {};
+        saveCloudLookup();
+        showToast('Cloud-Einstellungen gelöscht', 'success');
+        updateCloudStatusIndicator();
+        closeModal();
+      }
+    }, 'Löschen') : null
+  ));
+
+  openModal('Cloud-Einstellungen', content);
+}
+
+function updateCloudStatusIndicator() {
+  const btn = $('#btn-open-settings');
+  if (!btn) return;
+  const existing = btn.querySelector('.cloud-status');
+  if (existing) existing.remove();
+  const ind = el('span', { class: 'cloud-status' + (cloudConfigured() ? ' connected' : '') });
+  btn.insertBefore(ind, btn.firstChild);
+}
+
+function deleteActivePc() {
+  const pc = State.pcs.find(p => p.id === State.activePcId);
+  if (!pc) return;
+  if (!confirm('Charakter "' + pc.name + '" wirklich löschen?')) return;
+  State.pcs = State.pcs.filter(p => p.id !== State.activePcId);
+  State.activePcId = null;
+  saveState();
+  renderSCView();
+  showToast('Charakter gelöscht', 'success');
+}
+
+// ============================================
+// INIT / EVENT BINDINGS
+// ============================================
+
+function init() {
+  loadState();
+  loadCloudConfig();
+
+  // Nav buttons
+  $$('.nav-btn').forEach(btn => {
+    if (btn.id === 'btn-open-settings') return; // handled separately below
+    btn.addEventListener('click', () => switchView(btn.dataset.view));
+  });
+
+  // Settings button (cloud)
+  const settingsBtn = $('#btn-open-settings');
+  if (settingsBtn) {
+    settingsBtn.addEventListener('click', openCloudSettings);
+  }
+  updateCloudStatusIndicator();
+
+  // Modal close
+  $('#modal-close').addEventListener('click', closeModal);
+  $('#modal-overlay').addEventListener('click', (e) => {
+    if (e.target.id === 'modal-overlay') closeModal();
+  });
+
+  // SL buttons
+  $('#btn-new-scene').addEventListener('click', createNewScene);
+  $('#btn-delete-scene').addEventListener('click', deleteActiveScene);
+  $('#btn-add-npc-from-lib').addEventListener('click', openAddNpcFromLibrary);
+  $('#btn-add-pc-manual').addEventListener('click', openAddPcManual);
+  $('#btn-import-pc-code').addEventListener('click', openImportPcCode);
+  $('#scene-select').addEventListener('change', (e) => {
+    State.activeSceneId = e.target.value;
+    saveState();
+    renderActiveScene();
+  });
+
+  // SC: create / load
+  $('#btn-create-pc').addEventListener('click', createNewPc);
+  $('#btn-load-pc-code').addEventListener('click', loadPcFromCode);
+  $('#btn-load-pc-shortcode').addEventListener('click', loadPcFromShortcode);
+  $('#btn-start-qr-scan').addEventListener('click', startScPlayerQrScan);
+
+  // Auto-uppercase shortcode input
+  const scInput = $('#pc-shortcode-input');
+  if (scInput) {
+    scInput.addEventListener('input', (e) => {
+      const pos = e.target.selectionStart;
+      e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9]/g, '');
+      e.target.setSelectionRange(pos, pos);
+    });
+    scInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') loadPcFromShortcode();
+    });
+  }
+
+  // Tab switching in SC login
+  $$('#view-sc .tab-strip button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Stop scanner if switching away from QR tab
+      if (typeof scScannerInstance !== 'undefined' && scScannerInstance) {
+        try { scScannerInstance.stop(); } catch(e){}
+        scScannerInstance = null;
+      }
+      const tab = btn.dataset.tab;
+      $$('#view-sc .tab-strip button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      $$('#view-sc .tab-content').forEach(tc => tc.classList.remove('active'));
+      const target = document.querySelector('#view-sc [data-tab-content="' + tab + '"]');
+      if (target) target.classList.add('active');
+    });
+  });
+
+  // SC: edit-view actions
+  $('#btn-back-to-pc-list').addEventListener('click', () => {
+    State.activePcId = null;
+    saveState();
+    renderSCView();
+  });
+  $('#btn-save-pc').addEventListener('click', () => {
+    saveState();
+    showToast('Charakter gespeichert', 'success');
+  });
+  $('#btn-cloud-save-pc').addEventListener('click', cloudSaveActivePc);
+  $('#btn-show-qr-pc').addEventListener('click', showPcQrAndCode);
+  $('#btn-delete-pc').addEventListener('click', deleteActivePc);
+
+  // Library buttons
+  $('#library-search').addEventListener('input', renderLibrary);
+  $('#btn-add-library-entry').addEventListener('click', addNewLibraryEntry);
+  $('#btn-reset-library').addEventListener('click', resetLibraryToDefaults);
+
+  // ESC closes modal (and stops scanners)
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') {
+      if (typeof scScannerInstance !== 'undefined' && scScannerInstance) {
+        try { scScannerInstance.stop(); } catch(err){}
+        scScannerInstance = null;
+      }
+      closeModal();
+    }
+  });
+
+  // Initial render
+  switchView('sl');
+}
+
+// Run when DOM is ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
+
+</script>
+</body>
+</html>
