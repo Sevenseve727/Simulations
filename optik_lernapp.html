@@ -4903,47 +4903,55 @@ function showGameRoom() {
 // LICHTSTRAHL-LABYRINTH
 // =========================================
 const MAZE_COST = 20; // Diamanten pro Versuch
+// Lichtquelle hat Startrichtung (angle in Radiant): 0 = rechts, PI/2 = unten, -PI/2 = oben
 const MAZE_LEVELS = [
   {
     num: 1, name: 'Erster Spiegel', unlockCost: 0,
-    light: { x: 60, y: 300, angle: 0 },       // nach rechts
-    target: { x: 540, y: 100 },
+    // Licht geht nach rechts, Ziel liegt direkt darüber - 1 Spiegel (45°) reicht
+    light: { x: 60, y: 300, angle: 0 },
+    target: { x: 400, y: 80 },
     walls: [],
     availableMirrors: 1,
-    // hint: Einen Spiegel platzieren, damit Strahl zum Ziel lenkt
   },
   {
     num: 2, name: 'Zwei Stationen', unlockCost: 30,
-    light: { x: 60, y: 300, angle: 0 },
-    target: { x: 540, y: 300 },
-    walls: [ { x1: 250, y1: 0, x2: 250, y2: 230 }, { x1: 350, y1: 370, x2: 350, y2: 600 } ],
+    // Licht geht nach oben, muss nach rechts um Wand herum
+    light: { x: 100, y: 360, angle: -Math.PI/2 },
+    target: { x: 540, y: 360 },
+    walls: [
+      { x1: 280, y1: 200, x2: 280, y2: 400 }  // senkrechte Wand in der Mitte
+    ],
     availableMirrors: 2,
   },
   {
     num: 3, name: 'Zickzack', unlockCost: 50,
+    // Licht oben-links nach rechts, Ziel unten-rechts, Mauer zwingt zu 2 Spiegeln
     light: { x: 60, y: 80, angle: 0 },
-    target: { x: 540, y: 320 },
-    walls: [ { x1: 200, y1: 0, x2: 200, y2: 170 }, { x1: 400, y1: 0, x2: 400, y2: 240 }, { x1: 300, y1: 200, x2: 300, y2: 400 } ],
-    availableMirrors: 3,
+    target: { x: 540, y: 330 },
+    walls: [
+      { x1: 380, y1: 0, x2: 380, y2: 230 }   // Sperre rechts oben
+    ],
+    availableMirrors: 2,
   },
   {
-    num: 4, name: 'Enger Kanal', unlockCost: 80,
+    num: 4, name: 'Über Eck', unlockCost: 80,
+    // Licht nach rechts, Ziel unten-links - muss zweimal umgelenkt werden
     light: { x: 60, y: 200, angle: 0 },
-    target: { x: 540, y: 200 },
+    target: { x: 120, y: 380 },
     walls: [
-      { x1: 180, y1: 0, x2: 180, y2: 140 }, { x1: 180, y1: 260, x2: 180, y2: 400 },
-      { x1: 420, y1: 0, x2: 420, y2: 140 }, { x1: 420, y1: 260, x2: 420, y2: 400 }
+      { x1: 180, y1: 100, x2: 480, y2: 100 }, // waagerechte Wand oben
+      { x1: 480, y1: 100, x2: 480, y2: 320 }  // senkrechte Wand rechts
     ],
     availableMirrors: 2,
   },
   {
     num: 5, name: 'Großmeister', unlockCost: 120,
-    light: { x: 60, y: 350, angle: 0 },
-    target: { x: 540, y: 60 },
+    // Licht nach unten, Ziel oben-rechts - Wände zwingen zu Umweg
+    light: { x: 100, y: 60, angle: Math.PI/2 },
+    target: { x: 540, y: 80 },
     walls: [
-      { x1: 150, y1: 150, x2: 300, y2: 150 },
-      { x1: 300, y1: 150, x2: 300, y2: 280 },
-      { x1: 400, y1: 200, x2: 400, y2: 400 }
+      { x1: 220, y1: 0, x2: 220, y2: 220 },
+      { x1: 400, y1: 180, x2: 400, y2: 400 }
     ],
     availableMirrors: 3,
   }
@@ -5364,27 +5372,23 @@ function setupMazeGame(num) {
 
 function mazeWon(num, mirrorsUsed) {
   const lvl = MAZE_LEVELS.find(l => l.num === num);
-  // Sterne: 3 = mit minimaler Anzahl Spiegeln, 2 = 1 mehr, 1 = geschafft
+  // Sterne: 3 = mit minimaler Anzahl Spiegeln, 2 = so viele wie erlaubt, 1 = mehr (falls möglich)
   let stars = 1;
   if (mirrorsUsed <= lvl.availableMirrors) stars = 2;
   if (mirrorsUsed < lvl.availableMirrors) stars = 3;
-  // 3 Sterne als Belohnung = 50 Diamanten, 2 = 30, 1 = 15
-  const rewards = { 1: 15, 2: 30, 3: 50 };
-  const reward = rewards[stars];
-  state.totalPoints += reward;
-  // Besseres Ergebnis speichern
+  // Besseres Ergebnis speichern - ohne Diamanten-Belohnung
   const prog = state.mazeProgress[num] || { unlocked: true, stars: 0 };
   if (stars > prog.stars) prog.stars = stars;
   state.mazeProgress[num] = prog;
   updateStats();
-  showBadge(`🎉 Level ${num} geschafft! +${reward} 💎`);
+  showBadge(`🎉 Level ${num} geschafft!`);
   setTimeout(() => {
     openModal(`
       <h3 style="color:#4ade80;">🎉 Level geschafft!</h3>
       <div style="font-size:2.5em; color:#ffd700; margin:10px 0;">${'★'.repeat(stars)}${'☆'.repeat(3-stars)}</div>
-      <p>Du hast <strong>${mirrorsUsed}</strong> Spiegel verwendet.<br>Belohnung: <strong style="color:#fbbf24;">+${reward} 💎</strong></p>
-      <div style="display:flex; gap:10px; justify-content:center; margin-top:14px;">
-        <button class="btn btn-secondary" onclick="closeModalForce(); renderMaze(${num});">Nochmal</button>
+      <p>Du hast <strong>${mirrorsUsed}</strong> Spiegel verwendet.</p>
+      <div style="display:flex; gap:10px; justify-content:center; margin-top:14px; flex-wrap:wrap;">
+        <button class="btn btn-secondary" onclick="closeModalForce(); startMaze(${num});">Nochmal (-${MAZE_COST} 💎)</button>
         <button class="btn btn-primary" onclick="closeModalForce(); showMazeLevelSelect();">Weiter</button>
       </div>
     `);
