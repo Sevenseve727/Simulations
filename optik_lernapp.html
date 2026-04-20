@@ -1,0 +1,4619 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>Licht & Optik – Übungsreise</title>
+<style>
+  /* ===== Grundstil ===== */
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body { height: 100%; overflow-x: hidden; }
+  body {
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    background: radial-gradient(ellipse at top, #1a2151 0%, #0a0e2a 60%, #050816 100%);
+    color: #f0f3ff;
+    min-height: 100vh;
+    user-select: none;
+    -webkit-user-select: none;
+    padding: 0;
+  }
+
+  /* Sternenhimmel-Hintergrund */
+  .stars-bg {
+    position: fixed; top:0; left:0; right:0; bottom:0; z-index: 0; pointer-events: none;
+    background-image:
+      radial-gradient(1px 1px at 20% 30%, #fff, transparent),
+      radial-gradient(1px 1px at 60% 70%, #fff, transparent),
+      radial-gradient(1px 1px at 50% 50%, #fff, transparent),
+      radial-gradient(2px 2px at 80% 10%, #fff, transparent),
+      radial-gradient(1px 1px at 10% 80%, #fff, transparent),
+      radial-gradient(1px 1px at 90% 60%, #fff, transparent),
+      radial-gradient(2px 2px at 33% 88%, #fff, transparent),
+      radial-gradient(1px 1px at 70% 40%, #fff, transparent);
+    background-size: 200% 200%;
+    opacity: 0.4;
+    animation: twinkle 8s ease-in-out infinite;
+  }
+  @keyframes twinkle {
+    0%,100% { opacity: 0.3; }
+    50% { opacity: 0.6; }
+  }
+
+  .app { position: relative; z-index: 1; max-width: 1100px; margin: 0 auto; padding: 16px; }
+
+  /* ===== Kopfzeile mit Gamification ===== */
+  .topbar {
+    display: flex; justify-content: space-between; align-items: center;
+    background: rgba(255,255,255,0.06);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 12px 18px;
+    margin-bottom: 20px;
+    flex-wrap: wrap; gap: 10px;
+  }
+  .logo {
+    font-weight: 700; font-size: 1.2em;
+    background: linear-gradient(90deg, #ffd700, #ffed8a, #ffa500);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    cursor: pointer;
+  }
+  .stats { display:flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  .stat {
+    display: flex; align-items: center; gap: 6px;
+    background: rgba(255,255,255,0.08);
+    padding: 6px 12px; border-radius: 20px;
+    font-size: 0.95em; font-weight: 600;
+  }
+  .stat .icon { font-size: 1.2em; }
+
+  .level-bar-container {
+    width: 120px; height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px; overflow: hidden;
+  }
+  .level-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4ade80, #22d3ee);
+    transition: width 0.5s ease;
+    width: 0%;
+  }
+
+  /* ===== Startseite ===== */
+  .screen { animation: fadeIn 0.4s ease; }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  h1 {
+    font-size: 2em; text-align: center; margin: 20px 0 10px;
+    background: linear-gradient(135deg, #ffd700, #ff8a00);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  h2 { font-size: 1.5em; margin-bottom: 16px; color: #ffd700; }
+  .subtitle { text-align: center; color: #b8c0e5; margin-bottom: 24px; font-size: 1.05em; }
+
+  .chapters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .chapter-card {
+    background: linear-gradient(135deg, rgba(255,255,255,0.08), rgba(255,255,255,0.02));
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 18px;
+    padding: 20px;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative; overflow: hidden;
+    min-height: 180px;
+    display: flex; flex-direction: column; justify-content: space-between;
+  }
+  .chapter-card:hover, .chapter-card:active {
+    transform: translateY(-4px);
+    border-color: rgba(255,215,0,0.5);
+    box-shadow: 0 10px 30px rgba(255,215,0,0.15);
+  }
+  .chapter-card .chap-icon { font-size: 2.5em; margin-bottom: 8px; }
+  .chapter-card h3 { font-size: 1.15em; margin-bottom: 6px; color: #fff; }
+  .chapter-card p { font-size: 0.9em; color: #b8c0e5; line-height: 1.4; }
+  .chapter-card .chap-stars {
+    margin-top: 12px; display: flex; gap: 4px; align-items: center; font-size: 1.1em;
+  }
+  .chapter-card .chap-progress {
+    font-size: 0.85em; color: #8a94c8; margin-top: 4px;
+  }
+
+  .mode-buttons {
+    display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;
+    margin-top: 8px;
+  }
+  .btn {
+    padding: 12px 24px; border-radius: 30px; border: none;
+    font-size: 1em; font-weight: 600; cursor: pointer;
+    transition: all 0.2s ease;
+    font-family: inherit;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, #ffd700, #ff8a00);
+    color: #1a1a2e;
+  }
+  .btn-primary:hover, .btn-primary:active {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(255,165,0,0.4);
+  }
+  .btn-secondary {
+    background: rgba(255,255,255,0.1);
+    color: #f0f3ff;
+    border: 1px solid rgba(255,255,255,0.2);
+  }
+  .btn-secondary:hover, .btn-secondary:active {
+    background: rgba(255,255,255,0.18);
+  }
+  .btn-danger {
+    background: rgba(255,100,100,0.15);
+    color: #ffbdbd;
+    border: 1px solid rgba(255,100,100,0.3);
+  }
+
+  /* ===== Kapitel-Ansicht ===== */
+  .chapter-header {
+    display: flex; justify-content: space-between; align-items: center;
+    margin-bottom: 18px; flex-wrap: wrap; gap: 10px;
+  }
+  .back-btn {
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #f0f3ff;
+    padding: 8px 16px; border-radius: 20px; cursor: pointer;
+    font-size: 0.9em;
+  }
+  .task-counter {
+    background: rgba(255,215,0,0.15);
+    padding: 6px 14px; border-radius: 20px;
+    font-size: 0.9em; font-weight: 600; color: #ffd700;
+  }
+
+  .task-progress {
+    height: 6px; background: rgba(255,255,255,0.1);
+    border-radius: 3px; overflow: hidden;
+    margin-bottom: 24px;
+  }
+  .task-progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #ffd700, #ff8a00);
+    transition: width 0.5s ease;
+  }
+
+  .task-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 20px;
+    padding: 24px;
+    margin-bottom: 16px;
+  }
+  .task-title {
+    font-size: 1.15em; margin-bottom: 16px; line-height: 1.5;
+    color: #fff;
+  }
+  .task-type-tag {
+    display: inline-block;
+    background: rgba(100,200,255,0.15);
+    color: #7dd3fc;
+    padding: 4px 10px; border-radius: 12px;
+    font-size: 0.75em; font-weight: 600;
+    margin-bottom: 10px;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  /* Multiple-Choice */
+  .mc-options { display: flex; flex-direction: column; gap: 10px; }
+  .mc-option {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.1);
+    border-radius: 12px;
+    padding: 14px 18px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    font-size: 1em;
+    color: #f0f3ff;
+    text-align: left;
+    font-family: inherit;
+  }
+  .mc-option:hover:not(.disabled), .mc-option:active:not(.disabled) {
+    background: rgba(255,255,255,0.12);
+    border-color: rgba(255,215,0,0.5);
+  }
+  .mc-option.correct {
+    background: rgba(74,222,128,0.2);
+    border-color: #4ade80;
+    color: #bbf7d0;
+  }
+  .mc-option.incorrect {
+    background: rgba(248,113,113,0.2);
+    border-color: #f87171;
+    color: #fecaca;
+  }
+  .mc-option.disabled { cursor: not-allowed; opacity: 0.7; }
+
+  /* Feedback-Box */
+  .feedback {
+    margin-top: 16px;
+    padding: 14px 18px;
+    border-radius: 12px;
+    font-size: 0.95em;
+    line-height: 1.5;
+    display: none;
+    animation: slideIn 0.3s ease;
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateY(-8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .feedback.show { display: block; }
+  .feedback.correct {
+    background: rgba(74,222,128,0.15);
+    border-left: 4px solid #4ade80;
+    color: #d1fae5;
+  }
+  .feedback.incorrect {
+    background: rgba(248,113,113,0.15);
+    border-left: 4px solid #f87171;
+    color: #fee2e2;
+  }
+  .feedback strong { display: block; margin-bottom: 6px; font-size: 1.05em; }
+
+  .task-actions {
+    margin-top: 16px; display: flex; gap: 10px; justify-content: flex-end; flex-wrap: wrap;
+  }
+
+  /* Drag & Drop */
+  .dnd-container { display: flex; flex-direction: column; gap: 16px; }
+  .dnd-items, .dnd-targets {
+    display: flex; gap: 10px; flex-wrap: wrap;
+    background: rgba(255,255,255,0.03);
+    padding: 14px; border-radius: 12px;
+    min-height: 70px;
+    align-items: center;
+  }
+  .dnd-label { font-size: 0.85em; color: #b8c0e5; margin-bottom: 4px; font-weight: 600; }
+  .dnd-item {
+    background: linear-gradient(135deg, #4c63d4, #6b8aff);
+    color: white;
+    padding: 10px 16px; border-radius: 10px;
+    cursor: grab; cursor: -webkit-grab;
+    font-size: 0.95em; font-weight: 500;
+    transition: all 0.2s ease;
+    touch-action: none;
+    user-select: none;
+  }
+  .dnd-item.dragging {
+    opacity: 0.5;
+    cursor: grabbing; cursor: -webkit-grabbing;
+  }
+  .dnd-target {
+    background: rgba(255,255,255,0.06);
+    border: 2px dashed rgba(255,255,255,0.2);
+    border-radius: 10px;
+    padding: 10px 16px;
+    min-width: 120px;
+    min-height: 46px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 0.9em;
+    color: #b8c0e5;
+    transition: all 0.2s ease;
+  }
+  .dnd-target.hover {
+    background: rgba(255,215,0,0.15);
+    border-color: #ffd700;
+  }
+  .dnd-target.filled {
+    border-style: solid;
+    background: rgba(76,99,212,0.25);
+    color: #fff;
+  }
+  .dnd-pair { display: flex; flex-direction: column; gap: 4px; }
+
+  /* Canvas / Simulation */
+  canvas {
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+    background: #0a0e2a;
+    border: 1px solid rgba(255,255,255,0.1);
+    display: block;
+    touch-action: none;
+  }
+  .sim-controls {
+    display: flex; gap: 12px; flex-wrap: wrap;
+    margin-top: 12px; align-items: center;
+  }
+  .sim-controls label { font-size: 0.9em; color: #b8c0e5; }
+  .sim-controls input[type=range] {
+    width: 140px; accent-color: #ffd700;
+  }
+
+  /* Abschlussbildschirm */
+  .completion-screen {
+    text-align: center; padding: 30px 20px;
+  }
+  .completion-stars {
+    font-size: 3em; margin: 20px 0;
+    animation: bounce 1s ease;
+  }
+  @keyframes bounce {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.2); }
+  }
+  .completion-stats {
+    display: flex; justify-content: center; gap: 30px;
+    margin: 20px 0; flex-wrap: wrap;
+  }
+  .completion-stat { text-align: center; }
+  .completion-stat .num { font-size: 2em; font-weight: 700; color: #ffd700; }
+  .completion-stat .lbl { font-size: 0.85em; color: #b8c0e5; }
+
+  /* Modal / Info-Box */
+  .modal-backdrop {
+    position: fixed; top:0; left:0; right:0; bottom:0;
+    background: rgba(0,0,0,0.7);
+    z-index: 100;
+    display: none;
+    align-items: center; justify-content: center;
+    padding: 20px;
+  }
+  .modal-backdrop.show { display: flex; }
+  .modal {
+    background: linear-gradient(135deg, #1a2151, #0a0e2a);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 20px;
+    padding: 30px; max-width: 500px; width: 100%;
+    text-align: center;
+  }
+  .modal h3 { color: #ffd700; margin-bottom: 12px; font-size: 1.4em; }
+  .modal p { color: #d0d8f5; margin-bottom: 16px; line-height: 1.5; }
+
+  /* Spezielle Elemente */
+  .hint-box {
+    background: rgba(100,200,255,0.08);
+    border-left: 3px solid #7dd3fc;
+    padding: 12px 16px;
+    border-radius: 8px;
+    margin: 14px 0;
+    font-size: 0.9em;
+    color: #cae7ff;
+  }
+  .hint-box strong { color: #7dd3fc; }
+
+  /* Spiegel-Eingabe */
+  .mirror-input {
+    background: rgba(255,255,255,0.06);
+    border: 2px solid rgba(255,255,255,0.15);
+    border-radius: 10px;
+    padding: 12px 16px;
+    font-size: 1.1em;
+    color: #f0f3ff;
+    width: 100%;
+    font-family: inherit;
+  }
+  .mirror-input:focus {
+    outline: none;
+    border-color: #ffd700;
+  }
+  .mirror-display {
+    font-size: 1.8em;
+    text-align: center;
+    padding: 16px;
+    background: rgba(255,255,255,0.05);
+    border-radius: 12px;
+    margin: 12px 0;
+    letter-spacing: 2px;
+    font-weight: 600;
+  }
+
+  /* Klausur-Modus */
+  .exam-intro {
+    background: rgba(255,215,0,0.08);
+    border: 1px solid rgba(255,215,0,0.3);
+    border-radius: 16px;
+    padding: 24px;
+    margin-bottom: 20px;
+  }
+  .exam-intro ul { margin: 10px 0 10px 20px; color: #d0d8f5; line-height: 1.6; }
+
+  /* Zeichnen-Canvas */
+  .draw-canvas-container {
+    position: relative;
+    margin: 10px 0;
+  }
+  .draw-tools {
+    display: flex; gap: 8px; margin: 10px 0; flex-wrap: wrap;
+  }
+  .draw-tools button {
+    padding: 8px 14px;
+    background: rgba(255,255,255,0.08);
+    border: 1px solid rgba(255,255,255,0.15);
+    color: #f0f3ff;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.9em;
+  }
+  .draw-tools button.active {
+    background: rgba(255,215,0,0.2);
+    border-color: #ffd700;
+    color: #ffd700;
+  }
+
+  /* Badge-Animation */
+  .badge-pop {
+    position: fixed; top: 50%; left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    background: linear-gradient(135deg, #ffd700, #ff8a00);
+    color: #1a1a2e;
+    padding: 20px 30px; border-radius: 20px;
+    font-weight: 700; font-size: 1.2em;
+    z-index: 1000;
+    box-shadow: 0 10px 40px rgba(255,165,0,0.5);
+    transition: transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .badge-pop.show { transform: translate(-50%, -50%) scale(1); }
+  .badge-pop.hide { transform: translate(-50%, -50%) scale(0); }
+
+  /* Schwierigkeits-Tag */
+  .diff-tag {
+    display: inline-block;
+    padding: 3px 9px;
+    border-radius: 10px;
+    font-size: 0.7em;
+    font-weight: 600;
+    margin-left: 6px;
+    text-transform: uppercase;
+    letter-spacing: 0.3px;
+  }
+  .diff-leicht { background: rgba(74,222,128,0.2); color: #86efac; }
+  .diff-mittel { background: rgba(250,204,21,0.18); color: #fde047; }
+  .diff-schwer { background: rgba(248,113,113,0.2); color: #fca5a5; }
+
+  /* Lückentext */
+  .cloze-text {
+    background: rgba(255,255,255,0.04);
+    padding: 18px 20px;
+    border-radius: 12px;
+    line-height: 2.2;
+    font-size: 1.02em;
+    color: #e8ecff;
+  }
+  .cloze-slot {
+    display: inline-block;
+    min-width: 100px;
+    min-height: 26px;
+    padding: 2px 10px;
+    margin: 0 2px;
+    border-bottom: 2px dashed rgba(255,215,0,0.5);
+    text-align: center;
+    vertical-align: middle;
+    font-weight: 600;
+    color: #ffd700;
+    transition: all 0.2s ease;
+  }
+  .cloze-slot.hover {
+    background: rgba(255,215,0,0.15);
+    border-radius: 6px;
+  }
+  .cloze-slot.filled {
+    border-bottom: 2px solid #7dd3fc;
+    background: rgba(125,211,252,0.1);
+    border-radius: 6px;
+    cursor: pointer;
+  }
+
+  /* Bild-Beschriftung */
+  .label-target circle, .label-target rect.hit-area {
+    transition: all 0.2s ease;
+  }
+  .label-target.hover-target circle, .label-target.hover-target rect.hit-area {
+    fill: rgba(255,215,0,0.3);
+    stroke: #ffd700;
+  }
+
+  /* Memory-Spiel */
+  .mem-card {
+    position: relative;
+    aspect-ratio: 1;
+    min-height: 70px;
+    cursor: pointer;
+    perspective: 600px;
+  }
+  .mem-front, .mem-back {
+    position: absolute; inset: 0;
+    display: flex; align-items: center; justify-content: center;
+    border-radius: 10px;
+    font-size: 0.8em;
+    text-align: center;
+    padding: 6px;
+    backface-visibility: hidden;
+    -webkit-backface-visibility: hidden;
+    transition: transform 0.5s ease;
+    line-height: 1.2;
+  }
+  .mem-front {
+    background: linear-gradient(135deg, #4c63d4, #6b8aff);
+    color: #fff;
+    font-size: 1.8em;
+    font-weight: 700;
+  }
+  .mem-back {
+    background: rgba(255,215,0,0.15);
+    border: 2px solid #ffd700;
+    color: #fff;
+    transform: rotateY(180deg);
+    font-weight: 500;
+  }
+  .mem-card.flipped .mem-front { transform: rotateY(180deg); }
+  .mem-card.flipped .mem-back { transform: rotateY(0deg); }
+  .mem-card.matched .mem-back {
+    background: rgba(74,222,128,0.2);
+    border-color: #4ade80;
+    animation: matchedPulse 0.6s ease;
+  }
+  @keyframes matchedPulse {
+    0%, 100% { transform: rotateY(0deg) scale(1); }
+    50% { transform: rotateY(0deg) scale(1.08); }
+  }
+
+  /* Zeichen-Canvas */
+  .draw-canvas-wrap { position: relative; }
+  .draw-canvas-wrap canvas { cursor: crosshair; }
+  .draw-instruction {
+    background: rgba(125,211,252,0.08);
+    border-left: 3px solid #7dd3fc;
+    padding: 10px 14px;
+    border-radius: 8px;
+    margin-bottom: 10px;
+    font-size: 0.9em;
+    color: #cae7ff;
+  }
+
+  @media (max-width: 600px) {
+    h1 { font-size: 1.5em; }
+    .chapter-card { min-height: 160px; padding: 16px; }
+    .task-card { padding: 18px; }
+    .stat { font-size: 0.85em; padding: 5px 10px; }
+    .level-bar-container { width: 80px; }
+  }
+
+</style>
+</head>
+<body>
+<div class="stars-bg"></div>
+<div class="app">
+
+  <!-- Kopfzeile -->
+  <div class="topbar">
+    <div class="logo" onclick="showHome()">☀ Licht &amp; Optik</div>
+    <div class="stats">
+      <div class="stat"><span class="icon">⭐</span><span id="totalStars">0</span>/<span id="maxStars">15</span></div>
+      <div class="stat"><span class="icon">💎</span><span id="totalPoints">0</span></div>
+      <div class="stat">
+        <span class="icon">🚀</span>Lvl <span id="userLevel">1</span>
+        <div class="level-bar-container"><div class="level-bar-fill" id="levelBar"></div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Hauptinhalt -->
+  <div id="content"></div>
+
+</div>
+
+<!-- Modals -->
+<div class="modal-backdrop" id="modalBackdrop" onclick="closeModal(event)">
+  <div class="modal" id="modalContent"></div>
+</div>
+<div class="badge-pop" id="badgePop"></div>
+
+<script>
+// =========================================
+// ZENTRALE DATEN & ZUSTAND
+// =========================================
+const state = {
+  totalPoints: 0,
+  chapterProgress: {}, // { chapterId: { completed: [idx], stars: n, bestScore: n } }
+};
+
+const POINTS_PER_CORRECT = 10;
+
+// Fortschritt im Speicher halten (kein localStorage in artifacts)
+function saveState() { /* nur im Speicher */ }
+function loadState() { /* nichts zu tun */ }
+
+function updateStats() {
+  document.getElementById('totalPoints').textContent = state.totalPoints;
+  let stars = 0;
+  Object.values(state.chapterProgress).forEach(p => stars += (p.stars || 0));
+  const maxStars = Object.keys(chapters).length * 3;
+  document.getElementById('totalStars').textContent = stars;
+  document.getElementById('maxStars').textContent = maxStars;
+  // Level: je 50 Punkte ein Level
+  const level = Math.floor(state.totalPoints / 50) + 1;
+  const progressInLevel = (state.totalPoints % 50) / 50 * 100;
+  document.getElementById('userLevel').textContent = level;
+  document.getElementById('levelBar').style.width = progressInLevel + '%';
+}
+
+function showBadge(text) {
+  const b = document.getElementById('badgePop');
+  b.textContent = text;
+  b.classList.remove('hide');
+  b.classList.add('show');
+  setTimeout(() => {
+    b.classList.remove('show');
+    b.classList.add('hide');
+  }, 1800);
+}
+
+function openModal(html) {
+  document.getElementById('modalContent').innerHTML = html;
+  document.getElementById('modalBackdrop').classList.add('show');
+}
+function closeModal(evt) {
+  if (evt && evt.target.id !== 'modalBackdrop') return;
+  document.getElementById('modalBackdrop').classList.remove('show');
+}
+function closeModalForce() {
+  document.getElementById('modalBackdrop').classList.remove('show');
+}
+
+// =========================================
+// STARTSEITE
+// =========================================
+function showHome() {
+  const content = document.getElementById('content');
+  const chapterList = Object.entries(chapters).map(([id, ch]) => {
+    const prog = state.chapterProgress[id] || { stars: 0, completed: [] };
+    const totalTasks = ch.tasks.length;
+    const done = prog.completed ? prog.completed.length : 0;
+    const starDisplay = '★'.repeat(prog.stars || 0) + '☆'.repeat(3 - (prog.stars || 0));
+    return `
+      <div class="chapter-card" onclick="startChapter('${id}')">
+        <div>
+          <div class="chap-icon">${ch.icon}</div>
+          <h3>${ch.title}</h3>
+          <p>${ch.desc}</p>
+        </div>
+        <div>
+          <div class="chap-stars" style="color:#ffd700">${starDisplay}</div>
+          <div class="chap-progress">${done}/${totalTasks} Aufgaben</div>
+        </div>
+      </div>
+    `;
+  }).join('');
+
+  content.innerHTML = `
+    <div class="screen">
+      <h1>Entdecke die Welt des Lichts</h1>
+      <p class="subtitle">Übe spielerisch für deine Klassenarbeit. Wähle ein Kapitel oder stelle dich dem Klausur-Modus!</p>
+      <div class="chapters-grid">${chapterList}</div>
+      <div class="mode-buttons">
+        <button class="btn btn-primary" onclick="startExam()">🎯 Klausur-Modus starten</button>
+        <button class="btn btn-secondary" onclick="resetProgress()">Fortschritt zurücksetzen</button>
+      </div>
+    </div>
+  `;
+  updateStats();
+}
+
+function resetProgress() {
+  openModal(`
+    <h3>Wirklich zurücksetzen?</h3>
+    <p>Alle Sterne und Punkte gehen verloren.</p>
+    <div style="display:flex; gap:10px; justify-content:center; margin-top:10px;">
+      <button class="btn btn-danger" onclick="doReset()">Ja, zurücksetzen</button>
+      <button class="btn btn-secondary" onclick="closeModalForce()">Abbrechen</button>
+    </div>
+  `);
+}
+function doReset() {
+  state.totalPoints = 0;
+  state.chapterProgress = {};
+  closeModalForce();
+  showHome();
+}
+
+// =========================================
+// KAPITEL-AUSFÜHRUNG (wird später befüllt)
+// =========================================
+let currentChapter = null;
+let currentTaskIndex = 0;
+let currentSessionCorrect = 0;
+let isExamMode = false;
+let examTasks = [];
+
+function startChapter(id) {
+  isExamMode = false;
+  currentChapter = id;
+  currentTaskIndex = 0;
+  currentSessionCorrect = 0;
+  // Fortschritt für dieses Kapitel initialisieren
+  if (!state.chapterProgress[id]) {
+    state.chapterProgress[id] = { stars: 0, completed: [], bestScore: 0 };
+  }
+  renderCurrentTask();
+}
+
+function startExam() {
+  isExamMode = true;
+  currentTaskIndex = 0;
+  currentSessionCorrect = 0;
+  // Für Klausurmodus: aus jedem Kapitel 2 zufällige Aufgaben (10 insgesamt)
+  examTasks = [];
+  Object.entries(chapters).forEach(([id, ch]) => {
+    const shuffled = [...ch.tasks].sort(() => Math.random() - 0.5);
+    shuffled.slice(0, 2).forEach(t => examTasks.push({ ...t, _chapter: id }));
+  });
+  // Nochmal insgesamt mischen
+  examTasks = examTasks.sort(() => Math.random() - 0.5);
+  renderCurrentTask();
+}
+
+function getCurrentTasks() {
+  return isExamMode ? examTasks : chapters[currentChapter].tasks;
+}
+
+function renderCurrentTask() {
+  const tasks = getCurrentTasks();
+  if (currentTaskIndex >= tasks.length) {
+    renderCompletion();
+    return;
+  }
+  const task = tasks[currentTaskIndex];
+  const content = document.getElementById('content');
+  const title = isExamMode ? '🎯 Klausur-Modus' : chapters[currentChapter].title;
+  const progressPct = (currentTaskIndex / tasks.length) * 100;
+
+  content.innerHTML = `
+    <div class="screen">
+      <div class="chapter-header">
+        <button class="back-btn" onclick="showHome()">← Zurück</button>
+        <div class="task-counter">${title} – ${currentTaskIndex+1}/${tasks.length}</div>
+      </div>
+      <div class="task-progress"><div class="task-progress-fill" style="width:${progressPct}%"></div></div>
+      <div class="task-card" id="taskCard">
+        <div>
+          <span class="task-type-tag">${task.typeLabel || 'Aufgabe'}</span>
+          ${task.difficulty ? `<span class="diff-tag diff-${task.difficulty}">${task.difficulty}</span>` : ''}
+        </div>
+        <div class="task-title" style="margin-top:10px;">${task.question}</div>
+        <div id="taskBody"></div>
+        <div class="feedback" id="feedback"></div>
+        <div class="task-actions" id="taskActions"></div>
+      </div>
+    </div>
+  `;
+
+  // Aufgaben-Spezifisch rendern
+  task.render();
+}
+
+function showFeedback(correct, explanation) {
+  const fb = document.getElementById('feedback');
+  fb.className = 'feedback show ' + (correct ? 'correct' : 'incorrect');
+  fb.innerHTML = (correct ? '<strong>✓ Richtig!</strong>' : '<strong>✗ Nicht ganz richtig.</strong>') + explanation;
+
+  if (correct) {
+    state.totalPoints += POINTS_PER_CORRECT;
+    currentSessionCorrect++;
+    if (!isExamMode) {
+      const prog = state.chapterProgress[currentChapter];
+      if (!prog.completed.includes(currentTaskIndex)) {
+        prog.completed.push(currentTaskIndex);
+      }
+    }
+    updateStats();
+  }
+  // Weiter-Button
+  const actions = document.getElementById('taskActions');
+  actions.innerHTML = `<button class="btn btn-primary" onclick="nextTask()">Weiter →</button>`;
+}
+
+function nextTask() {
+  currentTaskIndex++;
+  renderCurrentTask();
+}
+
+function renderCompletion() {
+  const tasks = getCurrentTasks();
+  const total = tasks.length;
+  const pct = currentSessionCorrect / total;
+  let stars = 0;
+  if (pct >= 0.95) stars = 3;
+  else if (pct >= 0.75) stars = 2;
+  else if (pct >= 0.5) stars = 1;
+
+  let title, message;
+  if (isExamMode) {
+    title = 'Klausur-Modus beendet!';
+    message = `Du hast <strong>${currentSessionCorrect} von ${total}</strong> Aufgaben richtig gelöst.`;
+    if (pct >= 0.9) {
+      showBadge('🏆 Optik-Meister!');
+    } else if (pct >= 0.7) {
+      showBadge('🌟 Starke Leistung!');
+    }
+  } else {
+    title = `Kapitel geschafft: ${chapters[currentChapter].title}`;
+    message = `Du hast <strong>${currentSessionCorrect} von ${total}</strong> Aufgaben richtig gelöst.`;
+    const prog = state.chapterProgress[currentChapter];
+    if (stars > prog.stars) {
+      prog.stars = stars;
+      showBadge(`✨ ${stars} Sterne erreicht!`);
+    }
+  }
+
+  const starsDisplay = '★'.repeat(stars) + '☆'.repeat(3 - stars);
+  document.getElementById('content').innerHTML = `
+    <div class="screen completion-screen">
+      <h1>${title}</h1>
+      <div class="completion-stars" style="color:#ffd700">${starsDisplay}</div>
+      <p class="subtitle">${message}</p>
+      <div class="completion-stats">
+        <div class="completion-stat">
+          <div class="num">${currentSessionCorrect}/${total}</div>
+          <div class="lbl">Richtig</div>
+        </div>
+        <div class="completion-stat">
+          <div class="num">+${currentSessionCorrect * POINTS_PER_CORRECT}</div>
+          <div class="lbl">Punkte</div>
+        </div>
+      </div>
+      <div class="mode-buttons">
+        <button class="btn btn-secondary" onclick="${isExamMode ? 'startExam()' : `startChapter('${currentChapter}')`}">Nochmal</button>
+        <button class="btn btn-primary" onclick="showHome()">Zur Übersicht</button>
+      </div>
+    </div>
+  `;
+  updateStats();
+}
+
+// =========================================
+// AUFGABEN-HELFER
+// =========================================
+
+// Multiple-Choice Aufgabe - robuste Variante (ohne String-Escaping-Probleme)
+function renderMC(options, correctIdx, explanation) {
+  const body = document.getElementById('taskBody');
+  // Zustand in window-Variable speichern, damit Event-Handler darauf zugreifen können
+  window._mcState = { correctIdx, explanation };
+  body.innerHTML = `
+    <div class="mc-options">
+      ${options.map((opt, i) => `<button class="mc-option" data-idx="${i}">${opt}</button>`).join('')}
+    </div>
+  `;
+  // Event-Listener direkt an die Buttons hängen (keine onclick-Strings)
+  body.querySelectorAll('.mc-option').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const selected = parseInt(btn.dataset.idx);
+      selectMC(selected);
+    });
+  });
+}
+function selectMC(selected) {
+  const { correctIdx, explanation } = window._mcState;
+  document.querySelectorAll('.mc-option').forEach((el, i) => {
+    el.classList.add('disabled');
+    el.onclick = null;
+    // Neue Listener entfernen durch cloneNode
+    const clone = el.cloneNode(true);
+    el.parentNode.replaceChild(clone, el);
+    if (i === correctIdx) clone.classList.add('correct');
+    else if (i === selected && selected !== correctIdx) clone.classList.add('incorrect');
+  });
+  showFeedback(selected === correctIdx, explanation);
+}
+
+// True/False Aufgabe (mehrere Aussagen)
+function renderTrueFalse(statements, explanation) {
+  // statements: [{ text, correct: true/false }]
+  const body = document.getElementById('taskBody');
+  body.innerHTML = `
+    <div style="display:flex; flex-direction:column; gap:10px;">
+      ${statements.map((s, i) => `
+        <div style="background:rgba(255,255,255,0.05); padding:12px; border-radius:10px;">
+          <div style="margin-bottom:8px;">${s.text}</div>
+          <div style="display:flex; gap:8px;">
+            <button class="btn btn-secondary tf-btn" data-i="${i}" data-v="true" onclick="selectTF(${i}, true)">✓ Richtig</button>
+            <button class="btn btn-secondary tf-btn" data-i="${i}" data-v="false" onclick="selectTF(${i}, false)">✗ Falsch</button>
+          </div>
+        </div>
+      `).join('')}
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="tfCheckBtn" onclick="checkTF()" disabled style="opacity:0.5">Prüfen</button>
+    </div>
+  `;
+  // State tracking
+  window._tfState = { statements, answers: {}, explanation };
+}
+
+function selectTF(idx, value) {
+  window._tfState.answers[idx] = value;
+  document.querySelectorAll(`.tf-btn[data-i="${idx}"]`).forEach(b => {
+    b.style.background = '';
+    b.style.borderColor = '';
+    if (b.dataset.v === String(value)) {
+      b.style.background = 'rgba(255,215,0,0.2)';
+      b.style.borderColor = '#ffd700';
+    }
+  });
+  // Check if all answered
+  if (Object.keys(window._tfState.answers).length === window._tfState.statements.length) {
+    const btn = document.getElementById('tfCheckBtn');
+    btn.disabled = false;
+    btn.style.opacity = '1';
+  }
+}
+
+function checkTF() {
+  const s = window._tfState;
+  let allCorrect = true;
+  s.statements.forEach((stmt, i) => {
+    if (s.answers[i] !== stmt.correct) allCorrect = false;
+  });
+  // Visualisierung
+  s.statements.forEach((stmt, i) => {
+    document.querySelectorAll(`.tf-btn[data-i="${i}"]`).forEach(b => {
+      b.disabled = true;
+      if (b.dataset.v === String(stmt.correct)) {
+        b.style.background = 'rgba(74,222,128,0.25)';
+        b.style.borderColor = '#4ade80';
+      } else if (b.dataset.v === String(s.answers[i]) && s.answers[i] !== stmt.correct) {
+        b.style.background = 'rgba(248,113,113,0.25)';
+        b.style.borderColor = '#f87171';
+      }
+    });
+  });
+  document.getElementById('tfCheckBtn').style.display = 'none';
+  showFeedback(allCorrect, s.explanation);
+}
+
+// Text-Eingabe (z.B. Spiegelschrift) - robuste Variante
+function renderTextInput(correctAnswer, explanation, options = {}) {
+  const body = document.getElementById('taskBody');
+  // State in window speichern
+  window._textState = { correctAnswer, explanation, options };
+  body.innerHTML = `
+    ${options.mirrorDisplay ? `<div class="mirror-display" id="mirrorDisplay">${options.mirrorDisplay}</div>` : ''}
+    <input type="text" class="mirror-input" id="textAnswer" placeholder="${options.placeholder || 'Deine Antwort...'}" autocomplete="off">
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="textCheckBtn">Prüfen</button>
+    </div>
+  `;
+  document.getElementById('textCheckBtn').addEventListener('click', checkTextInput);
+  setTimeout(() => document.getElementById('textAnswer').focus(), 100);
+}
+
+function checkTextInput() {
+  const { correctAnswer, explanation } = window._textState;
+  const input = document.getElementById('textAnswer').value.trim();
+  let normalize = s => s.toLowerCase().replace(/\s+/g,' ').trim();
+  const correctAnswers = Array.isArray(correctAnswer) ? correctAnswer : [correctAnswer];
+  const ok = correctAnswers.some(c => normalize(c) === normalize(input));
+  document.getElementById('textAnswer').disabled = true;
+  showFeedback(ok, explanation + (ok ? '' : `<br><br><em>Richtige Antwort: <strong>${correctAnswers[0]}</strong></em>`));
+}
+
+</script>
+<!-- Kapitel-Definitionen und Aufgaben folgen im nächsten Schritt -->
+<script id="chaptersScript">
+// =========================================
+// KAPITEL 1: SCHATTEN & LICHTQUELLEN
+// =========================================
+const chapter_schatten = {
+  icon: '🌑',
+  title: 'Schatten & Lichtquellen',
+  desc: 'Kern- und Halbschatten, punktförmige und flächenförmige Lichtquellen',
+  tasks: [
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'leicht',
+      question: 'Was passiert, wenn das Licht einer <strong>punktförmigen Lichtquelle</strong> auf einen Gegenstand trifft?',
+      render() {
+        renderMC(
+          [
+            'Es entsteht nur ein Halbschatten.',
+            'Es entsteht nur ein scharf begrenzter Kernschatten.',
+            'Es entstehen Kernschatten und Halbschatten nebeneinander.',
+            'Es entsteht gar kein Schatten.'
+          ],
+          1,
+          'Eine punktförmige Lichtquelle sendet Licht nur aus einem einzigen Punkt aus. Dahinter kann das Licht den Gegenstand entweder vollständig umgehen oder wird vollständig blockiert – es entsteht nur ein scharf begrenzter Kernschatten, aber kein Halbschatten.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Simulation',
+      difficulty: 'mittel',
+      question: 'Bewege den Schieberegler und beobachte, was passiert. Erkläre danach: Was ist der Unterschied zwischen punktförmiger und flächenförmiger Lichtquelle?',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <canvas id="shadowCanvas" width="500" height="280"></canvas>
+          <div class="sim-controls">
+            <label>Ausdehnung der Lichtquelle:</label>
+            <input type="range" id="lightSize" min="0" max="80" value="0">
+            <span id="lightLabel">punktförmig</span>
+          </div>
+          <div class="hint-box"><strong>💡 Tipp:</strong> Bei 0 ist die Lichtquelle ein Punkt, bei höheren Werten eine Fläche (z.B. Lampe).</div>
+        `;
+        const canvas = document.getElementById('shadowCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('lightSize');
+        const label = document.getElementById('lightLabel');
+        function draw() {
+          const w = canvas.width, h = canvas.height;
+          ctx.clearRect(0,0,w,h);
+          ctx.fillStyle = '#0a0e2a';
+          ctx.fillRect(0,0,w,h);
+
+          const lightSize = parseInt(slider.value);
+          const lightX = 60, lightY = h/2;
+          const objX = 220, objY = h/2, objR = 30;
+          const wallX = 400;
+
+          // Wand zeichnen
+          ctx.fillStyle = '#3a4170';
+          ctx.fillRect(wallX, 20, 8, h-40);
+
+          // Schatten auf der Wand berechnen
+          if (lightSize === 0) {
+            // Punktförmig: nur Kernschatten
+            const topY = objY - objR;
+            const botY = objY + objR;
+            const tan_t = (topY - lightY) / (objX - lightX);
+            const tan_b = (botY - lightY) / (objX - lightX);
+            const shadowTop = lightY + tan_t * (wallX - lightX);
+            const shadowBot = lightY + tan_b * (wallX - lightX);
+            ctx.fillStyle = 'rgba(0,0,0,0.85)';
+            ctx.beginPath();
+            ctx.moveTo(objX, topY);
+            ctx.lineTo(wallX, shadowTop);
+            ctx.lineTo(wallX, shadowBot);
+            ctx.lineTo(objX, botY);
+            ctx.closePath();
+            ctx.fill();
+          } else {
+            // Flächenförmig: Kernschatten + Halbschatten
+            const L_top_y = lightY - lightSize/2;
+            const L_bot_y = lightY + lightSize/2;
+            const objTop = objY - objR, objBot = objY + objR;
+            const outerTopY = L_bot_y + (objTop - L_bot_y) / (objX - lightX) * (wallX - lightX);
+            const outerBotY = L_top_y + (objBot - L_top_y) / (objX - lightX) * (wallX - lightX);
+            const innerTopY = L_top_y + (objTop - L_top_y) / (objX - lightX) * (wallX - lightX);
+            const innerBotY = L_bot_y + (objBot - L_bot_y) / (objX - lightX) * (wallX - lightX);
+
+            ctx.fillStyle = 'rgba(0,0,0,0.4)';
+            ctx.beginPath();
+            ctx.moveTo(objX, objTop);
+            ctx.lineTo(wallX, outerTopY);
+            ctx.lineTo(wallX, outerBotY);
+            ctx.lineTo(objX, objBot);
+            ctx.closePath();
+            ctx.fill();
+            if (innerTopY < innerBotY) {
+              ctx.fillStyle = 'rgba(0,0,0,0.9)';
+              ctx.beginPath();
+              ctx.moveTo(objX, objTop);
+              ctx.lineTo(wallX, innerTopY);
+              ctx.lineTo(wallX, innerBotY);
+              ctx.lineTo(objX, objBot);
+              ctx.closePath();
+              ctx.fill();
+            }
+          }
+
+          // Lichtquelle
+          ctx.fillStyle = '#ffd700';
+          if (lightSize === 0) {
+            ctx.beginPath();
+            ctx.arc(lightX, lightY, 6, 0, Math.PI*2);
+            ctx.fill();
+          } else {
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 15;
+            ctx.fillRect(lightX-4, lightY - lightSize/2, 8, lightSize);
+            ctx.shadowBlur = 0;
+          }
+
+          // Objekt (Kugel)
+          ctx.fillStyle = '#6b8aff';
+          ctx.beginPath();
+          ctx.arc(objX, objY, objR, 0, Math.PI*2);
+          ctx.fill();
+
+          // Beschriftungen
+          ctx.fillStyle = '#fff';
+          ctx.font = '12px sans-serif';
+          ctx.fillText('Lichtquelle', lightX-25, lightY - lightSize/2 - 12);
+          ctx.fillText('Gegenstand', objX-30, objY + objR + 20);
+          ctx.fillText('Wand', wallX+12, 40);
+
+          label.textContent = lightSize === 0 ? 'punktförmig' : `flächenförmig (${lightSize})`;
+        }
+        slider.oninput = draw;
+        draw();
+
+        document.getElementById('taskActions').innerHTML = `
+          <button class="btn btn-primary" onclick="afterShadowSim()">Ich habe es beobachtet →</button>
+        `;
+        window.afterShadowSim = function() {
+          renderMC(
+            [
+              'Eine flächenförmige Lichtquelle erzeugt nur Kernschatten.',
+              'Eine flächenförmige Lichtquelle erzeugt Kernschatten und zusätzlich einen Halbschatten.',
+              'Eine punktförmige Lichtquelle erzeugt immer einen Halbschatten.',
+              'Beide Lichtquellen erzeugen denselben Schatten.'
+            ],
+            1,
+            'Weil eine flächenförmige Lichtquelle aus vielen einzelnen "Punkten" besteht, entstehen am Rand Bereiche, die nur von einem Teil der Lichtquelle erreicht werden – das ist der Halbschatten. Der vollständig dunkle Bereich in der Mitte ist der Kernschatten.'
+          );
+          document.getElementById('taskActions').innerHTML = '';
+        };
+      }
+    },
+    {
+      typeLabel: 'Zeichnen',
+      difficulty: 'mittel',
+      question: 'Zeichne die <strong>beiden Begrenzungsstrahlen</strong> des Kernschattens! Ziehe mit dem Finger/der Maus von der Lichtquelle bis zur Wand, sodass die Strahlen den Ball gerade so streifen.',
+      render() {
+        renderDrawing((container) => {
+          container.innerHTML = `
+            <div class="draw-instruction"><strong>So geht's:</strong> Lege den Finger auf die Lichtquelle und ziehe eine gerade Linie bis zur Wand, die oben am Ball vorbeigeht. Dann den zweiten Strahl, der unten am Ball vorbeigeht. Die Punkte rasten ein!</div>
+            <canvas id="shadowDrawCanvas" width="500" height="320"></canvas>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <span style="font-size:0.85em; color:#b8c0e5;">Strahlen: <strong id="shadowRayCount" style="color:#ffd700">0 / 2</strong></span>
+              <div style="flex:1"></div>
+              <button class="btn btn-secondary" id="shadowResetBtn">Zurücksetzen</button>
+              <button class="btn btn-primary" id="shadowCheckBtn">Prüfen</button>
+            </div>
+          `;
+          const canvas = document.getElementById('shadowDrawCanvas');
+          const ctx = canvas.getContext('2d');
+          // Setup
+          const lightX = 60, lightY = 160;
+          const objX = 220, objY = 160, objR = 32;
+          const wallX = 420, wallTop = 30, wallBot = 290;
+          // Korrekte Schattenpunkte auf der Wand
+          const shadowTop = lightY + (objY - objR - lightY) / (objX - lightX) * (wallX - lightX);
+          const shadowBot = lightY + (objY + objR - lightY) / (objX - lightX) * (wallX - lightX);
+          // Snap-Punkte: Lichtquelle und verschiedene Wandpunkte
+          const snapPoints = [
+            { x: lightX, y: lightY, id: 'light' }
+          ];
+
+          let rays = []; // {start:{x,y}, end:{x,y}}
+          let currentRay = null;
+          let drawing = false;
+
+          function draw() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = '#0a0e2a';
+            ctx.fillRect(0,0,w,h);
+            // Wand
+            ctx.fillStyle = '#3a4170';
+            ctx.fillRect(wallX, wallTop, 8, wallBot - wallTop);
+            // Skala auf der Wand
+            ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+            ctx.lineWidth = 1;
+            for (let y = wallTop; y <= wallBot; y += 20) {
+              ctx.beginPath();
+              ctx.moveTo(wallX + 8, y); ctx.lineTo(wallX + 12, y);
+              ctx.stroke();
+            }
+            // Lichtquelle
+            ctx.fillStyle = '#ffd700';
+            ctx.shadowColor = '#ffd700';
+            ctx.shadowBlur = 12;
+            ctx.beginPath(); ctx.arc(lightX, lightY, 9, 0, Math.PI*2); ctx.fill();
+            ctx.shadowBlur = 0;
+            ctx.fillStyle = '#fff';
+            ctx.font = '12px sans-serif';
+            ctx.fillText('Lichtquelle', lightX-30, lightY-18);
+            // Objekt
+            ctx.fillStyle = '#6b8aff';
+            ctx.beginPath(); ctx.arc(objX, objY, objR, 0, Math.PI*2); ctx.fill();
+            ctx.fillStyle = '#fff';
+            ctx.fillText('Ball', objX-10, objY+objR+16);
+            ctx.fillText('Wand', wallX+16, 45);
+            // Gezeichnete Strahlen
+            rays.forEach(r => {
+              ctx.strokeStyle = '#ffd700';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(r.start.x, r.start.y);
+              ctx.lineTo(r.end.x, r.end.y);
+              ctx.stroke();
+              // Endpunkt markieren
+              ctx.fillStyle = '#ffd700';
+              ctx.beginPath(); ctx.arc(r.end.x, r.end.y, 5, 0, Math.PI*2); ctx.fill();
+            });
+            // Gerade gezeichneter Strahl (während des Ziehens)
+            if (currentRay) {
+              ctx.strokeStyle = 'rgba(255,215,0,0.6)';
+              ctx.lineWidth = 3;
+              ctx.setLineDash([6,3]);
+              ctx.beginPath();
+              ctx.moveTo(currentRay.start.x, currentRay.start.y);
+              ctx.lineTo(currentRay.end.x, currentRay.end.y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              // Hilfsanzeige: "Snap" wenn nah an Lichtquelle zum Start, oder wenn Endpunkt auf Wand
+              ctx.fillStyle = 'rgba(255,215,0,0.4)';
+              ctx.beginPath();
+              ctx.arc(currentRay.end.x, currentRay.end.y, 6, 0, Math.PI*2);
+              ctx.fill();
+            }
+            // Startpunkt-Hervorhebung
+            if (rays.length < 2 && !drawing) {
+              ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([3,3]);
+              ctx.beginPath();
+              ctx.arc(lightX, lightY, 18, 0, Math.PI*2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = 'rgba(255,255,255,0.35)';
+              ctx.font = '11px sans-serif';
+              ctx.fillText('← Hier starten, dann zur Wand ziehen', lightX+22, lightY+5);
+            }
+            // Dezente "Ziel-Indikatoren" auf der Wand (helfen beim Anvisieren)
+            if (rays.length < 2 && !currentRay) {
+              [shadowTop, shadowBot].forEach(sy => {
+                ctx.fillStyle = 'rgba(255,215,0,0.2)';
+                ctx.beginPath();
+                ctx.arc(wallX, sy, 8, 0, Math.PI*2); ctx.fill();
+              });
+            }
+            document.getElementById('shadowRayCount').textContent = `${rays.length} / 2`;
+          }
+
+          function startDraw(e) {
+            if (window._shadowAnswered || rays.length >= 2) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            // Nur starten, wenn nah an der Lichtquelle
+            if (Math.hypot(p.x - lightX, p.y - lightY) > 30) return;
+            drawing = true;
+            currentRay = { start: { x: lightX, y: lightY }, end: { x: lightX, y: lightY } };
+            draw();
+          }
+          function moveDraw(e) {
+            if (!drawing || !currentRay) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            // Den Endpunkt auf die Wand projizieren, wenn in der Nähe
+            let endX = p.x, endY = p.y;
+            // Wenn User nah am Wandbereich ist, snap auf die Wand
+            if (p.x > wallX - 20) {
+              const dx = p.x - lightX;
+              if (dx > 0) {
+                const t = (wallX - lightX) / dx;
+                endX = wallX;
+                endY = lightY + (p.y - lightY) * t;
+                endY = Math.max(wallTop, Math.min(wallBot, endY));
+              }
+            }
+            // Tangenten-Snap: Wenn die Linie nah an einer der korrekten Tangenten ist, einrasten
+            // Korrekte Tangenten: shadowTop und shadowBot auf der Wand
+            const snapDist = 20;
+            if (Math.abs(endY - shadowTop) < snapDist && endX >= wallX - 5) {
+              endX = wallX;
+              endY = shadowTop;
+            } else if (Math.abs(endY - shadowBot) < snapDist && endX >= wallX - 5) {
+              endX = wallX;
+              endY = shadowBot;
+            }
+            currentRay.end = { x: endX, y: endY };
+            draw();
+          }
+          function endDraw(e) {
+            if (!drawing || !currentRay) return;
+            drawing = false;
+            // Nur akzeptieren, wenn Endpunkt wirklich auf der Wand ist
+            if (currentRay.end.x >= wallX - 5 && currentRay.end.y >= wallTop && currentRay.end.y <= wallBot) {
+              // Auf Wand snappen
+              currentRay.end.x = wallX;
+              rays.push(currentRay);
+            }
+            currentRay = null;
+            draw();
+          }
+          canvas.addEventListener('mousedown', startDraw);
+          canvas.addEventListener('mousemove', moveDraw);
+          canvas.addEventListener('mouseup', endDraw);
+          canvas.addEventListener('touchstart', startDraw, {passive:false});
+          canvas.addEventListener('touchmove', moveDraw, {passive:false});
+          canvas.addEventListener('touchend', endDraw);
+
+          document.getElementById('shadowResetBtn').addEventListener('click', () => {
+            rays = []; currentRay = null;
+            window._shadowAnswered = false;
+            document.getElementById('shadowCheckBtn').disabled = false;
+            draw();
+          });
+          document.getElementById('shadowCheckBtn').addEventListener('click', () => {
+            if (rays.length !== 2) {
+              alert('Bitte zeichne beide Begrenzungsstrahlen.');
+              return;
+            }
+            window._shadowAnswered = true;
+            document.getElementById('shadowCheckBtn').disabled = true;
+            // Prüfe: Tangential am Ball vorbei (Abstand vom Linie-zu-Mittelpunkt ≈ objR)
+            // Abstand Punkt zu Strecke berechnen
+            function distPointToLine(px, py, x1, y1, x2, y2) {
+              const A = px - x1, B = py - y1, C = x2 - x1, D = y2 - y1;
+              const dot = A*C + B*D;
+              const lenSq = C*C + D*D;
+              const param = lenSq ? dot / lenSq : -1;
+              let xx, yy;
+              if (param < 0) { xx = x1; yy = y1; }
+              else if (param > 1) { xx = x2; yy = y2; }
+              else { xx = x1 + param*C; yy = y1 + param*D; }
+              return Math.hypot(px - xx, py - yy);
+            }
+            // Für jeden Strahl: Abstand zur Objektmitte ≈ objR (mit Toleranz)
+            // Und unterscheiden, ob oberer oder unterer Strahl
+            const tolerance = 18; // Pixel - großzügiger für bessere Bedienbarkeit
+            let upperOk = false, lowerOk = false;
+            rays.forEach(r => {
+              const d = distPointToLine(objX, objY, r.start.x, r.start.y, r.end.x, r.end.y);
+              if (Math.abs(d - objR) < tolerance) {
+                // Oben oder unten?
+                const tForObj = (objX - r.start.x) / (r.end.x - r.start.x);
+                const yAtObj = r.start.y + tForObj * (r.end.y - r.start.y);
+                if (yAtObj < objY) upperOk = true;
+                else lowerOk = true;
+              }
+            });
+            const ok = upperOk && lowerOk;
+            // Korrekte Strahlen einzeichnen
+            ctx.strokeStyle = 'rgba(74,222,128,0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3,3]);
+            ctx.beginPath();
+            ctx.moveTo(lightX, lightY); ctx.lineTo(wallX, shadowTop);
+            ctx.moveTo(lightX, lightY); ctx.lineTo(wallX, shadowBot);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // Schattenbereich markieren
+            ctx.fillStyle = 'rgba(74,222,128,0.25)';
+            ctx.fillRect(wallX - 2, shadowTop, 12, shadowBot - shadowTop);
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 1;
+            ctx.strokeRect(wallX - 2, shadowTop, 12, shadowBot - shadowTop);
+            ctx.fillStyle = '#4ade80';
+            ctx.font = 'bold 11px sans-serif';
+            ctx.fillText('Kernschatten', wallX + 16, (shadowTop + shadowBot)/2);
+            showFeedback(ok, 'Licht breitet sich <strong>geradlinig</strong> aus. Die Schattengrenzen findest du, indem du von der Lichtquelle aus gerade Linien <strong>tangential</strong> (streifend) am Ball vorbei zur Wand ziehst. Zwischen diesen beiden Strahlen liegt der Kernschatten – dort kommt kein Licht hin.');
+          });
+          draw();
+        });
+      }
+    },
+    {
+      typeLabel: 'Zuordnen',
+      difficulty: 'leicht',
+      question: 'Ordne die Begriffe den richtigen Beschreibungen zu:',
+      render() {
+        renderDragDrop(
+          [
+            { label: 'Kernschatten', id: 'k' },
+            { label: 'Halbschatten', id: 'h' },
+            { label: 'punktförmige Lichtquelle', id: 'p' },
+            { label: 'flächenförmige Lichtquelle', id: 'f' }
+          ],
+          [
+            { text: 'Hier kommt gar kein Licht hin.', correctId: 'k' },
+            { text: 'Hier kommt Licht von einem Teil der Lichtquelle hin.', correctId: 'h' },
+            { text: 'Erzeugt nur scharfe Kernschatten.', correctId: 'p' },
+            { text: 'Besteht aus vielen Leuchtpunkten (z.B. Leuchtstoffröhre).', correctId: 'f' }
+          ],
+          'Merke: Der <strong>Kernschatten</strong> ist der ganz dunkle Bereich – dorthin kommt kein Licht. Im <strong>Halbschatten</strong> erreicht nur ein Teil des Lichts die Stelle. Eine <strong>punktförmige</strong> Lichtquelle (z.B. kleine LED) erzeugt scharfe Schatten; eine <strong>flächenförmige</strong> Lichtquelle (z.B. Leuchtstoffröhre) erzeugt weiche Schatten mit Halbschatten.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Lückentext',
+      difficulty: 'mittel',
+      question: 'Fülle den Text mit den passenden Begriffen:',
+      render() {
+        renderCloze(
+          'Licht breitet sich {0} aus. Trifft es auf einen lichtundurchlässigen Körper, entsteht ein {1}. Eine {2} Lichtquelle erzeugt nur einen scharfen Kernschatten. Eine {3} Lichtquelle erzeugt zusätzlich einen {4}, weil das Licht von mehreren Punkten kommt.',
+          ['geradlinig', 'Schatten', 'punktförmige', 'flächenförmige', 'Halbschatten'],
+          ['gebrochen', 'reflektiert', 'Regenbogen'],
+          'Die geradlinige Ausbreitung des Lichts ist der Schlüssel zum Verständnis von Schatten. Punktförmig = nur Kernschatten (scharf); flächenförmig = Kernschatten + Halbschatten (weich).'
+        );
+      }
+    },
+    {
+      typeLabel: 'Richtig oder Falsch',
+      difficulty: 'schwer',
+      question: 'Entscheide, ob die folgenden Aussagen richtig oder falsch sind:',
+      render() {
+        renderTrueFalse([
+          { text: 'Ein Schatten entsteht, weil sich Licht geradlinig ausbreitet.', correct: true },
+          { text: 'Je weiter der Gegenstand von der Wand entfernt ist, desto kleiner wird sein Schatten.', correct: false },
+          { text: 'Hinter einem lichtundurchlässigen Körper kann nie Licht ankommen.', correct: false },
+          { text: 'Die Sonne ist für uns auf der Erde eine nahezu punktförmige Lichtquelle, weil sie sehr weit weg ist.', correct: true }
+        ],
+        'Licht breitet sich immer geradlinig aus – das ist der Grund für Schatten. Je <em>näher</em> ein Gegenstand der Lichtquelle kommt, desto größer wird sein Schatten. Bei einer flächenförmigen Lichtquelle kann Licht im Halbschatten-Bereich noch ankommen. Und die Sonne ist wegen ihrer großen Entfernung fast wie ein Punkt – deswegen sind Sonnenschatten recht scharf.');
+      }
+    }
+  ]
+};
+
+// =========================================
+// KAPITEL 2: TAG-NACHT & MONDPHASEN
+// =========================================
+const chapter_erde = {
+  icon: '🌍',
+  title: 'Erde, Sonne & Mond',
+  desc: 'Tag-Nacht-Wechsel und Mondphasen verstehen',
+  tasks: [
+    {
+      typeLabel: 'Simulation',
+      difficulty: 'leicht',
+      question: 'Drehe die Erde und schaue, wo gerade Tag und Nacht ist. Beobachte auch den Mond!',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <canvas id="earthSim" width="500" height="320"></canvas>
+          <div class="sim-controls">
+            <label>Drehung der Erde:</label>
+            <input type="range" id="earthRot" min="0" max="360" value="0">
+            <span id="earthTime">Mittag</span>
+          </div>
+          <div class="hint-box"><strong>💡 Beobachte:</strong> Auf welcher Seite der Erde ist es hell? Was bewirkt den Tag-Nacht-Wechsel?</div>
+        `;
+        const canvas = document.getElementById('earthSim');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('earthRot');
+        const timeLabel = document.getElementById('earthTime');
+        function draw() {
+          const w = canvas.width, h = canvas.height;
+          ctx.clearRect(0,0,w,h);
+          // Weltraum
+          const grad = ctx.createRadialGradient(w/2, h/2, 50, w/2, h/2, 300);
+          grad.addColorStop(0, '#1a2151');
+          grad.addColorStop(1, '#050816');
+          ctx.fillStyle = grad;
+          ctx.fillRect(0,0,w,h);
+          // Sterne
+          for (let i = 0; i < 50; i++) {
+            ctx.fillStyle = `rgba(255,255,255,${Math.random()*0.6 + 0.2})`;
+            ctx.beginPath();
+            ctx.arc((i*37)%w, (i*71)%h, Math.random()*1.5, 0, Math.PI*2);
+            ctx.fill();
+          }
+
+          // Sonne (links)
+          const sunX = 70, sunY = h/2;
+          const sunGrad = ctx.createRadialGradient(sunX, sunY, 5, sunX, sunY, 50);
+          sunGrad.addColorStop(0, '#fff4a3');
+          sunGrad.addColorStop(0.5, '#ffd700');
+          sunGrad.addColorStop(1, 'rgba(255,165,0,0)');
+          ctx.fillStyle = sunGrad;
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, 50, 0, Math.PI*2);
+          ctx.fill();
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          ctx.arc(sunX, sunY, 22, 0, Math.PI*2);
+          ctx.fill();
+
+          // Erde (Mitte)
+          const earthX = 280, earthY = h/2, earthR = 55;
+          // Tag-Seite
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(earthX, earthY, earthR, -Math.PI/2, Math.PI/2);
+          ctx.fillStyle = '#4a9eff';
+          ctx.fill();
+          ctx.restore();
+          // Nacht-Seite
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(earthX, earthY, earthR, Math.PI/2, 3*Math.PI/2);
+          ctx.fillStyle = '#0c1440';
+          ctx.fill();
+          ctx.restore();
+          // Kontinent-Marker (dreht mit)
+          const rot = parseInt(slider.value) * Math.PI / 180;
+          const markerX = earthX + Math.cos(rot) * (earthR - 10);
+          const markerY = earthY + Math.sin(rot) * (earthR - 10);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.beginPath();
+          ctx.arc(markerX, markerY, 7, 0, Math.PI*2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+
+          // Tag/Nacht Bestimmung
+          // Wenn markerX < earthX => Tag-Seite, wenn > earthX => Nacht-Seite
+          // Genauer: cos(rot) < 0 => Tag, > 0 => Nacht (weil Sonne links)
+          const isDayTime = Math.cos(rot) < 0;
+          const isSunsetSunrise = Math.abs(Math.cos(rot)) < 0.15;
+          if (isSunsetSunrise) {
+            timeLabel.textContent = Math.sin(rot) > 0 ? 'Sonnenuntergang' : 'Sonnenaufgang';
+          } else {
+            timeLabel.textContent = isDayTime ? 'Tag' : 'Nacht';
+          }
+
+          // Mond (rechts)
+          const moonX = 440, moonY = h/2;
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, 22, -Math.PI/2, Math.PI/2);
+          ctx.fillStyle = '#e8e8f0';
+          ctx.fill();
+          ctx.restore();
+          ctx.save();
+          ctx.beginPath();
+          ctx.arc(moonX, moonY, 22, Math.PI/2, 3*Math.PI/2);
+          ctx.fillStyle = '#3a3a5a';
+          ctx.fill();
+          ctx.restore();
+
+          // Beschriftungen
+          ctx.fillStyle = '#fff';
+          ctx.font = '13px sans-serif';
+          ctx.fillText('☀ Sonne', sunX-20, sunY-55);
+          ctx.fillText('🌍 Erde', earthX-20, earthY-earthR-10);
+          ctx.fillText('🌙 Mond', moonX-22, moonY-30);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText('Du', markerX+10, markerY-5);
+        }
+        slider.oninput = draw;
+        draw();
+
+        document.getElementById('taskActions').innerHTML = `
+          <button class="btn btn-primary" onclick="afterEarthSim()">Ich habe es beobachtet →</button>
+        `;
+        window.afterEarthSim = function() {
+          renderMC(
+            [
+              'Die Sonne dreht sich um die Erde – das macht Tag und Nacht.',
+              'Die Erde dreht sich um sich selbst. Die Seite zur Sonne hat Tag, die andere Nacht.',
+              'Der Mond schattet die Erde ab – deswegen wird es Nacht.',
+              'Die Erde bewegt sich um die Sonne – das macht Tag und Nacht.'
+            ],
+            1,
+            'Die Erde dreht sich einmal in etwa 24 Stunden um ihre eigene Achse. Dabei ist immer genau die Hälfte der Erde der Sonne zugewandt (dort ist Tag) und die andere Hälfte ist von ihr abgewandt (dort ist Nacht). Die Bewegung um die Sonne dauert dagegen 1 Jahr – das ist für die Jahreszeiten zuständig, nicht für Tag und Nacht.'
+          );
+          document.getElementById('taskActions').innerHTML = '';
+        };
+      }
+    },
+    {
+      typeLabel: 'Zuordnen',
+      difficulty: 'mittel',
+      question: 'Welche Mondphase siehst du bei welcher Stellung? Ziehe die Begriffe an die richtige Stelle.',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <div style="text-align:center; margin:10px 0;">
+            <svg id="moonPhases" width="100%" viewBox="0 0 420 140" style="max-width:480px;">
+              <defs>
+                <radialGradient id="sunGrad2">
+                  <stop offset="0%" stop-color="#fff4a3"/>
+                  <stop offset="100%" stop-color="#ff8a00"/>
+                </radialGradient>
+              </defs>
+              <!-- Mondphasen-Illustrationen -->
+              <!-- Vollmond -->
+              <g>
+                <circle cx="50" cy="50" r="22" fill="#e8e8f0"/>
+                <rect x="25" y="85" width="50" height="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,215,0,0.4)" stroke-dasharray="4" rx="8" class="moon-drop" data-pos="1"/>
+              </g>
+              <!-- Abnehmender Halbmond -->
+              <g>
+                <circle cx="130" cy="50" r="22" fill="#3a3a5a"/>
+                <path d="M 130 28 A 22 22 0 0 0 130 72 Z" fill="#e8e8f0"/>
+                <rect x="105" y="85" width="50" height="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,215,0,0.4)" stroke-dasharray="4" rx="8" class="moon-drop" data-pos="2"/>
+              </g>
+              <!-- Neumond -->
+              <g>
+                <circle cx="210" cy="50" r="22" fill="#3a3a5a" stroke="#666" stroke-width="1"/>
+                <rect x="185" y="85" width="50" height="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,215,0,0.4)" stroke-dasharray="4" rx="8" class="moon-drop" data-pos="3"/>
+              </g>
+              <!-- Zunehmender Halbmond -->
+              <g>
+                <circle cx="290" cy="50" r="22" fill="#3a3a5a"/>
+                <path d="M 290 28 A 22 22 0 0 1 290 72 Z" fill="#e8e8f0"/>
+                <rect x="265" y="85" width="50" height="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,215,0,0.4)" stroke-dasharray="4" rx="8" class="moon-drop" data-pos="4"/>
+              </g>
+              <!-- Sichel zunehmend -->
+              <g>
+                <circle cx="370" cy="50" r="22" fill="#3a3a5a"/>
+                <path d="M 370 28 A 22 22 0 0 1 370 72 A 14 22 0 0 0 370 28 Z" fill="#e8e8f0"/>
+                <rect x="345" y="85" width="50" height="40" fill="rgba(255,255,255,0.04)" stroke="rgba(255,215,0,0.4)" stroke-dasharray="4" rx="8" class="moon-drop" data-pos="5"/>
+              </g>
+            </svg>
+          </div>
+          <div class="dnd-label">Ziehe die Begriffe auf das passende Feld unter dem Mond:</div>
+          <div class="dnd-items" id="moonItems">
+            <div class="dnd-item" draggable="true" data-id="vollmond">Vollmond</div>
+            <div class="dnd-item" draggable="true" data-id="abnehmend">Abnehmender Halbmond</div>
+            <div class="dnd-item" draggable="true" data-id="neumond">Neumond</div>
+            <div class="dnd-item" draggable="true" data-id="zunehmend">Zunehmender Halbmond</div>
+            <div class="dnd-item" draggable="true" data-id="sichel">Zunehmende Sichel</div>
+          </div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-primary" onclick="checkMoonDrops()">Prüfen</button>
+          </div>
+        `;
+        // Setup drag&drop für die SVG-Rechtecke
+        const correctMap = { 1: 'vollmond', 2: 'abnehmend', 3: 'neumond', 4: 'zunehmend', 5: 'sichel' };
+        const explanation = 'Die Mondphasen entstehen, weil der Mond um die Erde kreist. Wir sehen jeweils einen anderen Teil seiner von der Sonne beleuchteten Seite. <strong>Merkregel:</strong> Sieht der Mond aus wie ein "a" → abnehmend. Sieht er aus wie ein "z" (Bogen mit Strich links) → zunehmend. Beim Vollmond steht die Erde zwischen Sonne und Mond, beim Neumond steht der Mond zwischen Sonne und Erde.';
+
+        setupMoonDragDrop(correctMap, explanation);
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'leicht',
+      question: 'Warum leuchtet der Mond am Himmel?',
+      render() {
+        renderMC(
+          [
+            'Der Mond erzeugt eigenes Licht, ähnlich wie die Sonne.',
+            'Der Mond reflektiert das Licht der Sonne.',
+            'Der Mond leuchtet nur, wenn die Erde ihn anstrahlt.',
+            'Der Mond leuchtet, weil die Sterne ihn beleuchten.'
+          ],
+          1,
+          'Der Mond ist kein eigener Leuchtkörper (wie die Sonne oder eine Lampe), sondern ein <strong>beleuchteter Körper</strong>. Er wird von der Sonne angestrahlt und wirft das Licht zu uns auf die Erde zurück – er reflektiert das Sonnenlicht.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Memory',
+      difficulty: 'mittel',
+      question: 'Finde die Paare! Ordne die Mondphasen-Namen den Beschreibungen zu.',
+      render() {
+        renderMemory([
+          { a: 'Neumond', b: 'Mond zwischen Sonne und Erde, wir sehen nichts' },
+          { a: 'Vollmond', b: 'Erde zwischen Sonne und Mond, voll beleuchtet' },
+          { a: 'Zunehmender Halbmond', b: 'Rechte Seite beleuchtet (Bogen wie "z")' },
+          { a: 'Abnehmender Halbmond', b: 'Linke Seite beleuchtet (Bogen wie "a")' }
+        ], 'Der Mond ändert sein Aussehen, weil wir immer einen anderen Teil seiner von der Sonne beleuchteten Seite sehen. Merkregel auf Deutsch: Sieht der Mond aus wie ein "a" → abnehmend. Wie ein "z" → zunehmend.');
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'mittel',
+      question: 'Es ist bei dir Mittag. Wie ist es gleichzeitig auf der anderen Seite der Erde?',
+      render() {
+        renderMC(
+          [
+            'Dort ist auch Mittag – auf der ganzen Erde ist es gleichzeitig Tag.',
+            'Dort ist Abend.',
+            'Dort ist Mitternacht.',
+            'Dort ist Sonnenaufgang.'
+          ],
+          2,
+          'Die Erde ist eine Kugel. Auf der der Sonne zugewandten Seite ist Tag (Mittag ist, wenn die Sonne am höchsten steht). Die Gegenseite ist der Sonne komplett abgewandt – dort ist Mitternacht. Genau dazwischen herrschen Morgen- und Abenddämmerung.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Lückentext',
+      difficulty: 'mittel',
+      question: 'Ergänze den Text zum Tag-Nacht-Wechsel:',
+      render() {
+        renderCloze(
+          'Die Erde dreht sich einmal in etwa {0} Stunden um ihre eigene {1}. Die der {2} zugewandte Seite hat Tag, die abgewandte Seite hat {3}. Der Mond leuchtet nicht selbst, sondern {4} das Sonnenlicht.',
+          ['24', 'Achse', 'Sonne', 'Nacht', 'reflektiert'],
+          ['12', '365', 'Mitte', 'Erdkern', 'verschluckt'],
+          'Die Erddrehung um ihre eigene Achse (24 Stunden) verursacht den Tag-Nacht-Wechsel. Die Bewegung um die Sonne (365 Tage) ist dagegen für die Jahreszeiten verantwortlich – nicht für Tag und Nacht.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Richtig oder Falsch',
+      difficulty: 'schwer',
+      question: 'Entscheide, ob die Aussagen über Mondphasen stimmen:',
+      render() {
+        renderTrueFalse([
+          { text: 'Beim Neumond steht der Mond zwischen Erde und Sonne.', correct: true },
+          { text: 'Der Mond verändert seine Form tatsächlich – er wächst und schrumpft.', correct: false },
+          { text: 'Ein vollständiger Mondphasen-Zyklus dauert etwa 4 Wochen.', correct: true },
+          { text: 'Beim Vollmond kannst du den Mond nur tagsüber sehen.', correct: false }
+        ],
+        'Der Mond ändert nie seine Form – wir sehen nur unterschiedlich viel von seiner beleuchteten Seite. Ein Zyklus dauert ca. 29,5 Tage (≈ 4 Wochen). Den Vollmond sieht man nachts, weil die Erde dann zwischen Sonne und Mond steht – der Mond geht auf, wenn die Sonne untergeht.');
+      }
+    }
+  ]
+};
+
+// =========================================
+// KAPITEL 3: REFLEXION & SPIEGEL
+// =========================================
+const chapter_spiegel = {
+  icon: '🪞',
+  title: 'Reflexion & Spiegel',
+  desc: 'Reflexionsgesetz, Spiegelbild und Spiegelschrift',
+  tasks: [
+    {
+      typeLabel: 'Simulation',
+      difficulty: 'leicht',
+      question: 'Bewege den Lichtstrahl mit dem Schieberegler. Beobachte: Wie verhält sich der reflektierte Strahl?',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <canvas id="reflectCanvas" width="500" height="280"></canvas>
+          <div class="sim-controls">
+            <label>Einfallswinkel:</label>
+            <input type="range" id="reflectAngle" min="10" max="80" value="45">
+            <span id="angleLabel">45°</span>
+          </div>
+          <div class="hint-box"><strong>💡 Beobachte:</strong> Vergleiche den Einfallswinkel (α) mit dem Ausfallswinkel (β). Was fällt dir auf?</div>
+        `;
+        const canvas = document.getElementById('reflectCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('reflectAngle');
+        const label = document.getElementById('angleLabel');
+        function draw() {
+          const w = canvas.width, h = canvas.height;
+          ctx.clearRect(0,0,w,h);
+          ctx.fillStyle = '#0a0e2a';
+          ctx.fillRect(0,0,w,h);
+
+          const mirrorY = h * 0.7;
+          const pivotX = w/2;
+          // Spiegel
+          ctx.fillStyle = '#6b8aff';
+          ctx.fillRect(50, mirrorY, w-100, 6);
+          // Spiegelstreifen (Schraffur)
+          ctx.strokeStyle = '#6b8aff';
+          ctx.lineWidth = 1;
+          for (let x = 55; x < w-50; x += 10) {
+            ctx.beginPath();
+            ctx.moveTo(x, mirrorY+6);
+            ctx.lineTo(x-6, mirrorY+14);
+            ctx.stroke();
+          }
+
+          // Einfalls-Lot
+          ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+          ctx.setLineDash([5,5]);
+          ctx.beginPath();
+          ctx.moveTo(pivotX, mirrorY-120);
+          ctx.lineTo(pivotX, mirrorY+30);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          const angle = parseInt(slider.value);
+          const rad = angle * Math.PI/180;
+          const rayLen = 120;
+
+          // Einfallender Strahl (von oben-links zum Pivot)
+          const inStartX = pivotX - Math.sin(rad) * rayLen;
+          const inStartY = mirrorY - Math.cos(rad) * rayLen;
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(inStartX, inStartY);
+          ctx.lineTo(pivotX, mirrorY);
+          ctx.stroke();
+          // Pfeilspitze auf einfallendem Strahl (zum Pivot)
+          drawArrow(ctx, (inStartX+pivotX)/2, (inStartY+mirrorY)/2, pivotX, mirrorY, '#ffd700');
+
+          // Reflektierter Strahl (nach oben-rechts)
+          const outEndX = pivotX + Math.sin(rad) * rayLen;
+          const outEndY = mirrorY - Math.cos(rad) * rayLen;
+          ctx.strokeStyle = '#ff6b6b';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(pivotX, mirrorY);
+          ctx.lineTo(outEndX, outEndY);
+          ctx.stroke();
+          drawArrow(ctx, pivotX, mirrorY, (pivotX+outEndX)/2, (mirrorY+outEndY)/2, '#ff6b6b');
+
+          // Winkel-Bögen
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(pivotX, mirrorY, 30, -Math.PI/2 - rad, -Math.PI/2);
+          ctx.stroke();
+          ctx.strokeStyle = '#ff6b6b';
+          ctx.beginPath();
+          ctx.arc(pivotX, mirrorY, 36, -Math.PI/2, -Math.PI/2 + rad);
+          ctx.stroke();
+
+          // Beschriftungen
+          ctx.fillStyle = '#ffd700';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText('α', pivotX - 20, mirrorY - 20);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.fillText('β', pivotX + 12, mirrorY - 20);
+          ctx.fillStyle = '#fff';
+          ctx.font = '12px sans-serif';
+          ctx.fillText('Lot', pivotX + 4, mirrorY - 110);
+          ctx.fillText('einfallender Strahl', inStartX - 40, inStartY - 8);
+          ctx.fillText('reflektierter Strahl', outEndX - 50, outEndY - 8);
+          ctx.fillText('Spiegel', w-60, mirrorY + 22);
+
+          // Anzeige der Winkel
+          ctx.fillStyle = '#ffd700';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText(`α = ${angle}°`, 60, 30);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.fillText(`β = ${angle}°`, 60, 50);
+
+          label.textContent = angle + '°';
+        }
+        function drawArrow(ctx, x1, y1, x2, y2, color) {
+          ctx.fillStyle = color;
+          const dx = x2-x1, dy = y2-y1;
+          const ang = Math.atan2(dy, dx);
+          const size = 8;
+          ctx.beginPath();
+          ctx.moveTo(x2, y2);
+          ctx.lineTo(x2 - size*Math.cos(ang - Math.PI/6), y2 - size*Math.sin(ang - Math.PI/6));
+          ctx.lineTo(x2 - size*Math.cos(ang + Math.PI/6), y2 - size*Math.sin(ang + Math.PI/6));
+          ctx.closePath();
+          ctx.fill();
+        }
+        slider.oninput = draw;
+        draw();
+
+        document.getElementById('taskActions').innerHTML = `
+          <button class="btn btn-primary" onclick="afterReflectSim()">Ich habe es beobachtet →</button>
+        `;
+        window.afterReflectSim = function() {
+          renderMC(
+            [
+              'Der Ausfallswinkel ist immer größer als der Einfallswinkel.',
+              'Einfallswinkel und Ausfallswinkel sind immer gleich groß.',
+              'Der Ausfallswinkel hängt nicht vom Einfallswinkel ab.',
+              'Beide Winkel werden vom Spiegel aus gemessen.'
+            ],
+            1,
+            'Das ist das <strong>Reflexionsgesetz</strong>: Einfallswinkel α = Ausfallswinkel β. Beide Winkel werden <strong>vom Lot aus</strong> gemessen (nicht vom Spiegel!). Außerdem liegen einfallender Strahl, Lot und reflektierter Strahl in einer Ebene.'
+          );
+          document.getElementById('taskActions').innerHTML = '';
+        };
+      }
+    },
+    {
+      typeLabel: 'Zeichnen',
+      difficulty: 'mittel',
+      question: 'Zeichne den reflektierten Strahl! <strong>Ziehe mit dem Finger/der Maus</strong> vom Auftreffpunkt auf dem Spiegel weg. Nutze das einblendbare Geodreieck zum Messen!',
+      render() {
+        renderDrawing((container) => {
+          // Zufälliger Einfallswinkel auf 5° gerundet zwischen 20° und 70°
+          const targetAngle = 20 + Math.floor(Math.random() * 11) * 5; // 20,25,...,70
+          container.innerHTML = `
+            <div class="draw-instruction"><strong>So geht's:</strong> Tippe auf den roten Auftreffpunkt und ziehe eine Linie schräg nach oben. Die Winkelanzeige hilft dir live. Wenn du näher als 2° an einem 5°-Schritt bist, rastet die Linie ein.</div>
+            <canvas id="reflectDrawCanvas" width="500" height="360"></canvas>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <span style="font-size:0.85em; color:#b8c0e5;">Einfallswinkel: <strong style="color:#ffd700">α = ${targetAngle}°</strong></span>
+              <div style="flex:1"></div>
+              <button class="btn btn-secondary" id="protractorBtn" style="font-size:0.85em;">📐 Geodreieck</button>
+              <button class="btn btn-secondary" id="reflectResetBtn">Zurücksetzen</button>
+              <button class="btn btn-primary" id="reflectCheckBtn">Prüfen</button>
+            </div>
+          `;
+          const canvas = document.getElementById('reflectDrawCanvas');
+          const ctx = canvas.getContext('2d');
+          const mirrorY = 260;
+          const pivotX = 250, pivotY = mirrorY;
+          const rad = targetAngle * Math.PI / 180;
+          const rayLen = 160;
+          const inStartX = pivotX - Math.sin(rad) * rayLen;
+          const inStartY = pivotY - Math.cos(rad) * rayLen;
+
+          let userRay = null; // {end: {x,y}, snapped: bool}
+          let drawing = false;
+          let currentAngle = null;
+          let showProtractor = false;
+          let protPos = { x: pivotX, y: pivotY, rotation: 0 }; // Geodreieck-Position und Drehung
+          let protractorDrag = null; // {mode: 'move'|'rotate', startX, startY}
+
+          function drawBg() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = '#0a0e2a';
+            ctx.fillRect(0,0,w,h);
+            // Spiegel
+            ctx.fillStyle = '#6b8aff';
+            ctx.fillRect(40, mirrorY, w-80, 5);
+            for (let x = 45; x < w-40; x += 10) {
+              ctx.strokeStyle = '#6b8aff';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(x, mirrorY+5);
+              ctx.lineTo(x-6, mirrorY+12);
+              ctx.stroke();
+            }
+            // Lot
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.setLineDash([5,5]);
+            ctx.lineWidth = 1.5;
+            ctx.beginPath();
+            ctx.moveTo(pivotX, mirrorY - 230);
+            ctx.lineTo(pivotX, mirrorY + 20);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = 'rgba(255,255,255,0.7)';
+            ctx.font = '11px sans-serif';
+            ctx.fillText('Lot', pivotX + 6, mirrorY - 220);
+            // Winkelskala am Lot - alle 5°
+            for (let a = 5; a <= 80; a += 5) {
+              const ar = a * Math.PI/180;
+              const isMajor = a % 10 === 0;
+              const tickLen = isMajor ? 10 : 5;
+              // Links (einfallende Seite)
+              const lx1 = pivotX - Math.sin(ar) * 70;
+              const ly1 = pivotY - Math.cos(ar) * 70;
+              const lx2 = pivotX - Math.sin(ar) * (70 + tickLen);
+              const ly2 = pivotY - Math.cos(ar) * (70 + tickLen);
+              ctx.strokeStyle = isMajor ? 'rgba(255,255,255,0.35)' : 'rgba(255,255,255,0.18)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(lx1, ly1); ctx.lineTo(lx2, ly2);
+              ctx.stroke();
+              // Rechts (ausfallende Seite)
+              const rx1 = pivotX + Math.sin(ar) * 70;
+              const rx2 = pivotX + Math.sin(ar) * (70 + tickLen);
+              ctx.beginPath();
+              ctx.moveTo(rx1, ly1); ctx.lineTo(rx2, ly2);
+              ctx.stroke();
+              // Beschriftung alle 10°
+              if (isMajor) {
+                ctx.fillStyle = 'rgba(255,255,255,0.5)';
+                ctx.font = '9px sans-serif';
+                ctx.fillText(a + '°', pivotX - Math.sin(ar) * 90 - 8, pivotY - Math.cos(ar) * 90 + 4);
+                ctx.fillText(a + '°', pivotX + Math.sin(ar) * 90 - 4, pivotY - Math.cos(ar) * 90 + 4);
+              }
+            }
+            // Einfallender Strahl (gelb)
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(inStartX, inStartY);
+            ctx.lineTo(pivotX, pivotY);
+            ctx.stroke();
+            drawArrowhead(ctx, (inStartX+pivotX)/2, (inStartY+pivotY)/2, pivotX, pivotY, '#ffd700');
+            // Einfallswinkel-Bogen
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(pivotX, pivotY, 40, -Math.PI/2 - rad, -Math.PI/2);
+            ctx.stroke();
+            ctx.fillStyle = '#ffd700';
+            ctx.font = 'bold 13px sans-serif';
+            const labelAngle = -Math.PI/2 - rad/2;
+            ctx.fillText('α=' + targetAngle + '°', pivotX + Math.cos(labelAngle) * 55 - 22, pivotY + Math.sin(labelAngle) * 55 + 5);
+            // Auftreffpunkt
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath();
+            ctx.arc(pivotX, pivotY, 8, 0, Math.PI*2);
+            ctx.fill();
+            ctx.strokeStyle = '#fff';
+            ctx.lineWidth = 2;
+            ctx.stroke();
+          }
+
+          function drawProtractor() {
+            if (!showProtractor) return;
+            const w = canvas.width;
+            const R = 100;
+            ctx.save();
+            ctx.translate(protPos.x, protPos.y);
+            ctx.rotate(protPos.rotation);
+            // Halbkreis-Hintergrund (nach oben)
+            ctx.fillStyle = 'rgba(255, 240, 200, 0.18)';
+            ctx.strokeStyle = 'rgba(255, 215, 0, 0.95)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.arc(0, 0, R, Math.PI, 2*Math.PI, false);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            // Grundlinie
+            ctx.beginPath();
+            ctx.moveTo(-R, 0); ctx.lineTo(R, 0);
+            ctx.stroke();
+            // Gradmarkierungen alle 5° von 0..180° (unser 0° = rechts)
+            for (let deg = 0; deg <= 180; deg += 5) {
+              const theta = Math.PI - deg * Math.PI / 180; // 0°=rechts, 180°=links, 90°=oben
+              const px = Math.cos(theta) * R;
+              const py = -Math.sin(theta) * R; // oben = negativer y
+              const isMajor = deg % 10 === 0;
+              const tickLen = isMajor ? 10 : 5;
+              const ix = Math.cos(theta) * (R - tickLen);
+              const iy = -Math.sin(theta) * (R - tickLen);
+              ctx.strokeStyle = isMajor ? 'rgba(200, 150, 50, 1)' : 'rgba(200, 150, 50, 0.6)';
+              ctx.lineWidth = 1;
+              ctx.beginPath();
+              ctx.moveTo(ix, iy); ctx.lineTo(px, py);
+              ctx.stroke();
+              if (isMajor && deg % 30 === 0) {
+                ctx.fillStyle = '#4a3000';
+                ctx.font = 'bold 10px sans-serif';
+                ctx.textAlign = 'center';
+                const lx = Math.cos(theta) * (R - 22);
+                const ly = -Math.sin(theta) * (R - 22);
+                ctx.fillText(deg.toString(), lx, ly + 3);
+              }
+            }
+            // Senkrechtes Lot-Markierungsstrich
+            ctx.strokeStyle = 'rgba(200, 150, 50, 0.8)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(0, 0); ctx.lineTo(0, -R+8);
+            ctx.stroke();
+            ctx.fillStyle = '#4a3000';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('90°', 0, -R+22);
+            // Mittelpunkt (Bezugspunkt)
+            ctx.fillStyle = '#ff6b6b';
+            ctx.beginPath(); ctx.arc(0, 0, 5, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+            ctx.restore();
+            // Drag-Griff (oben am Geodreieck, in Rotationsrichtung)
+            const handleDist = 110;
+            const handleX = protPos.x + Math.sin(protPos.rotation) * handleDist;
+            const handleY = protPos.y - Math.cos(protPos.rotation) * handleDist;
+            ctx.fillStyle = 'rgba(74,222,128,0.9)';
+            ctx.beginPath(); ctx.arc(handleX, handleY, 8, 0, Math.PI*2); ctx.fill();
+            ctx.strokeStyle = '#fff'; ctx.lineWidth = 2; ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 10px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText('⟲', handleX, handleY + 4);
+            // Hinweis
+            ctx.textAlign = 'left';
+            ctx.fillStyle = 'rgba(255,255,255,0.55)';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('Mitte ziehen = verschieben   |   grüner Knopf = drehen', 10, 20);
+          }
+
+          function draw() {
+            drawBg();
+            // User-Strahl
+            if (userRay) {
+              ctx.strokeStyle = userRay.snapped ? '#4ade80' : '#ff6b6b';
+              ctx.lineWidth = 3;
+              ctx.beginPath();
+              ctx.moveTo(pivotX, pivotY);
+              ctx.lineTo(userRay.end.x, userRay.end.y);
+              ctx.stroke();
+              drawArrowhead(ctx, pivotX, pivotY, userRay.end.x, userRay.end.y, userRay.snapped ? '#4ade80' : '#ff6b6b');
+              // Winkelbogen
+              const userAngRad = currentAngle * Math.PI / 180;
+              if (userAngRad > 0) {
+                ctx.strokeStyle = userRay.snapped ? '#4ade80' : '#ff6b6b';
+                ctx.lineWidth = 2;
+                ctx.beginPath();
+                ctx.arc(pivotX, pivotY, 50, -Math.PI/2, -Math.PI/2 + userAngRad);
+                ctx.stroke();
+              }
+            }
+            // Geodreieck
+            drawProtractor();
+            // Große Winkel-Live-Anzeige oben rechts
+            if (currentAngle !== null) {
+              const diff = Math.abs(currentAngle - targetAngle);
+              const angleColor = diff < 2 ? '#4ade80' : (diff < 6 ? '#ffd700' : '#ff6b6b');
+              ctx.fillStyle = 'rgba(0,0,0,0.75)';
+              ctx.fillRect(canvas.width - 140, 30, 125, 52);
+              ctx.strokeStyle = angleColor;
+              ctx.lineWidth = 2;
+              ctx.strokeRect(canvas.width - 140, 30, 125, 52);
+              ctx.fillStyle = '#b8c0e5';
+              ctx.font = '10px sans-serif';
+              ctx.textAlign = 'left';
+              ctx.fillText('Dein Winkel β:', canvas.width - 132, 46);
+              ctx.fillStyle = angleColor;
+              ctx.font = 'bold 24px sans-serif';
+              ctx.fillText(currentAngle.toFixed(0) + '°', canvas.width - 128, 72);
+              ctx.fillStyle = '#b8c0e5';
+              ctx.font = '10px sans-serif';
+              ctx.fillText('Ziel: ' + targetAngle + '°', canvas.width - 60, 72);
+            }
+            // Start-Hinweis
+            if (!userRay && !drawing) {
+              ctx.strokeStyle = 'rgba(255,107,107,0.6)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([3,3]);
+              ctx.beginPath();
+              ctx.arc(pivotX, pivotY, 20, 0, Math.PI*2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = 'rgba(255,255,255,0.4)';
+              ctx.font = '11px sans-serif';
+              ctx.textAlign = 'left';
+              ctx.fillText('↑ Von hier schräg nach oben ziehen', pivotX + 26, pivotY + 5);
+            }
+          }
+
+          function updateAngle() {
+            if (!userRay) { currentAngle = null; return; }
+            let ang = angleFromVertical(pivotX, pivotY, userRay.end.x, userRay.end.y);
+            // Snap auf 5°-Schritte wenn nah dran (<2°)
+            const near5 = Math.round(ang / 5) * 5;
+            if (Math.abs(ang - near5) < 2) {
+              ang = near5;
+              userRay.snapped = true;
+              // Endpunkt exakt auf Winkel setzen
+              const snappedRad = ang * Math.PI / 180;
+              const dist = Math.hypot(userRay.end.x - pivotX, userRay.end.y - pivotY);
+              userRay.end.x = pivotX + Math.sin(snappedRad) * dist;
+              userRay.end.y = pivotY - Math.cos(snappedRad) * dist;
+            } else {
+              userRay.snapped = false;
+            }
+            currentAngle = ang;
+          }
+
+          function isNearProtractorCenter(p) {
+            if (!showProtractor) return false;
+            return Math.hypot(p.x - protPos.x, p.y - protPos.y) < 25;
+          }
+          function isNearProtractorHandle(p) {
+            if (!showProtractor) return false;
+            const handleDist = 110;
+            const hx = protPos.x + Math.sin(protPos.rotation) * handleDist;
+            const hy = protPos.y - Math.cos(protPos.rotation) * handleDist;
+            return Math.hypot(p.x - hx, p.y - hy) < 15;
+          }
+
+          function startDraw(e) {
+            if (window._reflectAnswered) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            // Geodreieck-Interaktion hat Priorität
+            if (isNearProtractorHandle(p)) {
+              protractorDrag = { mode: 'rotate' };
+              return;
+            }
+            if (isNearProtractorCenter(p)) {
+              protractorDrag = { mode: 'move', offsetX: p.x - protPos.x, offsetY: p.y - protPos.y };
+              return;
+            }
+            // Sonst Strahl zeichnen
+            if (Math.hypot(p.x - pivotX, p.y - pivotY) > 40) return;
+            drawing = true;
+            userRay = { end: { x: p.x, y: p.y }, snapped: false };
+            updateAngle();
+            draw();
+          }
+          function moveDraw(e) {
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            if (protractorDrag) {
+              if (protractorDrag.mode === 'move') {
+                protPos.x = p.x - protractorDrag.offsetX;
+                protPos.y = p.y - protractorDrag.offsetY;
+              } else if (protractorDrag.mode === 'rotate') {
+                protPos.rotation = Math.atan2(p.x - protPos.x, -(p.y - protPos.y));
+              }
+              draw();
+              return;
+            }
+            if (!drawing) return;
+            // Nur oberhalb des Spiegels
+            if (p.y >= mirrorY - 3) {
+              userRay.end = { x: p.x, y: mirrorY - 3 };
+            } else {
+              userRay.end = { x: p.x, y: p.y };
+            }
+            updateAngle();
+            draw();
+          }
+          function endDraw(e) {
+            if (protractorDrag) {
+              protractorDrag = null;
+              return;
+            }
+            drawing = false;
+            if (userRay && Math.hypot(userRay.end.x - pivotX, userRay.end.y - pivotY) < 30) {
+              userRay = null;
+              currentAngle = null;
+            }
+            draw();
+          }
+          canvas.addEventListener('mousedown', startDraw);
+          canvas.addEventListener('mousemove', moveDraw);
+          canvas.addEventListener('mouseup', endDraw);
+          canvas.addEventListener('mouseleave', endDraw);
+          canvas.addEventListener('touchstart', startDraw, {passive:false});
+          canvas.addEventListener('touchmove', moveDraw, {passive:false});
+          canvas.addEventListener('touchend', endDraw);
+
+          document.getElementById('protractorBtn').addEventListener('click', () => {
+            showProtractor = !showProtractor;
+            document.getElementById('protractorBtn').style.background = showProtractor ? 'rgba(255,215,0,0.2)' : '';
+            document.getElementById('protractorBtn').style.borderColor = showProtractor ? '#ffd700' : '';
+            if (showProtractor) {
+              // Geodreieck auf Pivotpunkt setzen
+              protPos = { x: pivotX, y: pivotY, rotation: 0 };
+            }
+            draw();
+          });
+          document.getElementById('reflectResetBtn').addEventListener('click', () => {
+            userRay = null;
+            currentAngle = null;
+            window._reflectAnswered = false;
+            document.getElementById('reflectCheckBtn').disabled = false;
+            draw();
+          });
+          document.getElementById('reflectCheckBtn').addEventListener('click', () => {
+            if (!userRay || currentAngle === null) {
+              alert('Bitte zeichne zuerst den reflektierten Strahl.');
+              return;
+            }
+            window._reflectAnswered = true;
+            document.getElementById('reflectCheckBtn').disabled = true;
+            const diff = Math.abs(currentAngle - targetAngle);
+            const ok = diff < 3; // ±3° Toleranz (durch Snap meist exakt)
+            // Korrekten Strahl immer einzeichnen
+            const correctX = pivotX + Math.sin(rad) * rayLen;
+            const correctY = pivotY - Math.cos(rad) * rayLen;
+            ctx.strokeStyle = '#4ade80';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6,3]);
+            ctx.beginPath();
+            ctx.moveTo(pivotX, pivotY);
+            ctx.lineTo(correctX, correctY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.fillStyle = '#4ade80';
+            ctx.beginPath();
+            ctx.arc(correctX, correctY, 6, 0, Math.PI*2); ctx.fill();
+            ctx.font = 'bold 13px sans-serif';
+            ctx.fillText('β=' + targetAngle + '° (richtig)', correctX + 10, correctY + 5);
+            showFeedback(ok,
+              `Nach dem <strong>Reflexionsgesetz</strong> gilt: Einfallswinkel α = Ausfallswinkel β, beide <strong>vom Lot aus gemessen</strong>. In dieser Aufgabe war α = ${targetAngle}°, also muss auch β = ${targetAngle}° sein. Dein Winkel: ${currentAngle.toFixed(0)}° (Abweichung: ${diff.toFixed(1)}°).`
+            );
+          });
+          draw();
+        });
+      }
+    },
+    {
+      typeLabel: 'Eingabe',
+      difficulty: 'mittel',
+      question: 'Was siehst du im Spiegel? Schreibe die Spiegelschrift richtig:',
+      render() {
+        // Zufälliges Wort aus einer Liste
+        const words = ['HAUS', 'SONNE', 'BIO', 'PHYSIK', 'MOND'];
+        const word = words[Math.floor(Math.random() * words.length)];
+        window._textState = {
+          correctAnswer: word,
+          explanation: 'Im Spiegel werden links und rechts vertauscht. Einzelne Buchstaben werden seitenverkehrt dargestellt – du musst das Wort also in Gedanken umkehren, um es richtig zu lesen.',
+          options: {}
+        };
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <div style="text-align:center; color:#b8c0e5; margin-bottom:8px;">Im Spiegel steht:</div>
+          <div class="mirror-display" style="transform: scaleX(-1); display:inline-block; width:100%;">${word}</div>
+          <div style="text-align:center; color:#b8c0e5; margin-top:12px; margin-bottom:4px;">Wie heißt das Wort in normaler Schrift?</div>
+          <input type="text" class="mirror-input" id="textAnswer" placeholder="Wort eingeben..." autocomplete="off" style="text-align:center; text-transform:uppercase;">
+          <div class="hint-box" style="margin-top:10px;"><strong>💡 Tipp:</strong> Bei einem senkrechten Spiegel werden links und rechts vertauscht.</div>
+          <div style="margin-top:12px;">
+            <button class="btn btn-primary" id="textCheckBtn">Prüfen</button>
+          </div>
+        `;
+        document.getElementById('textCheckBtn').addEventListener('click', checkTextInput);
+        setTimeout(() => document.getElementById('textAnswer').focus(), 100);
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'leicht',
+      question: 'Du stehst 2 Meter vor einem Spiegel. Wie weit erscheint dein Spiegelbild hinter dem Spiegel?',
+      render() {
+        renderMC(
+          [
+            '1 Meter – es wirkt immer kleiner.',
+            '2 Meter – genauso weit wie du davor stehst.',
+            '4 Meter – doppelt so weit.',
+            'Das kommt auf die Größe des Spiegels an.'
+          ],
+          1,
+          'Das Spiegelbild erscheint <strong>genauso weit hinter dem Spiegel</strong>, wie der Gegenstand vor dem Spiegel steht. Stehst du 2 m davor, wirkt dein Spiegelbild, als wäre es 2 m dahinter. Auch die Größe bleibt gleich – nur links und rechts sind vertauscht.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Richtig oder Falsch',
+      difficulty: 'schwer',
+      question: 'Stimmt das über Spiegelbilder?',
+      render() {
+        renderTrueFalse([
+          { text: 'Das Spiegelbild ist genauso groß wie der Gegenstand.', correct: true },
+          { text: 'Im Spiegelbild werden oben und unten vertauscht.', correct: false },
+          { text: 'Das Spiegelbild befindet sich hinter dem Spiegel.', correct: true },
+          { text: 'Bei einem ebenen Spiegel ist Einfallswinkel = Ausfallswinkel, beide vom Lot aus gemessen.', correct: true }
+        ],
+        'Beim ebenen Spiegel ist das Spiegelbild gleich groß wie das Original und erscheint hinter dem Spiegel. Vertauscht werden <strong>links und rechts</strong>, nicht oben und unten (das liegt daran, dass wir uns gewohnheitsmäßig beim Umdrehen seitlich wenden). Das Reflexionsgesetz ist die Grundlage dafür.');
+      }
+    },
+    {
+      typeLabel: 'Eingabe',
+      difficulty: 'schwer',
+      question: 'Wie lautet das Wort, das dir ein Freund auf seine Stirn schreibt, wenn er es im Spiegel so sieht? Schreibe normal:',
+      render() {
+        window._textState = {
+          correctAnswer: 'LICHT',
+          explanation: 'Wenn du ein Wort im Spiegel richtig lesen kannst, ist es in Wirklichkeit in Spiegelschrift geschrieben. Wenn du aber auch im Spiegel LICHT liest, dann steht es in normaler Schrift auf der Stirn – denn der Spiegel dreht es nochmal um.',
+          options: {}
+        };
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <div style="text-align:center; color:#b8c0e5; margin-bottom:8px;">Im Spiegel liest du:</div>
+          <div class="mirror-display" style="transform: scaleX(-1); display:inline-block; width:100%;">LICHT</div>
+          <div style="text-align:center; color:#b8c0e5; margin-top:12px; margin-bottom:4px;">Was hat dein Freund geschrieben?</div>
+          <input type="text" class="mirror-input" id="textAnswer" placeholder="Wort eingeben..." autocomplete="off" style="text-align:center; text-transform:uppercase;">
+          <div style="margin-top:12px;">
+            <button class="btn btn-primary" id="textCheckBtn">Prüfen</button>
+          </div>
+        `;
+        document.getElementById('textCheckBtn').addEventListener('click', checkTextInput);
+        setTimeout(() => document.getElementById('textAnswer').focus(), 100);
+      }
+    },
+    {
+      typeLabel: 'Simulation',
+      difficulty: 'mittel',
+      question: 'Ziehe den Punkt (Gegenstand) und beobachte, wo sein Spiegelbild entsteht. Was fällt dir auf?',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <canvas id="mirrorImg" width="500" height="300"></canvas>
+          <div class="hint-box"><strong>💡 Ziehe den gelben Punkt!</strong> Beobachte, wie weit das rote Spiegelbild hinter dem Spiegel erscheint.</div>
+        `;
+        const canvas = document.getElementById('mirrorImg');
+        const ctx = canvas.getContext('2d');
+        let obj = { x: 150, y: 100 };
+        let dragging = false;
+
+        function draw() {
+          const w = canvas.width, h = canvas.height;
+          ctx.clearRect(0,0,w,h);
+          ctx.fillStyle = '#0a0e2a';
+          ctx.fillRect(0,0,w,h);
+
+          const mirrorX = w/2;
+          // Spiegel
+          ctx.strokeStyle = '#6b8aff';
+          ctx.lineWidth = 4;
+          ctx.beginPath();
+          ctx.moveTo(mirrorX, 30);
+          ctx.lineTo(mirrorX, h-30);
+          ctx.stroke();
+          // Spiegelstreifen
+          ctx.lineWidth = 1;
+          for (let y = 35; y < h-30; y += 8) {
+            ctx.beginPath();
+            ctx.moveTo(mirrorX, y);
+            ctx.lineTo(mirrorX+6, y+4);
+            ctx.stroke();
+          }
+
+          // Abstands-Linie Original → Spiegel
+          ctx.strokeStyle = 'rgba(255,215,0,0.4)';
+          ctx.setLineDash([3,3]);
+          ctx.beginPath();
+          ctx.moveTo(obj.x, obj.y);
+          ctx.lineTo(mirrorX, obj.y);
+          ctx.stroke();
+          // Abstands-Linie Spiegel → Spiegelbild
+          const imgX = 2*mirrorX - obj.x;
+          ctx.strokeStyle = 'rgba(255,107,107,0.4)';
+          ctx.beginPath();
+          ctx.moveTo(mirrorX, obj.y);
+          ctx.lineTo(imgX, obj.y);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Abstand anzeigen
+          const dist = Math.abs(mirrorX - obj.x);
+          ctx.fillStyle = '#ffd700';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(`${Math.round(dist/2)} cm`, (obj.x + mirrorX)/2 - 15, obj.y - 8);
+          ctx.fillStyle = '#ff6b6b';
+          ctx.fillText(`${Math.round(dist/2)} cm`, (mirrorX + imgX)/2 - 15, obj.y - 8);
+
+          // Original-Objekt (gelb)
+          ctx.fillStyle = '#ffd700';
+          ctx.beginPath();
+          ctx.arc(obj.x, obj.y, 14, 0, Math.PI*2);
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 2;
+          ctx.stroke();
+          ctx.fillStyle = '#1a1a2e';
+          ctx.font = 'bold 16px sans-serif';
+          ctx.textAlign = 'center';
+          ctx.fillText('K', obj.x, obj.y+5);
+
+          // Spiegelbild (rot, seitenverkehrt)
+          ctx.fillStyle = '#ff6b6b';
+          ctx.beginPath();
+          ctx.arc(imgX, obj.y, 14, 0, Math.PI*2);
+          ctx.fill();
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.setLineDash([2,2]);
+          ctx.stroke();
+          ctx.setLineDash([]);
+          ctx.fillStyle = '#fff';
+          ctx.save();
+          ctx.translate(imgX, obj.y);
+          ctx.scale(-1,1); // Spiegelung des K
+          ctx.fillText('K', 0, 5);
+          ctx.restore();
+          ctx.textAlign = 'start';
+
+          ctx.fillStyle = '#fff';
+          ctx.font = '12px sans-serif';
+          ctx.fillText('Gegenstand', obj.x - 30, obj.y + 28);
+          ctx.fillText('Spiegelbild', imgX - 25, obj.y + 28);
+          ctx.fillText('Spiegel', mirrorX - 20, 20);
+        }
+        function getPos(e) {
+          const rect = canvas.getBoundingClientRect();
+          const t = e.touches ? e.touches[0] : e;
+          return { x: (t.clientX - rect.left) * canvas.width/rect.width, y: (t.clientY - rect.top) * canvas.height/rect.height };
+        }
+        function down(e) {
+          e.preventDefault();
+          const p = getPos(e);
+          if (Math.hypot(p.x-obj.x, p.y-obj.y) < 25 && p.x < canvas.width/2 - 10) {
+            dragging = true;
+          }
+        }
+        function move(e) {
+          if (!dragging) return;
+          e.preventDefault();
+          const p = getPos(e);
+          obj.x = Math.max(30, Math.min(canvas.width/2 - 20, p.x));
+          obj.y = Math.max(40, Math.min(canvas.height-40, p.y));
+          draw();
+        }
+        function up() { dragging = false; }
+        canvas.addEventListener('mousedown', down);
+        canvas.addEventListener('mousemove', move);
+        canvas.addEventListener('mouseup', up);
+        canvas.addEventListener('touchstart', down, {passive:false});
+        canvas.addEventListener('touchmove', move, {passive:false});
+        canvas.addEventListener('touchend', up);
+        draw();
+
+        document.getElementById('taskActions').innerHTML = `
+          <button class="btn btn-primary" onclick="afterMirrorSim()">Ich habe es beobachtet →</button>
+        `;
+        window.afterMirrorSim = function() {
+          renderMC(
+            [
+              'Das Spiegelbild erscheint doppelt so weit hinter dem Spiegel wie der Gegenstand davor.',
+              'Das Spiegelbild erscheint genauso weit hinter dem Spiegel wie der Gegenstand davor.',
+              'Das Spiegelbild befindet sich direkt am Spiegel.',
+              'Je näher der Gegenstand am Spiegel, desto weiter weg erscheint das Spiegelbild.'
+            ],
+            1,
+            'Das <strong>Spiegelbild ist immer gleich weit hinter dem Spiegel wie das Original davor</strong> – egal wo du den Gegenstand hinbewegst. Die gedachte Verbindungslinie Original ↔ Spiegelbild steht dabei senkrecht auf dem Spiegel.'
+          );
+          document.getElementById('taskActions').innerHTML = '';
+        };
+      }
+    },
+    {
+      typeLabel: 'Lückentext',
+      difficulty: 'mittel',
+      question: 'Ergänze das Reflexionsgesetz:',
+      render() {
+        renderCloze(
+          'Beim <strong>Reflexionsgesetz</strong> gilt: Der {0}winkel ist genauso groß wie der {1}winkel. Beide werden vom {2} aus gemessen. Das Spiegelbild eines Gegenstands befindet sich {3} dem Spiegel und ist genauso {4} wie das Original.',
+          ['Einfalls', 'Ausfalls', 'Lot', 'hinter', 'groß'],
+          ['Spiegel', 'vor', 'klein', 'Licht'],
+          'Einfallswinkel α = Ausfallswinkel β (beide vom Lot gemessen). Das Spiegelbild erscheint genauso weit hinter dem Spiegel wie der Gegenstand davor steht – und in gleicher Größe.'
+        );
+      }
+    }
+  ]
+};
+
+// =========================================
+// KAPITEL 4: BRECHUNG & TOTALREFLEXION
+// =========================================
+const chapter_brechung = {
+  icon: '💎',
+  title: 'Brechung & Totalreflexion',
+  desc: 'Wie sich Licht in Wasser und Glas verhält',
+  tasks: [
+    {
+      typeLabel: 'Simulation',
+      difficulty: 'leicht',
+      question: 'Bewege den Lichtstrahl durch Luft ins Wasser. Was passiert mit dem Strahl an der Grenze?',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <canvas id="refractCanvas" width="500" height="320"></canvas>
+          <div class="sim-controls">
+            <label>Einfallswinkel (Luft → Wasser):</label>
+            <input type="range" id="refractAngle" min="0" max="75" value="30">
+            <span id="refAngleLabel">30°</span>
+          </div>
+          <div class="hint-box"><strong>💡 Beobachte:</strong> In welche Richtung wird der Strahl abgelenkt, wenn er von Luft ins Wasser tritt?</div>
+        `;
+        const canvas = document.getElementById('refractCanvas');
+        const ctx = canvas.getContext('2d');
+        const slider = document.getElementById('refractAngle');
+        const label = document.getElementById('refAngleLabel');
+
+        function draw() {
+          const w = canvas.width, h = canvas.height;
+          ctx.clearRect(0,0,w,h);
+          // Luft
+          ctx.fillStyle = '#1a2151';
+          ctx.fillRect(0,0,w,h/2);
+          // Wasser
+          const wGrad = ctx.createLinearGradient(0, h/2, 0, h);
+          wGrad.addColorStop(0, '#2a5080');
+          wGrad.addColorStop(1, '#1a3050');
+          ctx.fillStyle = wGrad;
+          ctx.fillRect(0, h/2, w, h/2);
+
+          const pivot = { x: w/2, y: h/2 };
+          const angle = parseInt(slider.value);
+          const radIn = angle * Math.PI/180;
+
+          // Lot
+          ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+          ctx.setLineDash([5,5]);
+          ctx.beginPath();
+          ctx.moveTo(pivot.x, 20);
+          ctx.lineTo(pivot.x, h-20);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Grenzfläche
+          ctx.strokeStyle = 'rgba(255,255,255,0.5)';
+          ctx.lineWidth = 1;
+          ctx.beginPath();
+          ctx.moveTo(0, h/2);
+          ctx.lineTo(w, h/2);
+          ctx.stroke();
+
+          // Einfallender Strahl
+          const rayLen = 120;
+          const startX = pivot.x - Math.sin(radIn) * rayLen;
+          const startY = pivot.y - Math.cos(radIn) * rayLen;
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(startX, startY);
+          ctx.lineTo(pivot.x, pivot.y);
+          ctx.stroke();
+
+          // Gebrochener Strahl (Snelliussches Gesetz n1 sin α = n2 sin β; n_luft ≈ 1, n_wasser ≈ 1.33)
+          const n1 = 1.0, n2 = 1.33;
+          let sinBeta = n1 / n2 * Math.sin(radIn);
+          let radOut = Math.asin(Math.min(1, sinBeta));
+          const endX = pivot.x + Math.sin(radOut) * rayLen;
+          const endY = pivot.y + Math.cos(radOut) * rayLen;
+          ctx.strokeStyle = '#ff9f45';
+          ctx.lineWidth = 3;
+          ctx.beginPath();
+          ctx.moveTo(pivot.x, pivot.y);
+          ctx.lineTo(endX, endY);
+          ctx.stroke();
+
+          // Kleiner teilweise reflektierter Strahl (optional, schwächer)
+          const reflEndX = pivot.x + Math.sin(radIn) * rayLen;
+          const reflEndY = pivot.y - Math.cos(radIn) * rayLen;
+          ctx.strokeStyle = 'rgba(255,215,0,0.3)';
+          ctx.lineWidth = 1.5;
+          ctx.setLineDash([4,4]);
+          ctx.beginPath();
+          ctx.moveTo(pivot.x, pivot.y);
+          ctx.lineTo(reflEndX, reflEndY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Winkel-Bögen
+          ctx.strokeStyle = '#ffd700';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.arc(pivot.x, pivot.y, 30, -Math.PI/2 - radIn, -Math.PI/2);
+          ctx.stroke();
+          ctx.strokeStyle = '#ff9f45';
+          ctx.beginPath();
+          ctx.arc(pivot.x, pivot.y, 30, Math.PI/2, Math.PI/2 + radOut);
+          ctx.stroke();
+
+          // Beschriftungen
+          ctx.fillStyle = '#fff';
+          ctx.font = '13px sans-serif';
+          ctx.fillText('Luft', 20, 30);
+          ctx.fillText('Wasser', 20, h/2 + 22);
+          ctx.fillStyle = '#ffd700';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText('α', pivot.x - 20, pivot.y - 20);
+          ctx.fillStyle = '#ff9f45';
+          ctx.fillText('β', pivot.x + 12, pivot.y + 30);
+          ctx.fillStyle = '#fff';
+          ctx.font = '11px sans-serif';
+          ctx.fillText(`α = ${angle}°`, 20, h - 40);
+          ctx.fillText(`β ≈ ${Math.round(radOut * 180/Math.PI)}°`, 20, h - 25);
+          label.textContent = angle + '°';
+        }
+        slider.oninput = draw;
+        draw();
+
+        document.getElementById('taskActions').innerHTML = `
+          <button class="btn btn-primary" onclick="afterRefractSim()">Ich habe es beobachtet →</button>
+        `;
+        window.afterRefractSim = function() {
+          renderMC(
+            [
+              'Der Strahl wird vom Lot weg gebrochen.',
+              'Der Strahl wird zum Lot hin gebrochen.',
+              'Der Strahl geht geradlinig weiter, ohne Veränderung.',
+              'Der Strahl wird komplett reflektiert.'
+            ],
+            1,
+            'Beim Übergang vom <strong>optisch dünneren</strong> Medium (Luft) ins <strong>optisch dichtere</strong> Medium (Wasser) wird der Lichtstrahl <strong>zum Lot hin</strong> gebrochen. Der Ausfallswinkel β ist kleiner als der Einfallswinkel α.'
+          );
+          document.getElementById('taskActions').innerHTML = '';
+        };
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'mittel',
+      question: 'Ein Lichtstrahl geht vom Wasser in die Luft. Wohin wird er gebrochen?',
+      render() {
+        renderMC(
+          [
+            'Zum Lot hin – er wird steiler.',
+            'Vom Lot weg – er wird flacher.',
+            'Gar nicht gebrochen.',
+            'Er wird immer reflektiert.'
+          ],
+          1,
+          'Beim Übergang vom <strong>optisch dichteren</strong> Medium (Wasser) ins <strong>optisch dünnere</strong> (Luft) wird der Strahl <strong>vom Lot weg</strong> gebrochen. Merkregel: <em>„Von dicht nach dünn weicht weg vom Lot."</em>'
+        );
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'schwer',
+      question: 'Was ist Totalreflexion?',
+      render() {
+        renderMC(
+          [
+            'Wenn Licht von einem dünneren in ein dichteres Medium geht und fast komplett reflektiert wird.',
+            'Wenn Licht von einem dichteren in ein dünneres Medium geht und bei einem sehr flachen Winkel vollständig in das dichtere Medium zurückreflektiert wird.',
+            'Wenn Licht in einer Lampe mehrmals reflektiert wird.',
+            'Wenn Licht beim Eintritt in Glas zweimal gebrochen wird.'
+          ],
+          1,
+          'Totalreflexion passiert nur beim Übergang vom <strong>optisch dichteren ins dünnere Medium</strong> (z.B. Wasser → Luft). Wenn der Einfallswinkel größer als der Grenzwinkel wird, kann das Licht die Grenzfläche nicht mehr durchdringen und wird vollständig in das dichtere Medium zurückgeworfen. Diesen Effekt nutzt man z.B. in Glasfaserkabeln!'
+        );
+      }
+    },
+    {
+      typeLabel: 'Lückentext',
+      difficulty: 'mittel',
+      question: 'Fülle den Text zur Lichtbrechung:',
+      render() {
+        renderCloze(
+          'Wenn Licht von Luft ins Wasser übergeht, wird es {0} gebrochen. Beim Übergang vom Wasser in die Luft wird es dagegen {1} gebrochen. Dieses Verhalten zeigt, dass Wasser optisch {2} als Luft ist. Bei sehr flachen Winkeln kann Licht beim Übergang vom dichteren ins dünnere Medium gar nicht mehr austreten – es kommt zur {3}.',
+          ['zum Lot hin', 'vom Lot weg', 'dichter', 'Totalreflexion'],
+          ['parallel', 'dünner', 'Spiegelung'],
+          'Merke: Ins dichtere Medium → zum Lot hin. Ins dünnere Medium → vom Lot weg. Bei sehr flachen Winkeln aus dem dichteren Medium heraus erreicht der Strahl den Grenzwinkel – ab dann wird alles zurückreflektiert (Totalreflexion).'
+        );
+      }
+    },
+    {
+      typeLabel: 'Richtig oder Falsch',
+      difficulty: 'schwer',
+      question: 'Welche Aussagen über Brechung sind richtig?',
+      render() {
+        renderTrueFalse([
+          { text: 'Ein gerader Strohhalm erscheint im Wasserglas geknickt – das liegt an der Brechung.', correct: true },
+          { text: 'Brechung tritt nur auf, wenn der Strahl senkrecht auf die Grenzfläche trifft.', correct: false },
+          { text: 'Wasser ist optisch dichter als Luft.', correct: true },
+          { text: 'Bei der Totalreflexion gelangt ein Teil des Lichts noch ins andere Medium.', correct: false }
+        ],
+        'Brechung erklärt den "Knick" beim Strohhalm im Glas. Wenn ein Strahl senkrecht auf die Grenzfläche trifft, wird er ausnahmsweise <em>nicht</em> gebrochen – er geht geradeaus weiter. Bei der Totalreflexion geht <em>kein</em> Licht in das andere Medium – daher der Name "total".');
+      }
+    }
+  ]
+};
+
+// =========================================
+// KAPITEL 5: LINSEN
+// =========================================
+const chapter_linsen = {
+  icon: '🔍',
+  title: 'Linsen',
+  desc: 'Sammellinsen und Zerstreuungslinsen verstehen',
+  tasks: [
+    {
+      typeLabel: 'Simulation',
+      difficulty: 'leicht',
+      question: 'Wähle eine Linsenart und beobachte, wie parallele Lichtstrahlen abgelenkt werden:',
+      render() {
+        const body = document.getElementById('taskBody');
+        body.innerHTML = `
+          <canvas id="lensCanvas" width="500" height="280"></canvas>
+          <div class="sim-controls">
+            <button class="btn btn-secondary lens-btn active" data-lens="sammel" onclick="setLensType('sammel')">Sammellinse</button>
+            <button class="btn btn-secondary lens-btn" data-lens="zerstreu" onclick="setLensType('zerstreu')">Zerstreuungslinse</button>
+          </div>
+          <div class="hint-box"><strong>💡 Beobachte:</strong> Was passiert mit den parallelen Strahlen nach der Linse? Wo treffen sie sich?</div>
+        `;
+        const canvas = document.getElementById('lensCanvas');
+        const ctx = canvas.getContext('2d');
+        let lensType = 'sammel';
+
+        window.setLensType = function(t) {
+          lensType = t;
+          document.querySelectorAll('.lens-btn').forEach(b => {
+            b.classList.toggle('active', b.dataset.lens === t);
+            b.style.background = b.dataset.lens === t ? 'rgba(255,215,0,0.2)' : '';
+            b.style.borderColor = b.dataset.lens === t ? '#ffd700' : '';
+            b.style.color = b.dataset.lens === t ? '#ffd700' : '';
+          });
+          draw();
+        };
+        // Initial active-Button stylen
+        document.querySelectorAll('.lens-btn').forEach(b => {
+          if (b.dataset.lens === 'sammel') {
+            b.style.background = 'rgba(255,215,0,0.2)';
+            b.style.borderColor = '#ffd700';
+            b.style.color = '#ffd700';
+          }
+        });
+
+        function draw() {
+          const w = canvas.width, h = canvas.height;
+          ctx.clearRect(0,0,w,h);
+          ctx.fillStyle = '#0a0e2a';
+          ctx.fillRect(0,0,w,h);
+
+          const centerX = w/2, centerY = h/2;
+          const f = 120; // Brennweite in Pixel
+          const F1 = centerX - f, F2 = centerX + f;
+
+          // Optische Achse
+          ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+          ctx.setLineDash([5,5]);
+          ctx.beginPath();
+          ctx.moveTo(10, centerY);
+          ctx.lineTo(w-10, centerY);
+          ctx.stroke();
+          ctx.setLineDash([]);
+
+          // Linse zeichnen
+          ctx.strokeStyle = '#7dd3fc';
+          ctx.fillStyle = 'rgba(125,211,252,0.15)';
+          ctx.lineWidth = 2;
+          if (lensType === 'sammel') {
+            // Bikonvex
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, 14, 90, 0, 0, Math.PI*2);
+            ctx.fill();
+            ctx.stroke();
+            // Pfeile oben/unten
+            drawLensArrows(ctx, centerX, centerY, 90, true);
+          } else {
+            // Bikonkav - als zwei Bögen
+            ctx.beginPath();
+            ctx.moveTo(centerX-8, centerY-90);
+            ctx.quadraticCurveTo(centerX+2, centerY, centerX-8, centerY+90);
+            ctx.lineTo(centerX+8, centerY+90);
+            ctx.quadraticCurveTo(centerX-2, centerY, centerX+8, centerY-90);
+            ctx.closePath();
+            ctx.fill();
+            ctx.stroke();
+            drawLensArrows(ctx, centerX, centerY, 90, false);
+          }
+
+          // Brennpunkte
+          ctx.fillStyle = '#ff6b6b';
+          [F1, F2].forEach(fx => {
+            ctx.beginPath();
+            ctx.arc(fx, centerY, 4, 0, Math.PI*2);
+            ctx.fill();
+          });
+          ctx.fillStyle = '#ff6b6b';
+          ctx.font = 'bold 14px sans-serif';
+          ctx.fillText('F', F1 - 5, centerY + 20);
+          ctx.fillText('F', F2 - 5, centerY + 20);
+
+          // Parallele Lichtstrahlen von links
+          const yOffsets = [-60, -30, 0, 30, 60];
+          yOffsets.forEach(off => {
+            const yStart = centerY + off;
+            ctx.strokeStyle = '#ffd700';
+            ctx.lineWidth = 2;
+            // Strahl bis zur Linse
+            ctx.beginPath();
+            ctx.moveTo(20, yStart);
+            ctx.lineTo(centerX, yStart);
+            ctx.stroke();
+
+            if (lensType === 'sammel') {
+              // Sammellinse: Strahl geht durch F2 nach der Linse
+              ctx.strokeStyle = '#ffd700';
+              ctx.beginPath();
+              ctx.moveTo(centerX, yStart);
+              // Strahl von (centerX, yStart) durch (F2, centerY) verlängern
+              const dx = F2 - centerX, dy = centerY - yStart;
+              const endX = w - 10;
+              const t = (endX - centerX) / dx;
+              const endY = yStart + dy * t;
+              ctx.lineTo(endX, endY);
+              ctx.stroke();
+              // Pfeilspitze
+              drawTipArrow(ctx, centerX, yStart, F2, centerY, '#ffd700');
+            } else {
+              // Zerstreuungslinse: Strahl wird so gebrochen, als käme er von F1
+              const dx = centerX - F1, dy = yStart - centerY;
+              const endX = w - 10;
+              const t = (endX - centerX) / dx;
+              const endY = yStart + dy * t;
+              ctx.strokeStyle = '#ffd700';
+              ctx.beginPath();
+              ctx.moveTo(centerX, yStart);
+              ctx.lineTo(endX, endY);
+              ctx.stroke();
+              // Gestrichelte Verlängerung rückwärts zu F1
+              ctx.strokeStyle = 'rgba(255,215,0,0.35)';
+              ctx.setLineDash([3,3]);
+              ctx.beginPath();
+              ctx.moveTo(centerX, yStart);
+              ctx.lineTo(F1, centerY);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+          });
+
+          // Beschriftungen
+          ctx.fillStyle = '#fff';
+          ctx.font = '12px sans-serif';
+          ctx.fillText(lensType === 'sammel' ? 'Sammellinse' : 'Zerstreuungslinse', centerX - 50, 20);
+          ctx.fillText('F = Brennpunkt', 10, h-10);
+        }
+        function drawLensArrows(ctx, cx, cy, halfH, convex) {
+          ctx.strokeStyle = '#7dd3fc';
+          ctx.fillStyle = '#7dd3fc';
+          ctx.lineWidth = 2;
+          // Oben
+          ctx.beginPath();
+          if (convex) {
+            ctx.moveTo(cx, cy - halfH - 5);
+            ctx.lineTo(cx - 5, cy - halfH + 3);
+            ctx.moveTo(cx, cy - halfH - 5);
+            ctx.lineTo(cx + 5, cy - halfH + 3);
+          } else {
+            // Konkav: Pfeile nach innen
+            ctx.moveTo(cx - 8, cy - halfH + 3);
+            ctx.lineTo(cx, cy - halfH - 5);
+            ctx.lineTo(cx + 8, cy - halfH + 3);
+          }
+          ctx.stroke();
+        }
+        function drawTipArrow(ctx, x1, y1, x2, y2, color) {
+          // Nichts - wir lassen es simpel
+        }
+        draw();
+
+        document.getElementById('taskActions').innerHTML = `
+          <button class="btn btn-primary" onclick="afterLensSim()">Ich habe es beobachtet →</button>
+        `;
+        window.afterLensSim = function() {
+          renderMC(
+            [
+              'Beide Linsen bündeln das Licht im Brennpunkt.',
+              'Die Sammellinse bündelt das Licht im Brennpunkt, die Zerstreuungslinse streut es auseinander.',
+              'Die Sammellinse streut das Licht, die Zerstreuungslinse bündelt es.',
+              'Parallele Strahlen werden von beiden Linsen gar nicht verändert.'
+            ],
+            1,
+            'Die <strong>Sammellinse</strong> (dicker in der Mitte, konvex) bündelt parallel einfallende Strahlen im Brennpunkt F – daher der Name "Sammel"linse. Die <strong>Zerstreuungslinse</strong> (dünner in der Mitte, konkav) streut die Strahlen auseinander, sodass sie scheinbar von einem Brennpunkt vor der Linse ausgehen.'
+          );
+          document.getElementById('taskActions').innerHTML = '';
+        };
+      }
+    },
+    {
+      typeLabel: 'Zeichnen',
+      difficulty: 'schwer',
+      question: 'Bildkonstruktion: Der Gegenstand (gelber Pfeil) steht <strong>außerhalb der doppelten Brennweite</strong>. Zeichne nacheinander die zwei Konstruktionsstrahlen, um das Bild zu finden.',
+      render() {
+        renderDrawing((container) => {
+          container.innerHTML = `
+            <div class="draw-instruction" id="lens1Step">
+              <strong>Schritt 1 von 2:</strong> Zeichne den <strong>Parallelstrahl</strong>. Ziehe eine waagerechte Linie von der <em>Spitze des Gegenstands (G)</em> bis zur Linse. Die Linie rastet automatisch ein.
+            </div>
+            <canvas id="lensDrawCanvas1" width="500" height="320"></canvas>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <span style="font-size:0.85em; color:#b8c0e5;">Strahlen: <strong id="lens1Count" style="color:#ffd700">0 / 2</strong></span>
+              <div style="flex:1"></div>
+              <button class="btn btn-secondary" id="lens1ResetBtn">Zurücksetzen</button>
+              <button class="btn btn-primary" id="lens1CheckBtn" disabled style="opacity:0.5">Bildpunkt prüfen</button>
+            </div>
+          `;
+          const canvas = document.getElementById('lensDrawCanvas1');
+          const ctx = canvas.getContext('2d');
+          const centerX = 250, centerY = 160;
+          const f = 70;
+          const F1 = centerX - f, F2 = centerX + f;
+          const TwoF2 = centerX + 2*f;
+          const objX = centerX - 2.5*f;
+          const objTopY = centerY - 50;
+          const objBaseY = centerY;
+          // Berechnung des Bildpunkts
+          const g = centerX - objX;
+          const b = 1 / (1/f - 1/g);
+          const imgX = centerX + b;
+          const imgHeight = (objTopY - centerY) * (-b/g);
+          const imgTopY = centerY + imgHeight;
+
+          const snapPoints = [
+            { x: objX, y: objTopY, id: 'objTop' },
+            { x: centerX, y: objTopY, id: 'lensAtObjTop' },
+            { x: centerX, y: centerY, id: 'lensCenter' },
+            { x: F1, y: centerY, id: 'F1' },
+            { x: F2, y: centerY, id: 'F2' }
+          ];
+
+          // State: welchen Strahl zeichnet der User gerade?
+          // steps: 0 = Parallelstrahl (objTop -> lensAtObjTop), 1 = Mittelpunktsstrahl (objTop -> lensCenter)
+          let step = 0;
+          let drawnRays = []; // {type, endAtLens:{x,y}} - definierter Teil vor der Linse
+          let currentDrawing = null; // {start, end}
+          let drawing = false;
+
+          function draw() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = '#0a0e2a';
+            ctx.fillRect(0,0,w,h);
+            // Optische Achse
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.setLineDash([5,5]);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(10, centerY); ctx.lineTo(w-10, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // Skala: Brennpunkt-Markierungen
+            [F1, F2, centerX - 2*f, TwoF2].forEach(fx => {
+              ctx.strokeStyle = 'rgba(255,107,107,0.4)';
+              ctx.beginPath();
+              ctx.moveTo(fx, centerY - 4); ctx.lineTo(fx, centerY + 4);
+              ctx.stroke();
+            });
+            // Linse
+            ctx.strokeStyle = '#7dd3fc';
+            ctx.fillStyle = 'rgba(125,211,252,0.15)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, 10, 80, 0, 0, Math.PI*2);
+            ctx.fill(); ctx.stroke();
+            // Brennpunkte
+            ctx.fillStyle = '#ff6b6b';
+            [F1, F2].forEach(fx => {
+              ctx.beginPath(); ctx.arc(fx, centerY, 5, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillText('F', F1-4, centerY+20);
+            ctx.fillText('F', F2-4, centerY+20);
+            // 2F-Punkte
+            ctx.fillStyle = 'rgba(255,107,107,0.6)';
+            ctx.font = '10px sans-serif';
+            ctx.fillText('2F', centerX - 2*f - 8, centerY+20);
+            ctx.fillText('2F', TwoF2 - 6, centerY+20);
+            // Gegenstand
+            ctx.strokeStyle = '#ffd700';
+            ctx.fillStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(objX, objBaseY); ctx.lineTo(objX, objTopY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(objX, objTopY);
+            ctx.lineTo(objX-6, objTopY+9);
+            ctx.lineTo(objX+6, objTopY+9);
+            ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.arc(objX, objTopY, 4, 0, Math.PI*2); ctx.fill();
+            ctx.font = '11px sans-serif';
+            ctx.fillText('G', objX-6, objTopY-10);
+            // Gezeichnete Strahlen anzeigen
+            drawnRays.forEach(ray => {
+              ctx.strokeStyle = ray.type === 'parallel' ? '#4ade80' : '#7dd3fc';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(objX, objTopY);
+              ctx.lineTo(ray.endAtLens.x, ray.endAtLens.y);
+              ctx.stroke();
+              // Fortsetzung nach der Linse (wird automatisch berechnet)
+              ctx.strokeStyle = ray.type === 'parallel' ? 'rgba(74,222,128,0.8)' : 'rgba(125,211,252,0.8)';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(centerX, ray.endAtLens.y);
+              if (ray.type === 'parallel') {
+                // Geht durch F2
+                const dx = F2 - centerX, dy = centerY - ray.endAtLens.y;
+                const tEnd = (w - 10 - centerX) / dx;
+                ctx.lineTo(centerX + dx * tEnd, ray.endAtLens.y + dy * tEnd);
+              } else {
+                // Mittelpunktsstrahl: geradeaus weiter
+                const dx = centerX - objX, dy = centerY - objTopY;
+                const tEnd = (w - 10 - centerX) / dx;
+                ctx.lineTo(centerX + dx * tEnd, centerY + dy * tEnd);
+              }
+              ctx.stroke();
+            });
+            // Aktueller Strahl während des Zeichnens
+            if (currentDrawing) {
+              ctx.strokeStyle = '#ffd700';
+              ctx.lineWidth = 2.5;
+              ctx.setLineDash([5,3]);
+              ctx.beginPath();
+              ctx.moveTo(currentDrawing.start.x, currentDrawing.start.y);
+              ctx.lineTo(currentDrawing.end.x, currentDrawing.end.y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            // Snap-Punkt-Hinweise je nach Schritt
+            if (step < 2 && !drawing) {
+              ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([3,3]);
+              ctx.beginPath();
+              ctx.arc(objX, objTopY, 14, 0, Math.PI*2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+              ctx.fillStyle = 'rgba(255,255,255,0.35)';
+              ctx.font = '11px sans-serif';
+              ctx.fillText('von hier aus ziehen →', objX + 18, objTopY + 4);
+            }
+            document.getElementById('lens1Count').textContent = `${drawnRays.length} / 2`;
+            // Step-Anweisung aktualisieren
+            const stepEl = document.getElementById('lens1Step');
+            if (step === 0) {
+              stepEl.innerHTML = '<strong>Schritt 1 von 2:</strong> Zeichne den <strong>Parallelstrahl</strong>. Ziehe eine waagerechte Linie von G bis zur Linse. Die Linie rastet automatisch auf der Linse ein.';
+            } else if (step === 1) {
+              stepEl.innerHTML = '<strong>Schritt 2 von 2:</strong> Zeichne den <strong>Mittelpunktsstrahl</strong>. Ziehe eine Linie von G bis zum <em>Linsenmittelpunkt</em>. Danach kannst du das Bild prüfen.';
+            } else {
+              stepEl.innerHTML = '<strong>Fertig!</strong> Klicke auf "Bildpunkt prüfen" – die Fortsetzung der Strahlen nach der Linse ist bereits eingezeichnet (grün und blau).';
+            }
+          }
+
+          function startDraw(e) {
+            if (step >= 2 || window._lens1Answered) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            // Start nur nah am objTop
+            if (Math.hypot(p.x - objX, p.y - objTopY) > 30) return;
+            drawing = true;
+            currentDrawing = { start: { x: objX, y: objTopY }, end: { x: p.x, y: p.y } };
+            draw();
+          }
+          function moveDraw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            // Je nach Schritt: Snap auf die Linsenebene (centerX)
+            let endX = p.x, endY = p.y;
+            if (step === 0) {
+              // Parallelstrahl: muss waagerecht sein!
+              endY = objTopY; // erzwinge horizontale Linie
+              if (endX > centerX) endX = centerX;
+              if (endX < objX + 10) endX = objX + 10;
+            } else if (step === 1) {
+              // Mittelpunktsstrahl: Zielrichtung ist centerX, centerY
+              // Benutzer sieht Linie folgen, aber mit Snap am Mittelpunkt
+              const dx = p.x - objX, dy = p.y - objTopY;
+              // Parametrisch: wie weit entlang der Linie?
+              const tToLens = (centerX - objX) / dx;
+              if (dx > 0 && tToLens > 0) {
+                // Zeige Linie bis zum aktuellen Punkt oder max bis zur Linsenebene
+                const maxX = Math.min(p.x, centerX);
+                endX = maxX;
+                endY = objTopY + (maxX - objX) / dx * dy;
+              }
+              // Snap auf Mittelpunkt, wenn nah dran
+              if (Math.hypot(p.x - centerX, p.y - centerY) < 20) {
+                endX = centerX; endY = centerY;
+              }
+            }
+            currentDrawing.end = { x: endX, y: endY };
+            draw();
+          }
+          function endDraw(e) {
+            if (!drawing || !currentDrawing) return;
+            drawing = false;
+            const end = currentDrawing.end;
+            // Akzeptieren, wenn Ende nah an der Linsenebene und in erwarteter Richtung
+            let accepted = false;
+            if (step === 0) {
+              // Parallelstrahl: Endpunkt muss auf centerX (Linse) mit gleicher Y liegen
+              if (end.x >= centerX - 15) {
+                drawnRays.push({ type: 'parallel', endAtLens: { x: centerX, y: objTopY } });
+                step = 1;
+                accepted = true;
+              }
+            } else if (step === 1) {
+              // Mittelpunktsstrahl: Endpunkt muss am Linsenmittelpunkt (centerX, centerY) sein
+              if (Math.hypot(end.x - centerX, end.y - centerY) < 25) {
+                drawnRays.push({ type: 'mid', endAtLens: { x: centerX, y: centerY } });
+                step = 2;
+                accepted = true;
+                // Prüfen-Button aktivieren
+                const btn = document.getElementById('lens1CheckBtn');
+                btn.disabled = false;
+                btn.style.opacity = '1';
+              }
+            }
+            currentDrawing = null;
+            draw();
+          }
+          canvas.addEventListener('mousedown', startDraw);
+          canvas.addEventListener('mousemove', moveDraw);
+          canvas.addEventListener('mouseup', endDraw);
+          canvas.addEventListener('touchstart', startDraw, {passive:false});
+          canvas.addEventListener('touchmove', moveDraw, {passive:false});
+          canvas.addEventListener('touchend', endDraw);
+          document.getElementById('lens1ResetBtn').addEventListener('click', () => {
+            drawnRays = []; step = 0; currentDrawing = null;
+            window._lens1Answered = false;
+            const btn = document.getElementById('lens1CheckBtn');
+            btn.disabled = true; btn.style.opacity = '0.5';
+            draw();
+          });
+          document.getElementById('lens1CheckBtn').addEventListener('click', () => {
+            if (step < 2) return;
+            window._lens1Answered = true;
+            document.getElementById('lens1CheckBtn').disabled = true;
+            // Bildpunkt markieren + Pfeil
+            ctx.strokeStyle = '#ffd700';
+            ctx.fillStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(imgX, centerY); ctx.lineTo(imgX, imgTopY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(imgX, imgTopY);
+            ctx.lineTo(imgX-6, imgTopY-9);
+            ctx.lineTo(imgX+6, imgTopY-9);
+            ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.arc(imgX, imgTopY, 5, 0, Math.PI*2); ctx.fill();
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText('B', imgX+10, imgTopY+5);
+            // Schnittpunkt-Hervorhebung
+            ctx.strokeStyle = 'rgba(255,215,0,0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3,3]);
+            ctx.beginPath();
+            ctx.arc(imgX, imgTopY, 14, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            showFeedback(true, 'Gut gemacht! Du hast richtig konstruiert: Der <strong>Parallelstrahl</strong> (grün) wird nach der Linse zum <strong>Brennpunktstrahl</strong> und geht durch F. Der <strong>Mittelpunktsstrahl</strong> (blau) geht gerade durch die Linse. Wo sich beide Strahlen treffen, entsteht die Spitze des Bildes (B). Bei einem Gegenstand <em>außerhalb</em> der doppelten Brennweite entsteht ein <strong>reelles, umgekehrtes, verkleinertes Bild</strong> zwischen f und 2f auf der anderen Seite der Linse.');
+          });
+          draw();
+        });
+      }
+    },
+    {
+      typeLabel: 'Zeichnen',
+      difficulty: 'schwer',
+      question: 'Bildkonstruktion: Der Gegenstand steht nun <strong>innerhalb der Brennweite</strong> (zwischen Linse und F). Zeichne die Konstruktionsstrahlen!',
+      render() {
+        renderDrawing((container) => {
+          container.innerHTML = `
+            <div class="draw-instruction" id="lens2Step">
+              <strong>Schritt 1 von 2:</strong> Zeichne den <strong>Parallelstrahl</strong>. Ziehe von G waagerecht zur Linse.
+            </div>
+            <canvas id="lensDrawCanvas2" width="500" height="320"></canvas>
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
+              <span style="font-size:0.85em; color:#b8c0e5;">Strahlen: <strong id="lens2Count" style="color:#ffd700">0 / 2</strong></span>
+              <div style="flex:1"></div>
+              <button class="btn btn-secondary" id="lens2ResetBtn">Zurücksetzen</button>
+              <button class="btn btn-primary" id="lens2CheckBtn" disabled style="opacity:0.5">Bildpunkt prüfen</button>
+            </div>
+          `;
+          const canvas = document.getElementById('lensDrawCanvas2');
+          const ctx = canvas.getContext('2d');
+          const centerX = 250, centerY = 160;
+          const f = 90;
+          const F1 = centerX - f, F2 = centerX + f;
+          const objX = centerX - 0.5 * f; // innerhalb f
+          const objTopY = centerY - 40;
+          const objBaseY = centerY;
+          const g = centerX - objX;
+          const b = f*g / (g-f); // negativ → virtuell
+          const imgX = centerX + b;
+          const imgHeight = (objTopY - centerY) * (-b/g);
+          const imgTopY = centerY + imgHeight;
+
+          let step = 0;
+          let drawnRays = [];
+          let currentDrawing = null;
+          let drawing = false;
+
+          function draw() {
+            const w = canvas.width, h = canvas.height;
+            ctx.clearRect(0,0,w,h);
+            ctx.fillStyle = '#0a0e2a';
+            ctx.fillRect(0,0,w,h);
+            ctx.strokeStyle = 'rgba(255,255,255,0.4)';
+            ctx.setLineDash([5,5]);
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(10, centerY); ctx.lineTo(w-10, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            // Linse
+            ctx.strokeStyle = '#7dd3fc';
+            ctx.fillStyle = 'rgba(125,211,252,0.15)';
+            ctx.lineWidth = 2;
+            ctx.beginPath();
+            ctx.ellipse(centerX, centerY, 10, 85, 0, 0, Math.PI*2);
+            ctx.fill(); ctx.stroke();
+            // Brennpunkte
+            ctx.fillStyle = '#ff6b6b';
+            [F1, F2].forEach(fx => {
+              ctx.beginPath(); ctx.arc(fx, centerY, 5, 0, Math.PI*2); ctx.fill();
+            });
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillStyle = '#ff6b6b';
+            ctx.fillText('F', F1-4, centerY+20);
+            ctx.fillText('F', F2-4, centerY+20);
+            // Gegenstand
+            ctx.strokeStyle = '#ffd700';
+            ctx.fillStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(objX, objBaseY); ctx.lineTo(objX, objTopY);
+            ctx.stroke();
+            ctx.beginPath();
+            ctx.moveTo(objX, objTopY);
+            ctx.lineTo(objX-6, objTopY+9);
+            ctx.lineTo(objX+6, objTopY+9);
+            ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.arc(objX, objTopY, 4, 0, Math.PI*2); ctx.fill();
+            ctx.font = '11px sans-serif';
+            ctx.fillText('G', objX-8, objTopY-10);
+            // Gezeichnete Strahlen
+            drawnRays.forEach(ray => {
+              ctx.strokeStyle = ray.type === 'parallel' ? '#4ade80' : '#7dd3fc';
+              ctx.lineWidth = 2;
+              ctx.beginPath();
+              ctx.moveTo(objX, objTopY);
+              ctx.lineTo(ray.endAtLens.x, ray.endAtLens.y);
+              ctx.stroke();
+              // Gebrochener Strahl + Rückwärtsverlängerung (virtuell)
+              if (ray.type === 'parallel') {
+                // Nach der Linse: geht durch F2 (gebrochen)
+                const dx = F2 - centerX, dy = centerY - ray.endAtLens.y;
+                const tEnd = (w - 10 - centerX) / dx;
+                ctx.strokeStyle = 'rgba(74,222,128,0.8)';
+                ctx.beginPath();
+                ctx.moveTo(centerX, ray.endAtLens.y);
+                ctx.lineTo(centerX + dx * tEnd, ray.endAtLens.y + dy * tEnd);
+                ctx.stroke();
+                // Rückwärts-Verlängerung (virtuelles Bild)
+                ctx.strokeStyle = 'rgba(74,222,128,0.4)';
+                ctx.setLineDash([3,4]);
+                ctx.beginPath();
+                ctx.moveTo(centerX, ray.endAtLens.y);
+                ctx.lineTo(centerX - dx * 1.5, ray.endAtLens.y - dy * 1.5);
+                ctx.stroke();
+                ctx.setLineDash([]);
+              } else {
+                // Mittelpunktsstrahl: geradeaus weiter
+                const dx = centerX - objX, dy = centerY - objTopY;
+                const tEnd = (w - 10 - centerX) / dx;
+                ctx.strokeStyle = 'rgba(125,211,252,0.8)';
+                ctx.beginPath();
+                ctx.moveTo(centerX, centerY);
+                ctx.lineTo(centerX + dx * tEnd, centerY + dy * tEnd);
+                ctx.stroke();
+                // Rückwärts-Verlängerung
+                ctx.strokeStyle = 'rgba(125,211,252,0.4)';
+                ctx.setLineDash([3,4]);
+                ctx.beginPath();
+                ctx.moveTo(objX, objTopY);
+                ctx.lineTo(objX - dx, objTopY - dy);
+                ctx.stroke();
+                ctx.setLineDash([]);
+              }
+            });
+            if (currentDrawing) {
+              ctx.strokeStyle = '#ffd700';
+              ctx.lineWidth = 2.5;
+              ctx.setLineDash([5,3]);
+              ctx.beginPath();
+              ctx.moveTo(currentDrawing.start.x, currentDrawing.start.y);
+              ctx.lineTo(currentDrawing.end.x, currentDrawing.end.y);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            if (step < 2 && !drawing) {
+              ctx.strokeStyle = 'rgba(255,215,0,0.5)';
+              ctx.lineWidth = 2;
+              ctx.setLineDash([3,3]);
+              ctx.beginPath();
+              ctx.arc(objX, objTopY, 14, 0, Math.PI*2);
+              ctx.stroke();
+              ctx.setLineDash([]);
+            }
+            document.getElementById('lens2Count').textContent = `${drawnRays.length} / 2`;
+            const stepEl = document.getElementById('lens2Step');
+            if (step === 0) {
+              stepEl.innerHTML = '<strong>Schritt 1 von 2:</strong> Zeichne den <strong>Parallelstrahl</strong>. Ziehe von G waagerecht bis zur Linse.';
+            } else if (step === 1) {
+              stepEl.innerHTML = '<strong>Schritt 2 von 2:</strong> Zeichne den <strong>Mittelpunktsstrahl</strong> von G durch den Linsenmittelpunkt.';
+            } else {
+              stepEl.innerHTML = '<strong>Fertig!</strong> Achtung: Die Strahlen nach der Linse (durchgezogen) laufen auseinander – die gestrichelten Linien sind die <em>Rückwärtsverlängerungen</em>. Dort schneiden sie sich scheinbar!';
+            }
+          }
+
+          function startDraw(e) {
+            if (step >= 2 || window._lens2Answered) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            if (Math.hypot(p.x - objX, p.y - objTopY) > 30) return;
+            drawing = true;
+            currentDrawing = { start: { x: objX, y: objTopY }, end: { x: p.x, y: p.y } };
+            draw();
+          }
+          function moveDraw(e) {
+            if (!drawing) return;
+            e.preventDefault();
+            const p = getCanvasPos(canvas, e);
+            let endX = p.x, endY = p.y;
+            if (step === 0) {
+              endY = objTopY;
+              if (endX > centerX) endX = centerX;
+              if (endX < objX + 10) endX = objX + 10;
+            } else if (step === 1) {
+              const dx = p.x - objX, dy = p.y - objTopY;
+              const tToLens = (centerX - objX) / dx;
+              if (dx > 0 && tToLens > 0) {
+                const maxX = Math.min(p.x, centerX);
+                endX = maxX;
+                endY = objTopY + (maxX - objX) / dx * dy;
+              }
+              if (Math.hypot(p.x - centerX, p.y - centerY) < 20) {
+                endX = centerX; endY = centerY;
+              }
+            }
+            currentDrawing.end = { x: endX, y: endY };
+            draw();
+          }
+          function endDraw(e) {
+            if (!drawing || !currentDrawing) return;
+            drawing = false;
+            const end = currentDrawing.end;
+            if (step === 0) {
+              if (end.x >= centerX - 15) {
+                drawnRays.push({ type: 'parallel', endAtLens: { x: centerX, y: objTopY } });
+                step = 1;
+              }
+            } else if (step === 1) {
+              if (Math.hypot(end.x - centerX, end.y - centerY) < 25) {
+                drawnRays.push({ type: 'mid', endAtLens: { x: centerX, y: centerY } });
+                step = 2;
+                const btn = document.getElementById('lens2CheckBtn');
+                btn.disabled = false; btn.style.opacity = '1';
+              }
+            }
+            currentDrawing = null;
+            draw();
+          }
+          canvas.addEventListener('mousedown', startDraw);
+          canvas.addEventListener('mousemove', moveDraw);
+          canvas.addEventListener('mouseup', endDraw);
+          canvas.addEventListener('touchstart', startDraw, {passive:false});
+          canvas.addEventListener('touchmove', moveDraw, {passive:false});
+          canvas.addEventListener('touchend', endDraw);
+          document.getElementById('lens2ResetBtn').addEventListener('click', () => {
+            drawnRays = []; step = 0; currentDrawing = null;
+            window._lens2Answered = false;
+            const btn = document.getElementById('lens2CheckBtn');
+            btn.disabled = true; btn.style.opacity = '0.5';
+            draw();
+          });
+          document.getElementById('lens2CheckBtn').addEventListener('click', () => {
+            if (step < 2) return;
+            window._lens2Answered = true;
+            document.getElementById('lens2CheckBtn').disabled = true;
+            // Virtuelles Bild zeichnen
+            ctx.strokeStyle = '#ffd700';
+            ctx.fillStyle = '#ffd700';
+            ctx.lineWidth = 3;
+            ctx.setLineDash([6,3]);
+            ctx.beginPath();
+            ctx.moveTo(imgX, centerY); ctx.lineTo(imgX, imgTopY);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            ctx.beginPath();
+            ctx.moveTo(imgX, imgTopY);
+            ctx.lineTo(imgX-6, imgTopY+9);
+            ctx.lineTo(imgX+6, imgTopY+9);
+            ctx.closePath(); ctx.fill();
+            ctx.beginPath();
+            ctx.arc(imgX, imgTopY, 5, 0, Math.PI*2); ctx.fill();
+            ctx.font = 'bold 12px sans-serif';
+            ctx.fillText("B'", imgX-10, imgTopY+5);
+            ctx.strokeStyle = 'rgba(255,215,0,0.6)';
+            ctx.lineWidth = 2;
+            ctx.setLineDash([3,3]);
+            ctx.beginPath();
+            ctx.arc(imgX, imgTopY, 14, 0, Math.PI*2);
+            ctx.stroke();
+            ctx.setLineDash([]);
+            showFeedback(true, 'Super! Du siehst: Nach der Linse laufen die Strahlen <strong>auseinander</strong> – sie treffen sich nicht mehr! Aber wenn du sie <strong>rückwärts verlängerst</strong> (gestrichelte Linien), schneiden sie sich scheinbar <em>auf derselben Seite</em> wie der Gegenstand. Dort entsteht ein <strong>virtuelles, aufrechtes und vergrößertes Bild</strong> – genau das ist das Prinzip der <strong>Lupe</strong>!');
+          });
+          draw();
+        });
+      }
+    },
+    {
+      typeLabel: 'Zuordnen',
+      difficulty: 'leicht',
+      question: 'Ordne die Eigenschaften der richtigen Linsenart zu:',
+      render() {
+        renderDragDrop(
+          [
+            { label: 'Sammellinse', id: 'S' },
+            { label: 'Zerstreuungslinse', id: 'Z' }
+          ],
+          [
+            { text: 'In der Mitte dicker als am Rand (konvex)', correctId: 'S' },
+            { text: 'In der Mitte dünner als am Rand (konkav)', correctId: 'Z' },
+            { text: 'Parallele Strahlen treffen sich im Brennpunkt', correctId: 'S' },
+            { text: 'Parallele Strahlen laufen auseinander', correctId: 'Z' },
+            { text: 'Wird z.B. in Lupen verwendet', correctId: 'S' }
+          ],
+          'Sammellinsen sind <strong>konvex</strong> (in der Mitte dicker). Zerstreuungslinsen sind <strong>konkav</strong> (in der Mitte dünner). Der Name verrät immer die Wirkung: Sammel → sammelt; Zerstreuung → zerstreut. Lupen, Brillen für Weitsichtige und der menschliche Augapfel enthalten Sammellinsen.',
+          true
+        );
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'leicht',
+      question: 'Was ist der Brennpunkt einer Sammellinse?',
+      render() {
+        renderMC(
+          [
+            'Der Punkt, an dem die Linse am heißesten wird.',
+            'Der Punkt, in dem sich parallele Lichtstrahlen nach der Linse treffen.',
+            'Der Mittelpunkt der Linse.',
+            'Ein Punkt auf der Oberfläche der Linse.'
+          ],
+          1,
+          'Der <strong>Brennpunkt F</strong> ist der Punkt, in dem sich alle parallel zur optischen Achse einfallenden Strahlen nach dem Durchgang durch die Sammellinse treffen. Dort ist das Licht so stark gebündelt, dass man damit z.B. Papier entzünden kann – daher der Name "Brenn"punkt!'
+        );
+      }
+    },
+    {
+      typeLabel: 'Lückentext',
+      difficulty: 'mittel',
+      question: 'Fülle die Aussagen zu den Konstruktionsstrahlen an Sammellinsen:',
+      render() {
+        renderCloze(
+          'Bei der Bildkonstruktion nutzt man drei Hilfsstrahlen: Der <strong>Parallelstrahl</strong> läuft parallel zur optischen Achse und geht nach der Linse durch den {0}. Der <strong>Mittelpunktsstrahl</strong> geht durch den Linsenmittelpunkt und läuft {1} weiter. Der <strong>Brennpunktstrahl</strong> geht vor der Linse durch den Brennpunkt und läuft nach der Linse {2} zur optischen Achse. Das Bild entsteht dort, wo sich die {3} treffen.',
+          ['Brennpunkt', 'geradeaus', 'parallel', 'Strahlen'],
+          ['Linse', 'schräg', 'senkrecht', 'Lichtquelle'],
+          'Die drei Konstruktionsstrahlen helfen dir, das Bild zu konstruieren, ohne Messungen durchzuführen. Merke: Parallel → Brennpunkt. Durch Mittelpunkt → geradeaus. Durch Brennpunkt → parallel. Zwei davon reichen aus, um den Bildpunkt zu finden.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Quiz',
+      difficulty: 'mittel',
+      question: 'Eine Sammellinse wird oft als Lupe benutzt. Was macht die Lupe?',
+      render() {
+        renderMC(
+          [
+            'Sie verkleinert den Gegenstand.',
+            'Sie vergrößert den Gegenstand.',
+            'Sie macht den Gegenstand unsichtbar.',
+            'Sie lässt den Gegenstand gleich groß, aber heller erscheinen.'
+          ],
+          1,
+          'Eine Lupe ist eine Sammellinse. Wenn man einen Gegenstand näher als den Brennpunkt vor die Linse hält, sieht man ein <strong>vergrößertes, aufrechtes Bild</strong>. So kann man kleine Dinge besser erkennen.'
+        );
+      }
+    },
+    {
+      typeLabel: 'Memory',
+      difficulty: 'mittel',
+      question: 'Finde die Paare aus Linsen-Begriffen und Eigenschaften!',
+      render() {
+        renderMemory([
+          { a: 'Sammellinse', b: 'bündelt parallele Strahlen im Brennpunkt' },
+          { a: 'Zerstreuungslinse', b: 'streut parallele Strahlen auseinander' },
+          { a: 'Brennpunkt', b: 'dort treffen sich die Strahlen nach der Linse' },
+          { a: 'Parallelstrahl', b: 'wird zum Brennpunktsstrahl nach der Linse' },
+          { a: 'Mittelpunktsstrahl', b: 'geht gerade durch die Linse' }
+        ], 'Sammellinse = konvex, bündelt. Zerstreuungslinse = konkav, streut. Der Brennpunkt F liegt auf beiden Seiten der Linse gleich weit entfernt. Die drei Konstruktionsstrahlen helfen, Bilder zu zeichnen.');
+      }
+    },
+    {
+      typeLabel: 'Richtig oder Falsch',
+      difficulty: 'schwer',
+      question: 'Welche Aussagen über Linsen stimmen?',
+      render() {
+        renderTrueFalse([
+          { text: 'Bei einer Sammellinse wird ein Strahl parallel zur optischen Achse nach der Linse durch den Brennpunkt gelenkt.', correct: true },
+          { text: 'Ein Strahl durch den Mittelpunkt der Linse wird stark gebrochen.', correct: false },
+          { text: 'Je dicker die Sammellinse, desto kürzer die Brennweite (desto stärker die Bündelung).', correct: true },
+          { text: 'Zerstreuungslinsen können Licht nicht in einem Punkt sammeln.', correct: true }
+        ],
+        'Die drei <strong>Konstruktionsstrahlen</strong> bei Sammellinsen sind: Parallelstrahl → wird zum Brennpunkt-Strahl. Mittelpunktsstrahl → geht ungebrochen geradeaus. Brennpunktsstrahl → wird zum Parallelstrahl. Dicke Sammellinsen brechen stärker und haben kürzere Brennweiten. Bei Zerstreuungslinsen laufen parallele Strahlen auseinander – sie treffen sich nie in einem echten Punkt.');
+      }
+    }
+  ]
+};
+
+// =========================================
+// ALLE KAPITEL REGISTRIEREN
+// =========================================
+const chapters = {
+  schatten: chapter_schatten,
+  erde: chapter_erde,
+  spiegel: chapter_spiegel,
+  brechung: chapter_brechung,
+  linsen: chapter_linsen
+};
+
+// =========================================
+// DRAG & DROP (Touch-fähig)
+// =========================================
+function renderDragDrop(items, targets, explanation, allowMulti) {
+  // items: [{label, id}]
+  // targets: [{text, correctId}]
+  // State für prüfen in window speichern
+  window._dndState = { explanation, allowMulti: allowMulti || false };
+  const body = document.getElementById('taskBody');
+  body.innerHTML = `
+    <div class="dnd-container">
+      <div>
+        <div class="dnd-label">Begriffe:</div>
+        <div class="dnd-items" id="dndItems">
+          ${items.map((it, i) => `<div class="dnd-item" draggable="true" data-id="${it.id}" data-label="${it.label}" data-idx="${i}">${it.label}</div>`).join('')}
+        </div>
+      </div>
+      <div>
+        <div class="dnd-label">Ziele:</div>
+        <div style="display:flex; flex-direction:column; gap:8px;">
+          ${targets.map((t, i) => `
+            <div style="display:flex; gap:10px; align-items:center; background:rgba(255,255,255,0.04); padding:10px; border-radius:10px;">
+              <div style="flex:1; font-size:0.95em; color:#d0d8f5;">${t.text}</div>
+              <div class="dnd-target" data-target="${i}" data-correct="${t.correctId}"></div>
+            </div>
+          `).join('')}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="dndCheckBtn">Prüfen</button>
+    </div>
+  `;
+  document.getElementById('dndCheckBtn').addEventListener('click', checkDragDrop);
+  setupDragDropHandlers(allowMulti);
+}
+
+function setupDragDropHandlers(allowMulti) {
+  const items = document.querySelectorAll('#dndItems .dnd-item');
+  const targets = document.querySelectorAll('.dnd-target');
+  let draggedItem = null;
+
+  items.forEach(item => {
+    // Mouse
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+    });
+    item.addEventListener('dragend', () => {
+      if (draggedItem) draggedItem.classList.remove('dragging');
+      draggedItem = null;
+    });
+    // Touch
+    let touchClone = null;
+    let startX, startY;
+    item.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      draggedItem = item;
+      const touch = e.touches[0];
+      startX = touch.clientX;
+      startY = touch.clientY;
+      touchClone = item.cloneNode(true);
+      touchClone.style.position = 'fixed';
+      touchClone.style.zIndex = '1000';
+      touchClone.style.pointerEvents = 'none';
+      touchClone.style.opacity = '0.8';
+      const rect = item.getBoundingClientRect();
+      touchClone.style.left = rect.left + 'px';
+      touchClone.style.top = rect.top + 'px';
+      touchClone.style.width = rect.width + 'px';
+      document.body.appendChild(touchClone);
+      item.classList.add('dragging');
+    }, {passive:false});
+    item.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!touchClone) return;
+      const touch = e.touches[0];
+      const rect = item.getBoundingClientRect();
+      touchClone.style.left = (touch.clientX - rect.width/2) + 'px';
+      touchClone.style.top = (touch.clientY - rect.height/2) + 'px';
+      // Highlight target under finger
+      document.querySelectorAll('.dnd-target').forEach(t => t.classList.remove('hover'));
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el && el.classList.contains('dnd-target')) {
+        el.classList.add('hover');
+      }
+    }, {passive:false});
+    item.addEventListener('touchend', (e) => {
+      if (!touchClone) return;
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      document.body.removeChild(touchClone);
+      touchClone = null;
+      item.classList.remove('dragging');
+      if (el && el.classList.contains('dnd-target')) {
+        placeItemInTarget(item, el, allowMulti);
+      }
+      draggedItem = null;
+    });
+  });
+
+  targets.forEach(target => {
+    target.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      target.classList.add('hover');
+    });
+    target.addEventListener('dragleave', () => {
+      target.classList.remove('hover');
+    });
+    target.addEventListener('drop', (e) => {
+      e.preventDefault();
+      target.classList.remove('hover');
+      if (draggedItem) {
+        placeItemInTarget(draggedItem, target, allowMulti);
+      }
+    });
+  });
+}
+
+function placeItemInTarget(item, target, allowMulti) {
+  // Wenn Ziel schon belegt ist: bestehendes Item zurück zu Items
+  const existing = target.querySelector('.dnd-item');
+  if (existing) {
+    document.getElementById('dndItems').appendChild(existing);
+  }
+  if (!allowMulti) {
+    // Nicht multi: Klon des Items setzen und Original zurücklassen? Oder verschieben.
+    target.appendChild(item);
+    target.classList.add('filled');
+  } else {
+    // Multi-mode: Klon erstellen (Items bleiben wählbar)
+    // Aber Klon zählt nur als Platzierung
+    const clone = item.cloneNode(true);
+    // Remove draggable/listener from clone to avoid chaos
+    clone.classList.add('placed-clone');
+    target.innerHTML = '';
+    target.appendChild(clone);
+    target.classList.add('filled');
+  }
+}
+
+function checkDragDrop() {
+  const { explanation } = window._dndState;
+  const targets = document.querySelectorAll('.dnd-target');
+  let allCorrect = true;
+  targets.forEach(target => {
+    const item = target.querySelector('.dnd-item');
+    const correctId = target.dataset.correct;
+    if (!item || item.dataset.id !== correctId) {
+      allCorrect = false;
+      target.style.borderColor = '#f87171';
+      target.style.background = 'rgba(248,113,113,0.15)';
+    } else {
+      target.style.borderColor = '#4ade80';
+      target.style.background = 'rgba(74,222,128,0.15)';
+    }
+  });
+  // Buttons deaktivieren
+  document.querySelectorAll('#dndItems .dnd-item').forEach(i => {
+    i.draggable = false;
+    i.style.opacity = '0.6';
+  });
+  showFeedback(allCorrect, explanation);
+}
+
+// =========================================
+// LÜCKENTEXT
+// =========================================
+// text: String mit {0}, {1}, ... als Platzhalter
+// words: Array der richtigen Lösungen (Reihenfolge entspricht Platzhaltern)
+// distractors: zusätzliche Ablenker-Begriffe
+function renderCloze(text, words, distractors, explanation) {
+  window._clozeState = { words, explanation };
+  // Alle Wörter (Lösungen + Distraktoren) mischen
+  const allWords = [...words, ...distractors].sort(() => Math.random() - 0.5);
+  // Text in HTML mit Drop-Zonen umwandeln
+  let html = text;
+  words.forEach((_, i) => {
+    html = html.replace(`{${i}}`, `<span class="cloze-slot" data-slot="${i}"></span>`);
+  });
+  const body = document.getElementById('taskBody');
+  body.innerHTML = `
+    <div class="cloze-text">${html}</div>
+    <div class="dnd-label" style="margin-top:18px;">Wörter zum Ziehen:</div>
+    <div class="dnd-items" id="clozeWords">
+      ${allWords.map(w => `<div class="dnd-item cloze-word" draggable="true" data-word="${w}">${w}</div>`).join('')}
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="clozeCheckBtn">Prüfen</button>
+    </div>
+  `;
+  document.getElementById('clozeCheckBtn').addEventListener('click', checkCloze);
+  setupClozeDragDrop();
+}
+
+function setupClozeDragDrop() {
+  const words = document.querySelectorAll('.cloze-word');
+  const slots = document.querySelectorAll('.cloze-slot');
+  let dragged = null;
+
+  words.forEach(w => {
+    w.addEventListener('dragstart', () => {
+      dragged = w;
+      w.classList.add('dragging');
+    });
+    w.addEventListener('dragend', () => {
+      if (dragged) dragged.classList.remove('dragging');
+      dragged = null;
+    });
+    // Touch
+    let clone = null;
+    w.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      dragged = w;
+      const touch = e.touches[0];
+      clone = w.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.zIndex = '1000';
+      clone.style.pointerEvents = 'none';
+      clone.style.opacity = '0.8';
+      const rect = w.getBoundingClientRect();
+      clone.style.left = rect.left + 'px';
+      clone.style.top = rect.top + 'px';
+      document.body.appendChild(clone);
+      w.classList.add('dragging');
+    }, {passive:false});
+    w.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!clone) return;
+      const touch = e.touches[0];
+      clone.style.left = (touch.clientX - 40) + 'px';
+      clone.style.top = (touch.clientY - 20) + 'px';
+      document.querySelectorAll('.cloze-slot').forEach(s => s.classList.remove('hover'));
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      if (el && el.classList.contains('cloze-slot')) el.classList.add('hover');
+    }, {passive:false});
+    w.addEventListener('touchend', (e) => {
+      if (!clone) return;
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      document.body.removeChild(clone);
+      clone = null;
+      w.classList.remove('dragging');
+      if (el && el.classList.contains('cloze-slot')) {
+        placeClozeWord(w, el);
+      }
+      dragged = null;
+    });
+  });
+
+  slots.forEach(slot => {
+    slot.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      slot.classList.add('hover');
+    });
+    slot.addEventListener('dragleave', () => slot.classList.remove('hover'));
+    slot.addEventListener('drop', (e) => {
+      e.preventDefault();
+      slot.classList.remove('hover');
+      if (dragged) placeClozeWord(dragged, slot);
+    });
+    // Klick, um Wort wieder herauszunehmen
+    slot.addEventListener('click', () => {
+      if (slot.dataset.word) {
+        const wordDiv = document.querySelector(`.cloze-word[data-word="${slot.dataset.word}"]`);
+        if (wordDiv) {
+          wordDiv.style.opacity = '1';
+          wordDiv.draggable = true;
+        }
+        slot.textContent = '';
+        delete slot.dataset.word;
+        slot.classList.remove('filled');
+      }
+    });
+  });
+}
+
+function placeClozeWord(wordEl, slot) {
+  // Wenn slot bereits befüllt: altes Wort befreien
+  if (slot.dataset.word) {
+    const oldWord = document.querySelector(`.cloze-word[data-word="${slot.dataset.word}"]`);
+    if (oldWord) { oldWord.style.opacity = '1'; oldWord.draggable = true; }
+  }
+  slot.textContent = wordEl.dataset.word;
+  slot.dataset.word = wordEl.dataset.word;
+  slot.classList.add('filled');
+  wordEl.style.opacity = '0.3';
+  wordEl.draggable = false;
+}
+
+function checkCloze() {
+  const { words, explanation } = window._clozeState;
+  let allCorrect = true;
+  document.querySelectorAll('.cloze-slot').forEach((slot, i) => {
+    if (slot.dataset.word === words[i]) {
+      slot.style.color = '#4ade80';
+      slot.style.borderBottomColor = '#4ade80';
+    } else {
+      slot.style.color = '#f87171';
+      slot.style.borderBottomColor = '#f87171';
+      allCorrect = false;
+      // Korrekte Antwort als Tooltip in Klammern
+      slot.setAttribute('title', 'Richtig: ' + words[i]);
+    }
+  });
+  document.querySelectorAll('.cloze-word').forEach(w => w.draggable = false);
+  document.getElementById('clozeCheckBtn').style.display = 'none';
+  showFeedback(allCorrect, explanation + (allCorrect ? '' : '<br><br><em>Richtige Lösungen: ' + words.map(w => `<strong>${w}</strong>`).join(', ') + '</em>'));
+}
+
+// =========================================
+// BILD-BESCHRIFTUNG
+// =========================================
+// svgHTML: Inline-SVG mit <g class="label-target" data-id="..."> Markern (unsichtbare Hotspots)
+// labels: [{id, text}]
+function renderLabeling(svgHTML, labels, explanation) {
+  window._labelState = { labels, explanation };
+  const body = document.getElementById('taskBody');
+  body.innerHTML = `
+    <div style="text-align:center; background:#0a0e2a; border-radius:12px; padding:10px; border:1px solid rgba(255,255,255,0.1);">
+      ${svgHTML}
+    </div>
+    <div class="dnd-label" style="margin-top:14px;">Ziehe die Begriffe auf die richtigen Stellen:</div>
+    <div class="dnd-items" id="labelItems">
+      ${labels.map(l => `<div class="dnd-item label-item" draggable="true" data-id="${l.id}">${l.text}</div>`).join('')}
+    </div>
+    <div style="margin-top:12px;">
+      <button class="btn btn-primary" id="labelCheckBtn">Prüfen</button>
+    </div>
+  `;
+  document.getElementById('labelCheckBtn').addEventListener('click', checkLabeling);
+  setupLabelingDragDrop();
+}
+
+function setupLabelingDragDrop() {
+  const items = document.querySelectorAll('.label-item');
+  const targets = document.querySelectorAll('.label-target');
+  let dragged = null;
+
+  items.forEach(item => {
+    item.addEventListener('dragstart', () => { dragged = item; item.classList.add('dragging'); });
+    item.addEventListener('dragend', () => { if (dragged) dragged.classList.remove('dragging'); dragged = null; });
+    let clone = null;
+    item.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      dragged = item;
+      const touch = e.touches[0];
+      clone = item.cloneNode(true);
+      clone.style.position = 'fixed';
+      clone.style.zIndex = '1000';
+      clone.style.pointerEvents = 'none';
+      clone.style.opacity = '0.8';
+      const rect = item.getBoundingClientRect();
+      clone.style.left = rect.left + 'px';
+      clone.style.top = rect.top + 'px';
+      document.body.appendChild(clone);
+    }, {passive:false});
+    item.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!clone) return;
+      const touch = e.touches[0];
+      clone.style.left = (touch.clientX - 40) + 'px';
+      clone.style.top = (touch.clientY - 20) + 'px';
+      document.querySelectorAll('.label-target').forEach(t => t.classList.remove('hover-target'));
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const target = el ? el.closest('.label-target') : null;
+      if (target) target.classList.add('hover-target');
+    }, {passive:false});
+    item.addEventListener('touchend', (e) => {
+      if (!clone) return;
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      const target = el ? el.closest('.label-target') : null;
+      document.body.removeChild(clone); clone = null;
+      if (target) placeLabel(item, target);
+      dragged = null;
+    });
+  });
+
+  targets.forEach(target => {
+    target.addEventListener('dragover', (e) => { e.preventDefault(); target.classList.add('hover-target'); });
+    target.addEventListener('dragleave', () => target.classList.remove('hover-target'));
+    target.addEventListener('drop', (e) => {
+      e.preventDefault();
+      target.classList.remove('hover-target');
+      if (dragged) placeLabel(dragged, target);
+    });
+  });
+}
+
+function placeLabel(item, target) {
+  // Falls target schon ein Label hat: altes zurück
+  const oldId = target.dataset.placedId;
+  if (oldId) {
+    const old = document.querySelector(`.label-item[data-id="${oldId}"]`);
+    if (old) { old.style.opacity = '1'; old.draggable = true; }
+    // Altes Label-Text im SVG entfernen
+    const oldText = target.querySelector('.placed-label-text');
+    if (oldText) oldText.remove();
+  }
+  target.dataset.placedId = item.dataset.id;
+  target.dataset.placedLabel = item.textContent;
+  // Text ins SVG setzen
+  const xmlns = 'http://www.w3.org/2000/svg';
+  const text = document.createElementNS(xmlns, 'text');
+  text.setAttribute('class', 'placed-label-text');
+  text.setAttribute('x', target.dataset.lblX || 0);
+  text.setAttribute('y', target.dataset.lblY || 0);
+  text.setAttribute('text-anchor', target.dataset.anchor || 'middle');
+  text.setAttribute('fill', '#ffd700');
+  text.setAttribute('font-size', '12');
+  text.setAttribute('font-weight', '600');
+  text.textContent = item.textContent;
+  target.appendChild(text);
+  item.style.opacity = '0.3';
+  item.draggable = false;
+}
+
+function checkLabeling() {
+  const { explanation } = window._labelState;
+  const targets = document.querySelectorAll('.label-target');
+  let allCorrect = true;
+  targets.forEach(target => {
+    const placedId = target.dataset.placedId;
+    const correctId = target.dataset.id;
+    const txt = target.querySelector('.placed-label-text');
+    if (placedId === correctId) {
+      if (txt) txt.setAttribute('fill', '#4ade80');
+    } else {
+      allCorrect = false;
+      if (txt) txt.setAttribute('fill', '#f87171');
+    }
+  });
+  document.querySelectorAll('.label-item').forEach(i => i.draggable = false);
+  document.getElementById('labelCheckBtn').style.display = 'none';
+  showFeedback(allCorrect, explanation);
+}
+
+// =========================================
+// PAAR-MEMORY (Mini-Game)
+// =========================================
+// pairs: [{a: "Begriff/Bild", b: "Erklärung"}]
+function renderMemory(pairs, explanation) {
+  window._memState = {
+    pairs, explanation,
+    flipped: [],      // aktuell aufgedeckte (noch nicht als Paar bestätigte) Karten
+    matched: [],      // bereits gelöste pair-Indizes
+    attempts: 0
+  };
+  // Karten erzeugen: jedes Paar → 2 Karten (a und b) mit gleicher pairIdx
+  const cards = [];
+  pairs.forEach((p, i) => {
+    cards.push({ pairIdx: i, side: 'a', content: p.a });
+    cards.push({ pairIdx: i, side: 'b', content: p.b });
+  });
+  cards.sort(() => Math.random() - 0.5);
+  window._memState.cards = cards;
+  const body = document.getElementById('taskBody');
+  const gridCols = cards.length <= 8 ? 4 : 4;
+  body.innerHTML = `
+    <div class="hint-box"><strong>🎴 Finde die Paare!</strong> Decke jeweils zwei Karten auf. Gehören sie zusammen, bleiben sie offen.</div>
+    <div id="memGrid" style="display:grid; grid-template-columns:repeat(${gridCols}, 1fr); gap:8px; margin-top:12px;">
+      ${cards.map((c, i) => `
+        <div class="mem-card" data-idx="${i}">
+          <div class="mem-front">?</div>
+          <div class="mem-back">${c.content}</div>
+        </div>
+      `).join('')}
+    </div>
+    <div id="memStatus" style="margin-top:12px; text-align:center; color:#b8c0e5; font-size:0.9em;">
+      Versuche: <span id="memAttempts">0</span> | Paare: <span id="memMatched">0</span>/${pairs.length}
+    </div>
+  `;
+  document.querySelectorAll('.mem-card').forEach(card => {
+    card.addEventListener('click', () => flipMemCard(parseInt(card.dataset.idx)));
+  });
+}
+
+function flipMemCard(idx) {
+  const s = window._memState;
+  const card = document.querySelector(`.mem-card[data-idx="${idx}"]`);
+  // Nicht erlaubt, wenn schon aufgedeckt/gelöst oder 2 aufgedeckt
+  if (card.classList.contains('flipped') || card.classList.contains('matched')) return;
+  if (s.flipped.length >= 2) return;
+
+  card.classList.add('flipped');
+  s.flipped.push(idx);
+
+  if (s.flipped.length === 2) {
+    s.attempts++;
+    document.getElementById('memAttempts').textContent = s.attempts;
+    const [a, b] = s.flipped;
+    const cardA = s.cards[a], cardB = s.cards[b];
+    const isMatch = cardA.pairIdx === cardB.pairIdx && cardA.side !== cardB.side;
+    if (isMatch) {
+      setTimeout(() => {
+        document.querySelector(`.mem-card[data-idx="${a}"]`).classList.add('matched');
+        document.querySelector(`.mem-card[data-idx="${b}"]`).classList.add('matched');
+        s.matched.push(cardA.pairIdx);
+        document.getElementById('memMatched').textContent = s.matched.length;
+        s.flipped = [];
+        if (s.matched.length === s.pairs.length) {
+          // Alles geschafft
+          const perfect = s.attempts === s.pairs.length;
+          showFeedback(true, s.explanation + `<br><br>Du hast <strong>${s.attempts} Versuche</strong> gebraucht.` + (perfect ? ' Perfekt ohne Fehler! 🏆' : ''));
+        }
+      }, 400);
+    } else {
+      setTimeout(() => {
+        document.querySelector(`.mem-card[data-idx="${a}"]`).classList.remove('flipped');
+        document.querySelector(`.mem-card[data-idx="${b}"]`).classList.remove('flipped');
+        s.flipped = [];
+      }, 1100);
+    }
+  }
+}
+
+// =========================================
+// ZEICHEN-AUFGABEN
+// =========================================
+// Generische Funktion: SchülerIn zeichnet eine Linie von Punkt A zu Punkt B.
+// Es wird geprüft, ob das gezeichnete Ende in einer Zielregion landet (und ggf. durch Zwischenpunkte geht).
+function renderDrawing(setupFn) {
+  // setupFn bekommt das taskBody und soll Canvas + eigene Logik einrichten,
+  // und am Ende showFeedback(ok, explanation) selbst aufrufen.
+  const body = document.getElementById('taskBody');
+  body.innerHTML = `<div id="drawContainer"></div>`;
+  setupFn(document.getElementById('drawContainer'));
+}
+
+// =========================================
+// DRAWING ENGINE - Linien durch Ziehen erstellen
+// =========================================
+// config: { canvas, fixedStartPoint (optional), startZone (optional: {x,y,r} - wo Start liegen darf),
+//          onLineComplete(line) - callback wenn eine Linie fertig gezogen wurde,
+//          redraw() - Funktion, die Canvas-Hintergrund neu malt }
+function createDrawingEngine(config) {
+  const canvas = config.canvas;
+  const ctx = canvas.getContext('2d');
+  let state = {
+    isDrawing: false,
+    startPt: null,
+    currentPt: null,
+    lines: [],           // Array: { x1, y1, x2, y2, color, dashed }
+    lockedLines: [],     // Bestätigte Linien (nicht mehr löschbar)
+    protractor: null,    // { x, y, angle } - Geodreieck-Position
+    protractorDrag: false
+  };
+
+  function getPos(e) {
+    const rect = canvas.getBoundingClientRect();
+    const t = e.touches ? e.touches[0] : e;
+    return {
+      x: (t.clientX - rect.left) * canvas.width / rect.width,
+      y: (t.clientY - rect.top) * canvas.height / rect.height
+    };
+  }
+
+  function render() {
+    // Hintergrund neu malen lassen
+    config.redraw(ctx);
+    // Bestätigte (gelockte) Linien
+    state.lockedLines.forEach(l => drawLine(l));
+    // Aktuelle Linien
+    state.lines.forEach(l => drawLine(l));
+    // Aktuell gezogene Linie
+    if (state.isDrawing && state.startPt && state.currentPt) {
+      drawLine({
+        x1: state.startPt.x, y1: state.startPt.y,
+        x2: state.currentPt.x, y2: state.currentPt.y,
+        color: config.drawColor || '#ffd700',
+        dashed: false,
+        preview: true
+      });
+      // Winkelanzeige (falls gewünscht)
+      if (config.showAngleWhileDrawing) {
+        const dx = state.currentPt.x - state.startPt.x;
+        const dy = state.currentPt.y - state.startPt.y;
+        const len = Math.hypot(dx, dy);
+        if (len > 20) {
+          ctx.fillStyle = '#ffd700';
+          ctx.font = 'bold 12px sans-serif';
+          ctx.fillText(`Länge: ${Math.round(len)}px`, state.currentPt.x + 10, state.currentPt.y - 10);
+        }
+      }
+    }
+    // Geodreieck
+    if (state.protractor) {
+      drawProtractor(state.protractor);
+    }
+  }
+
+  function drawLine(l) {
+    ctx.strokeStyle = l.color || '#ffd700';
+    ctx.lineWidth = l.width || 3;
+    if (l.dashed) ctx.setLineDash([6,4]);
+    ctx.beginPath();
+    ctx.moveTo(l.x1, l.y1);
+    ctx.lineTo(l.x2, l.y2);
+    ctx.stroke();
+    ctx.setLineDash([]);
+    // Pfeilspitze optional
+    if (l.arrow) {
+      const ang = Math.atan2(l.y2-l.y1, l.x2-l.x1);
+      const size = 10;
+      ctx.fillStyle = l.color;
+      ctx.beginPath();
+      ctx.moveTo(l.x2, l.y2);
+      ctx.lineTo(l.x2 - size*Math.cos(ang - Math.PI/6), l.y2 - size*Math.sin(ang - Math.PI/6));
+      ctx.lineTo(l.x2 - size*Math.cos(ang + Math.PI/6), l.y2 - size*Math.sin(ang + Math.PI/6));
+      ctx.closePath(); ctx.fill();
+    }
+    // Start-/Endpunkte markieren
+    if (!l.preview) {
+      ctx.fillStyle = l.color;
+      ctx.beginPath(); ctx.arc(l.x1, l.y1, 4, 0, Math.PI*2); ctx.fill();
+      ctx.beginPath(); ctx.arc(l.x2, l.y2, 4, 0, Math.PI*2); ctx.fill();
+    }
+  }
+
+  function drawProtractor(p) {
+    // Geodreieck: halbkreisförmig, 18cm Skalenreferenz, mit Gradanzeige
+    const cx = p.x, cy = p.y;
+    const R = 85;  // Radius
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(p.angle || 0);
+    // Transparenter Hintergrund
+    ctx.fillStyle = 'rgba(255, 235, 180, 0.15)';
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.8)';
+    ctx.lineWidth = 2;
+    // Halbkreis
+    ctx.beginPath();
+    ctx.arc(0, 0, R, 0, Math.PI, false);
+    ctx.lineTo(-R, 0);
+    ctx.closePath();
+    ctx.fill();
+    ctx.stroke();
+    // Grundlinie
+    ctx.strokeStyle = 'rgba(255, 215, 0, 1)';
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(-R, 0); ctx.lineTo(R, 0);
+    ctx.stroke();
+    // Mittelstrich (senkrecht)
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.6)';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(0, 0); ctx.lineTo(0, R);
+    ctx.stroke();
+    // Gradmarkierungen alle 10° von 0-180°
+    ctx.strokeStyle = 'rgba(255, 215, 0, 0.9)';
+    ctx.fillStyle = '#ffd700';
+    ctx.font = 'bold 9px sans-serif';
+    ctx.textAlign = 'center';
+    for (let deg = 0; deg <= 180; deg += 10) {
+      const rad = deg * Math.PI / 180;
+      // Punkt auf dem Halbkreis (von rechts nach links)
+      // deg=0 → rechts (1,0), deg=90 → oben (0,1), deg=180 → links (-1,0)
+      // Wir zeichnen aber das Geodreieck "nach unten" orientiert (Skalenseite ist bei positivem y? Nein, negativ)
+      // Halbkreis oberhalb: wenn wir y positiv nach unten denken, liegt die Skala oben
+      // Bei ctx.arc(0,0,R,0,Math.PI) wird ein Halbkreis nach unten gezeichnet (weil Canvas-y nach unten)
+      // Ah wait: Math.PI=rad → unten-halb. Meine Grundlinie ist y=0, Punkte gehen nach y=+R (unten)
+      // Also muss das Geodreieck "nach unten" sein - das ist ok weil so der User es auf Lot/Strahlen legen kann
+      const px = Math.cos(Math.PI - rad) * R; // invertieren, damit 0° rechts, 180° links
+      const py = Math.sin(Math.PI - rad) * R * -1; // negativ, damit Skala oben...
+      // Zu kompliziert. Einfacher: Halbkreis nach unten, 0° = rechts, 90° = unten, 180° = links
+      const actualPx = Math.cos(rad) * R;
+      const actualPy = Math.sin(rad) * R;
+      const isMajor = deg % 30 === 0;
+      const tickLen = isMajor ? 10 : 6;
+      const innerX = actualPx * (R - tickLen) / R;
+      const innerY = actualPy * (R - tickLen) / R;
+      ctx.beginPath();
+      ctx.moveTo(innerX, innerY);
+      ctx.lineTo(actualPx, actualPy);
+      ctx.stroke();
+      if (isMajor) {
+        const labelX = actualPx * (R - 20) / R;
+        const labelY = actualPy * (R - 20) / R;
+        ctx.fillText(deg.toString(), labelX, labelY + 3);
+      }
+    }
+    ctx.restore();
+    // Drehpunkt-Marker
+    ctx.fillStyle = '#ff6b6b';
+    ctx.beginPath(); ctx.arc(cx, cy, 5, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle = '#fff'; ctx.lineWidth = 1; ctx.stroke();
+    // Hinweistext
+    ctx.fillStyle = 'rgba(255,255,255,0.6)';
+    ctx.font = '10px sans-serif';
+    ctx.textAlign = 'left';
+    ctx.fillText('Ziehen: verschieben | ⟲ drehen', cx - 75, cy - 95);
+  }
+
+  function isPointInProtractor(x, y) {
+    if (!state.protractor) return false;
+    const dx = x - state.protractor.x;
+    const dy = y - state.protractor.y;
+    return Math.hypot(dx, dy) < 10;
+  }
+
+  function onDown(e) {
+    e.preventDefault();
+    const p = getPos(e);
+    // Wenn Geodreieck aktiv und nah am Drehpunkt: Geodreieck dragen
+    if (state.protractor && isPointInProtractor(p.x, p.y)) {
+      state.protractorDrag = true;
+      return;
+    }
+    // Falls startZone definiert: Start muss dort liegen
+    if (config.startZone) {
+      const sz = config.startZone;
+      const d = Math.hypot(p.x - sz.x, p.y - sz.y);
+      if (d > sz.r) return; // Außerhalb -> nichts tun
+      state.startPt = { x: sz.x, y: sz.y }; // Fest auf Zentrum snappen
+    } else {
+      state.startPt = p;
+    }
+    state.currentPt = p;
+    state.isDrawing = true;
+    render();
+  }
+
+  function onMove(e) {
+    e.preventDefault();
+    const p = getPos(e);
+    if (state.protractorDrag && state.protractor) {
+      state.protractor.x = p.x;
+      state.protractor.y = p.y;
+      render();
+      return;
+    }
+    if (!state.isDrawing) return;
+    state.currentPt = p;
+    render();
+  }
+
+  function onUp(e) {
+    if (state.protractorDrag) {
+      state.protractorDrag = false;
+      return;
+    }
+    if (!state.isDrawing) return;
+    state.isDrawing = false;
+    if (state.startPt && state.currentPt) {
+      const dist = Math.hypot(state.currentPt.x - state.startPt.x, state.currentPt.y - state.startPt.y);
+      if (dist > 15) { // Mindestlänge
+        const line = {
+          x1: state.startPt.x, y1: state.startPt.y,
+          x2: state.currentPt.x, y2: state.currentPt.y,
+          color: config.drawColor || '#ffd700',
+          dashed: false,
+          arrow: config.arrow !== false
+        };
+        state.lines = [line]; // Immer nur eine aktuelle Linie
+        if (config.onLineComplete) config.onLineComplete(line);
+      }
+    }
+    state.startPt = null;
+    state.currentPt = null;
+    render();
+  }
+
+  canvas.addEventListener('mousedown', onDown);
+  canvas.addEventListener('mousemove', onMove);
+  canvas.addEventListener('mouseup', onUp);
+  canvas.addEventListener('mouseleave', onUp);
+  canvas.addEventListener('touchstart', onDown, {passive:false});
+  canvas.addEventListener('touchmove', onMove, {passive:false});
+  canvas.addEventListener('touchend', onUp);
+
+  return {
+    render,
+    clearCurrent() { state.lines = []; render(); },
+    lockCurrent(color) {
+      if (state.lines.length > 0) {
+        const l = state.lines[0];
+        if (color) l.color = color;
+        state.lockedLines.push(l);
+        state.lines = [];
+      }
+      render();
+    },
+    clearAll() { state.lines = []; state.lockedLines = []; render(); },
+    addLockedLine(line) { state.lockedLines.push(line); render(); },
+    getCurrentLine() { return state.lines[0] || null; },
+    getLockedLines() { return state.lockedLines; },
+    toggleProtractor(x, y) {
+      if (state.protractor) { state.protractor = null; }
+      else { state.protractor = { x: x || canvas.width/2, y: y || canvas.height/2, angle: 0 }; }
+      render();
+    },
+    hasProtractor() { return !!state.protractor; }
+  };
+}
+
+// =========================================
+// DRAW HELPERS: Linie zeichnen, Winkel messen, Snap
+// =========================================
+
+// Hilfsfunktion: Position eines Maus/Touch-Events auf Canvas ermitteln
+function getCanvasPos(canvas, e) {
+  const rect = canvas.getBoundingClientRect();
+  const t = e.touches && e.touches.length ? e.touches[0] : (e.changedTouches && e.changedTouches.length ? e.changedTouches[0] : e);
+  return {
+    x: (t.clientX - rect.left) * canvas.width / rect.width,
+    y: (t.clientY - rect.top) * canvas.height / rect.height
+  };
+}
+
+// Snap: Punkt zu nächstem Snap-Punkt im Radius magnetisch ziehen
+function snapToPoints(p, snapPoints, radius) {
+  let best = null, bestDist = radius;
+  snapPoints.forEach(sp => {
+    const d = Math.hypot(p.x - sp.x, p.y - sp.y);
+    if (d < bestDist) { bestDist = d; best = sp; }
+  });
+  return best ? { x: best.x, y: best.y, snapped: true, id: best.id } : { ...p, snapped: false };
+}
+
+// Winkel zwischen zwei Punkten und dem Lot (vertikale Linie) berechnen
+// Gibt Winkel in Grad zurück: 0 = senkrecht nach oben, 90 = waagerecht
+function angleFromVertical(fromX, fromY, toX, toY) {
+  const dx = toX - fromX;
+  const dy = fromY - toY; // y ist invertiert (Canvas)
+  return Math.atan2(dx, dy) * 180 / Math.PI;
+}
+
+// Pfeilspitze zeichnen
+function drawArrowhead(ctx, x1, y1, x2, y2, color, size = 8) {
+  const ang = Math.atan2(y2 - y1, x2 - x1);
+  ctx.fillStyle = color;
+  ctx.beginPath();
+  ctx.moveTo(x2, y2);
+  ctx.lineTo(x2 - size * Math.cos(ang - Math.PI/6), y2 - size * Math.sin(ang - Math.PI/6));
+  ctx.lineTo(x2 - size * Math.cos(ang + Math.PI/6), y2 - size * Math.sin(ang + Math.PI/6));
+  ctx.closePath();
+  ctx.fill();
+}
+
+// Winkelbogen zeichnen
+function drawAngleArc(ctx, cx, cy, startRad, endRad, radius, color, label) {
+  ctx.strokeStyle = color;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, radius, startRad, endRad, startRad > endRad);
+  ctx.stroke();
+  if (label) {
+    const midAng = (startRad + endRad) / 2;
+    ctx.fillStyle = color;
+    ctx.font = 'bold 14px sans-serif';
+    ctx.fillText(label, cx + Math.cos(midAng) * (radius + 14) - 6, cy + Math.sin(midAng) * (radius + 14) + 5);
+  }
+}
+
+// =========================================
+// MOND-DRAG&DROP
+// =========================================
+function setupMoonDragDrop(correctMap, explanation) {
+  const items = document.querySelectorAll('#moonItems .dnd-item');
+  const targets = document.querySelectorAll('.moon-drop');
+  let draggedItem = null;
+
+  items.forEach(item => {
+    item.addEventListener('dragstart', (e) => {
+      draggedItem = item;
+      item.classList.add('dragging');
+    });
+    item.addEventListener('dragend', () => {
+      if (draggedItem) draggedItem.classList.remove('dragging');
+      draggedItem = null;
+    });
+    // Touch
+    let touchClone = null;
+    item.addEventListener('touchstart', (e) => {
+      e.preventDefault();
+      draggedItem = item;
+      const touch = e.touches[0];
+      touchClone = item.cloneNode(true);
+      touchClone.style.position = 'fixed';
+      touchClone.style.zIndex = '1000';
+      touchClone.style.pointerEvents = 'none';
+      touchClone.style.opacity = '0.8';
+      const rect = item.getBoundingClientRect();
+      touchClone.style.left = rect.left + 'px';
+      touchClone.style.top = rect.top + 'px';
+      touchClone.style.width = rect.width + 'px';
+      document.body.appendChild(touchClone);
+      item.classList.add('dragging');
+    }, {passive:false});
+    item.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      if (!touchClone) return;
+      const touch = e.touches[0];
+      const rect = item.getBoundingClientRect();
+      touchClone.style.left = (touch.clientX - rect.width/2) + 'px';
+      touchClone.style.top = (touch.clientY - rect.height/2) + 'px';
+    }, {passive:false});
+    item.addEventListener('touchend', (e) => {
+      if (!touchClone) return;
+      const touch = e.changedTouches[0];
+      const el = document.elementFromPoint(touch.clientX, touch.clientY);
+      document.body.removeChild(touchClone);
+      touchClone = null;
+      item.classList.remove('dragging');
+      if (el && el.classList.contains('moon-drop')) {
+        placeMoonItem(item, el);
+      }
+      draggedItem = null;
+    });
+  });
+
+  targets.forEach(target => {
+    target.addEventListener('dragover', (e) => {
+      e.preventDefault();
+    });
+    target.addEventListener('drop', (e) => {
+      e.preventDefault();
+      if (draggedItem) {
+        placeMoonItem(draggedItem, target);
+      }
+    });
+  });
+
+  window._moonState = { correctMap, explanation };
+}
+
+function placeMoonItem(item, target) {
+  // Entferne ggf. bisherigen Inhalt in anderen targets mit dieser id
+  document.querySelectorAll('.moon-drop').forEach(t => {
+    if (t.dataset.filled === item.dataset.id) {
+      delete t.dataset.filled;
+      t.setAttribute('fill', 'rgba(255,255,255,0.04)');
+    }
+  });
+  target.dataset.filled = item.dataset.id;
+  target.setAttribute('fill', 'rgba(255,215,0,0.2)');
+  target.setAttribute('stroke', '#ffd700');
+  // Text im SVG einfügen
+  const pos = target.dataset.pos;
+  // Alten Text entfernen
+  document.querySelectorAll(`.moon-label[data-pos="${pos}"]`).forEach(t => t.remove());
+  const svg = document.getElementById('moonPhases');
+  const xmlns = 'http://www.w3.org/2000/svg';
+  const text = document.createElementNS(xmlns, 'text');
+  const x = parseFloat(target.getAttribute('x')) + parseFloat(target.getAttribute('width'))/2;
+  const y = parseFloat(target.getAttribute('y')) + parseFloat(target.getAttribute('height'))/2 + 3;
+  text.setAttribute('x', x);
+  text.setAttribute('y', y);
+  text.setAttribute('text-anchor', 'middle');
+  text.setAttribute('fill', '#ffd700');
+  text.setAttribute('font-size', '9');
+  text.setAttribute('font-weight', '600');
+  text.setAttribute('class', 'moon-label');
+  text.setAttribute('data-pos', pos);
+  // Lange Wörter umbrechen
+  const label = item.textContent;
+  if (label.length > 12) {
+    const parts = label.split(' ');
+    const tspan1 = document.createElementNS(xmlns, 'tspan');
+    tspan1.setAttribute('x', x);
+    tspan1.setAttribute('dy', '-5');
+    tspan1.textContent = parts[0];
+    const tspan2 = document.createElementNS(xmlns, 'tspan');
+    tspan2.setAttribute('x', x);
+    tspan2.setAttribute('dy', '12');
+    tspan2.textContent = parts.slice(1).join(' ');
+    text.appendChild(tspan1);
+    text.appendChild(tspan2);
+  } else {
+    text.textContent = label;
+  }
+  svg.appendChild(text);
+  // Item optisch als "benutzt" markieren
+  item.style.opacity = '0.4';
+  item.draggable = false;
+
+  // Wenn alle gesetzt, automatisch prüfen? Nein - lieber Check-Button
+  if (!document.getElementById('moonCheck')) {
+    const btn = document.createElement('button');
+    btn.className = 'btn btn-primary';
+    btn.id = 'moonCheck';
+    btn.textContent = 'Prüfen';
+    btn.style.marginTop = '10px';
+    btn.onclick = checkMoonDrops;
+    item.parentElement.parentElement.appendChild(btn);
+  }
+}
+
+function checkMoonDrops() {
+  const s = window._moonState;
+  let allCorrect = true;
+  document.querySelectorAll('.moon-drop').forEach(target => {
+    const pos = target.dataset.pos;
+    const filled = target.dataset.filled;
+    const expected = s.correctMap[pos];
+    if (filled === expected) {
+      target.setAttribute('stroke', '#4ade80');
+      target.setAttribute('fill', 'rgba(74,222,128,0.2)');
+    } else {
+      target.setAttribute('stroke', '#f87171');
+      target.setAttribute('fill', 'rgba(248,113,113,0.2)');
+      allCorrect = false;
+    }
+  });
+  const btn = document.getElementById('moonCheck');
+  if (btn) btn.style.display = 'none';
+  showFeedback(allCorrect, s.explanation);
+}
+
+</script>
+
+<script>
+// App starten
+document.addEventListener('DOMContentLoaded', () => {
+  showHome();
+});
+</script>
+
+</body>
+</html>
