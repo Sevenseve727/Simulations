@@ -536,6 +536,10 @@
     background: #0a0e2a;
     border: 1px solid rgba(255,255,255,0.1);
     display: block;
+    touch-action: pan-y; /* Vertikales Scrollen erlaubt, horizontales/Zeichnen wird von JS gehandhabt */
+  }
+  /* Spezielle Canvas mit voller Interaktions-Kontrolle (Zeichnen, Ziehen) */
+  canvas.interactive {
     touch-action: none;
   }
   .sim-controls {
@@ -623,6 +627,11 @@
     margin: 12px 0;
     letter-spacing: 2px;
     font-weight: 600;
+    word-break: break-all;
+    overflow-wrap: break-word;
+  }
+  @media (max-width: 500px) {
+    .mirror-display { font-size: 1.4em; letter-spacing: 1px; }
   }
 
   /* Klausur-Modus */
@@ -1410,7 +1419,7 @@ const chapter_schatten = {
         renderDrawing((container) => {
           container.innerHTML = `
             <div class="draw-instruction"><strong>So geht's:</strong> Lege den Finger auf die Lichtquelle und ziehe eine gerade Linie bis zur Wand, die oben am Ball vorbeigeht. Dann den zweiten Strahl, der unten am Ball vorbeigeht. Die Punkte rasten ein!</div>
-            <canvas id="shadowDrawCanvas" width="500" height="320"></canvas>
+            <canvas id="shadowDrawCanvas" class="interactive" width="500" height="320"></canvas>
             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <span style="font-size:0.85em; color:#b8c0e5;">Strahlen: <strong id="shadowRayCount" style="color:#ffd700">0 / 2</strong></span>
               <div style="flex:1"></div>
@@ -2140,7 +2149,7 @@ const chapter_spiegel = {
           const targetAngle = 20 + Math.floor(Math.random() * 11) * 5; // 20,25,...,70
           container.innerHTML = `
             <div class="draw-instruction"><strong>So geht's:</strong> Tippe auf den roten Auftreffpunkt und ziehe eine Linie schräg nach oben. Die Winkelanzeige hilft dir live. Wenn du näher als 2° an einem 5°-Schritt bist, rastet die Linie ein.</div>
-            <canvas id="reflectDrawCanvas" width="500" height="360"></canvas>
+            <canvas id="reflectDrawCanvas" class="interactive" width="500" height="360"></canvas>
             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <span style="font-size:0.85em; color:#b8c0e5;">Einfallswinkel: <strong style="color:#ffd700">α = ${targetAngle}°</strong></span>
               <div style="flex:1"></div>
@@ -2534,9 +2543,12 @@ const chapter_spiegel = {
       difficulty: 'mittel',
       question: 'Was siehst du im Spiegel? Schreibe die Spiegelschrift richtig:',
       render() {
-        // Zufälliges Wort aus einer Liste
-        const words = ['HAUS', 'SONNE', 'BIO', 'PHYSIK', 'MOND'];
-        const word = words[Math.floor(Math.random() * words.length)];
+        // Zufälliges Wort aus drei Schwierigkeitsstufen
+        const wordsEasy = ['HAUS', 'MOND', 'HAND', 'BERG', 'BAUM', 'TAFEL', 'TASSE', 'UHR', 'STIFT', 'HEFT'];
+        const wordsMedium = ['SPIEGEL', 'LAMPE', 'SONNE', 'ERDE', 'PHYSIK', 'BIOLOGIE', 'FENSTER', 'SCHULE', 'PAUSE', 'TAFEL'];
+        const wordsHard = ['OPTIK', 'LINSE', 'BRECHUNG', 'SCHATTEN', 'REFLEXION', 'LICHTSTRAHL', 'KERNSCHATTEN', 'HALBSCHATTEN', 'MONDPHASE', 'GEODREIECK', 'KLASSENARBEIT'];
+        const pool = [...wordsEasy, ...wordsMedium, ...wordsHard];
+        const word = pool[Math.floor(Math.random() * pool.length)];
         window._textState = {
           correctAnswer: word,
           explanation: 'Im Spiegel werden links und rechts vertauscht. Einzelne Buchstaben werden seitenverkehrt dargestellt – du musst das Wort also in Gedanken umkehren, um es richtig zu lesen.',
@@ -2593,15 +2605,18 @@ const chapter_spiegel = {
       difficulty: 'schwer',
       question: 'Wie lautet das Wort, das dir ein Freund auf seine Stirn schreibt, wenn er es im Spiegel so sieht? Schreibe normal:',
       render() {
+        // Zufälliges Wort - etwas kniffliger, weil der Effekt hier doppelt ist
+        const words = ['LICHT', 'STOPP', 'HILFE', 'HALLO', 'TAFEL', 'PHYSIK', 'MAMA', 'PAPA', 'SCHULE', 'OPTIK'];
+        const word = words[Math.floor(Math.random() * words.length)];
         window._textState = {
-          correctAnswer: 'LICHT',
-          explanation: 'Wenn du ein Wort im Spiegel richtig lesen kannst, ist es in Wirklichkeit in Spiegelschrift geschrieben. Wenn du aber auch im Spiegel LICHT liest, dann steht es in normaler Schrift auf der Stirn – denn der Spiegel dreht es nochmal um.',
+          correctAnswer: word,
+          explanation: `Wenn du ein Wort im Spiegel richtig lesen kannst, ist es in Wirklichkeit in Spiegelschrift geschrieben. Wenn du aber auch im Spiegel "${word}" richtig herum liest, dann steht es in normaler Schrift auf der Stirn – denn der Spiegel dreht es noch mal um.`,
           options: {}
         };
         const body = document.getElementById('taskBody');
         body.innerHTML = `
           <div style="text-align:center; color:#b8c0e5; margin-bottom:8px;">Im Spiegel liest du:</div>
-          <div class="mirror-display" style="transform: scaleX(-1); display:inline-block; width:100%;">LICHT</div>
+          <div class="mirror-display" style="transform: scaleX(-1); display:inline-block; width:100%;">${word}</div>
           <div style="text-align:center; color:#b8c0e5; margin-top:12px; margin-bottom:4px;">Was hat dein Freund geschrieben?</div>
           <input type="text" class="mirror-input" id="textAnswer" placeholder="Wort eingeben..." autocomplete="off" style="text-align:center; text-transform:uppercase;">
           <div style="margin-top:12px;">
@@ -2619,7 +2634,7 @@ const chapter_spiegel = {
       render() {
         const body = document.getElementById('taskBody');
         body.innerHTML = `
-          <canvas id="mirrorImg" width="500" height="300"></canvas>
+          <canvas id="mirrorImg" class="interactive" width="500" height="300"></canvas>
           <div class="hint-box"><strong>💡 Ziehe den gelben Punkt!</strong> Beobachte, wie weit das rote Spiegelbild hinter dem Spiegel erscheint.</div>
         `;
         const canvas = document.getElementById('mirrorImg');
@@ -3190,7 +3205,7 @@ const chapter_linsen = {
             <div class="draw-instruction" id="lens1Step">
               <strong>Schritt 1 von 2:</strong> Zeichne den <strong>Parallelstrahl</strong>. Ziehe eine waagerechte Linie von der <em>Spitze des Gegenstands (G)</em> bis zur Linse. Die Linie rastet automatisch ein.
             </div>
-            <canvas id="lensDrawCanvas1" width="500" height="320"></canvas>
+            <canvas id="lensDrawCanvas1" class="interactive" width="500" height="320"></canvas>
             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <span style="font-size:0.85em; color:#b8c0e5;">Strahlen: <strong id="lens1Count" style="color:#ffd700">0 / 2</strong></span>
               <div style="flex:1"></div>
@@ -3474,7 +3489,7 @@ const chapter_linsen = {
             <div class="draw-instruction" id="lens2Step">
               <strong>Schritt 1 von 2:</strong> Zeichne den <strong>Parallelstrahl</strong>. Ziehe von G waagerecht zur Linse.
             </div>
-            <canvas id="lensDrawCanvas2" width="500" height="320"></canvas>
+            <canvas id="lensDrawCanvas2" class="interactive" width="500" height="320"></canvas>
             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap; align-items:center;">
               <span style="font-size:0.85em; color:#b8c0e5;">Strahlen: <strong id="lens2Count" style="color:#ffd700">0 / 2</strong></span>
               <div style="flex:1"></div>
@@ -5030,7 +5045,7 @@ function renderMaze(num) {
           <div style="flex:1"></div>
           <button class="maze-tool-btn" id="mazeReset">Zurücksetzen</button>
         </div>
-        <canvas id="mazeCanvas" width="600" height="400" style="cursor:pointer; max-width:100%;"></canvas>
+        <canvas id="mazeCanvas" class="interactive" width="600" height="400" style="cursor:pointer; max-width:100%;"></canvas>
         <div class="maze-status" id="mazeStatus">Ziehe einen Spiegel auf das Spielfeld!</div>
       </div>
     </div>
