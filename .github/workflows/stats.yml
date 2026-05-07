@@ -22,11 +22,21 @@ jobs:
           set -e
           END=$(date -u +%Y-%m-%d)
           START=$(date -u -d "30 days ago" +%Y-%m-%d)
-          curl -sS \
+          URL="https://${GC_SITE}.goatcounter.com/api/v0/stats/hits?start=${START}&end=${END}&limit=200"
+          echo "Fetching: $URL"
+          
+          curl -sS --fail-with-body \
+            -A "GitHub-Action-LearnLab-Stats" \
             -H "Authorization: Bearer $GC_TOKEN" \
-            -H "Content-Type: application/json" \
-            "https://${GC_SITE}.goatcounter.com/api/v0/stats/hits?start=${START}&end=${END}&limit=200" \
+            -H "Accept: application/json" \
+            --retry 3 --retry-delay 5 \
+            "$URL" \
             -o stats-raw.json
+          
+          echo "Response size: $(wc -c < stats-raw.json) bytes"
+          head -c 500 stats-raw.json
+          echo ""
+          
           node <<'EOF'
           const fs = require('fs');
           const raw = JSON.parse(fs.readFileSync('stats-raw.json', 'utf8'));
