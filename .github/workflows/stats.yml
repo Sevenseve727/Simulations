@@ -2,8 +2,8 @@ name: Update GoatCounter Stats
 
 on:
   schedule:
-    - cron: '0 4 * * *'   # täglich 04:00 UTC
-  workflow_dispatch: {}    # manuell auslösbar
+    - cron: '0 4 * * *'
+  workflow_dispatch: {}
 
 permissions:
   contents: write
@@ -24,28 +24,42 @@ jobs:
           START_30=$(date -u -d "30 days ago" +%Y-%m-%dT00:00:00Z)
           START_14=$(date -u -d "13 days ago" +%Y-%m-%dT00:00:00Z)
 
-          # 30-Tage-Aggregat pro Pfad
-          curl -sS --fail-with-body \
-            -A "GitHub-Action-LearnLab" \
-            -H "Authorization: Bearer $GC_TOKEN" \
-            -H "Accept: application/json" \
-            "https://${GC_SITE}.goatcounter.com/api/v0/stats/hits?start=${START_30}&end=${END}&limit=200&daily=1" \
-            -o stats-raw.json
+          fetch_stats() {
+            local url="$1"
+            local out="$2"
+            local label="$3"
+            echo "Fetching $label: $url"
+            for attempt in 1 2 3 4 5; do
+              HTTP_CODE=$(curl -sS -w "%{http_code}" \
+                -A "GitHub-Action-LearnLab" \
+                -H "Authorization: Bearer $GC_TOKEN" \
+                -H "Accept: application/json" \
+                --connect-timeout 20 --max-time 60 \
+                "$url" -o "$out" || echo "000")
+              if [ "$HTTP_CODE" = "200" ]; then
+                echo "$label OK (attempt $attempt, $(wc -c < "$out") bytes)"
+                return 0
+              fi
+              echo "$label attempt $attempt failed (HTTP $HTTP_CODE), retry in 10s..."
+              sleep 10
+            done
+            echo "$label failed after 5 attempts"
+            return 1
+          }
 
-          # 14-Tage-Reihe (alle Pfade, daily) für Trendgraph
-          curl -sS --fail-with-body \
-            -A "GitHub-Action-LearnLab" \
-            -H "Authorization: Bearer $GC_TOKEN" \
-            -H "Accept: application/json" \
+          fetch_stats \
+            "https://${GC_SITE}.goatcounter.com/api/v0/stats/hits?start=${START_30}&end=${END}&limit=200&daily=1" \
+            "stats-raw.json" "30d"
+
+          fetch_stats \
             "https://${GC_SITE}.goatcounter.com/api/v0/stats/hits?start=${START_14}&end=${END}&limit=200&daily=1" \
-            -o stats-14d.json
+            "stats-14d.json" "14d"
 
           node <<'EOF'
           const fs = require('fs');
           const raw30 = JSON.parse(fs.readFileSync('stats-raw.json', 'utf8'));
           const raw14 = JSON.parse(fs.readFileSync('stats-14d.json', 'utf8'));
 
-          // 30-Tage-Summe pro Pfad
           const out = { updated: new Date().toISOString(), paths: {}, total: 0, daily14: [] };
           for (const h of (raw30.hits || [])) {
             const total = (h.stats || []).reduce((s,d) => s + (d.daily || 0), 0);
@@ -53,14 +67,12 @@ jobs:
             out.total += total;
           }
 
-          // 14-Tage-Tagesreihe: pro Datum alle Pfade summieren
           const byDay = {};
           for (const h of (raw14.hits || [])) {
             for (const d of (h.stats || [])) {
               byDay[d.day] = (byDay[d.day] || 0) + (d.daily || 0);
             }
           }
-          // genau 14 Tage von heute rückwärts erzeugen (Lücken = 0)
           const today = new Date(); today.setUTCHours(0,0,0,0);
           for (let i = 13; i >= 0; i--) {
             const d = new Date(today); d.setUTCDate(d.getUTCDate() - i);
