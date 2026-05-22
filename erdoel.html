@@ -1,0 +1,1640 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Vom Plankton zum Erdöl – Lernumgebung</title>
+<style>
+  /* ============ GRUNDLAYOUT ============ */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --prisma-blau: #2b8cbe;
+    --prisma-blau-hell: #d6eaf3;
+    --prisma-blau-dunkel: #1a5f87;
+    --prisma-orange: #e87b2a;
+    --prisma-beige: #fdf6ec;
+    --prisma-beige-warm: #f5e6c8;
+    --text-dunkel: #2c2c2c;
+    --text-grau: #666;
+    --weiss: #ffffff;
+    --grenze: #e0e0e0;
+    --erfolg: #5cb85c;
+    --hilfe-hintergrund: #fff8e7;
+  }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: var(--prisma-beige);
+    color: var(--text-dunkel);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ============ HEADER ============ */
+  header {
+    background: var(--weiss);
+    border-bottom: 3px solid var(--prisma-blau);
+    padding: 1rem 2rem;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+
+  header h1 {
+    color: var(--prisma-blau-dunkel);
+    font-size: 1.4rem;
+    font-weight: 600;
+  }
+
+  .fortschritt {
+    background: var(--prisma-blau-hell);
+    color: var(--prisma-blau-dunkel);
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+  }
+
+  /* ============ HAUPTBEREICH ============ */
+  main {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 2rem;
+  }
+
+  .ansicht { display: none; }
+  .ansicht.aktiv { display: block; }
+
+  /* ============ STARTSEITE / KACHELANSICHT ============ */
+  .intro {
+    background: var(--weiss);
+    padding: 1.5rem 2rem;
+    border-radius: 12px;
+    margin-bottom: 2rem;
+    border-left: 4px solid var(--prisma-orange);
+  }
+
+  .intro h2 {
+    color: var(--prisma-blau-dunkel);
+    margin-bottom: 0.5rem;
+  }
+
+  .intro p {
+    color: var(--text-grau);
+  }
+
+  .kacheln {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 1.25rem;
+  }
+
+  .kachel {
+    background: var(--weiss);
+    border: 2px solid var(--grenze);
+    border-radius: 12px;
+    padding: 1.5rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+    position: relative;
+    min-height: 180px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+  }
+
+  .kachel:hover, .kachel:focus {
+    transform: translateY(-4px);
+    box-shadow: 0 6px 16px rgba(43, 140, 190, 0.15);
+    border-color: var(--prisma-blau);
+    outline: none;
+  }
+
+  .kachel.besucht {
+    background: var(--prisma-blau-hell);
+    border-color: var(--prisma-blau);
+  }
+
+  .kachel.besucht::after {
+    content: "✓";
+    position: absolute;
+    top: 8px;
+    right: 12px;
+    color: var(--erfolg);
+    font-weight: bold;
+    font-size: 1.2rem;
+  }
+
+  .kachel-symbol {
+    font-size: 2.5rem;
+    margin-bottom: 0.75rem;
+  }
+
+  .kachel-titel {
+    font-size: 1.05rem;
+    font-weight: 600;
+    color: var(--prisma-blau-dunkel);
+  }
+
+  /* ============ STATIONSANSICHT ============ */
+  .zurueck {
+    background: none;
+    border: none;
+    color: var(--prisma-blau);
+    font-size: 1rem;
+    cursor: pointer;
+    margin-bottom: 1.5rem;
+    padding: 0.5rem 0;
+    font-weight: 600;
+  }
+
+  .zurueck:hover { text-decoration: underline; }
+
+  .station {
+    background: var(--weiss);
+    border-radius: 12px;
+    padding: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .station h2 {
+    color: var(--prisma-blau-dunkel);
+    font-size: 1.6rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 2px solid var(--prisma-blau-hell);
+  }
+
+  .station-symbol-gross {
+    font-size: 3rem;
+    margin-bottom: 1rem;
+  }
+
+  .station-text {
+    font-size: 1.05rem;
+    margin-bottom: 1.5rem;
+  }
+
+  .station-text strong {
+    color: var(--prisma-blau-dunkel);
+    background: var(--prisma-blau-hell);
+    padding: 0.1rem 0.3rem;
+    border-radius: 3px;
+  }
+
+  /* ============ BILD-PLATZHALTER (alt, wird nicht mehr genutzt) ============ */
+  .bildbereich {
+    background: var(--prisma-beige-warm);
+    border-radius: 8px;
+    padding: 2rem;
+    margin: 1.5rem 0;
+    text-align: center;
+    color: var(--text-grau);
+    min-height: 200px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px dashed #d0c0a0;
+  }
+
+  /* ============ SVG-GRAFIK CONTAINER ============ */
+  .svg-container {
+    background: #d4c4a0;
+    border-radius: 8px;
+    margin: 0 0 1.5rem 0;
+    overflow: hidden;
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    position: relative;
+  }
+
+  .svg-container svg {
+    width: 100%;
+    height: 100%;
+    display: block;
+  }
+
+  /* Elemente, die nicht zur aktuellen Station gehören, werden gedimmt */
+  .svg-container svg .element {
+    transition: opacity 0.6s ease, transform 0.8s ease;
+  }
+  .svg-container svg .element.gedimmt {
+    opacity: 0.25;
+  }
+  .svg-container svg .element.hervorgehoben {
+    opacity: 1;
+  }
+  /* Animation-Start überschreibt hervorgehoben-Opacity */
+  .svg-container svg .element.anim-muttergestein-entstehen {
+    opacity: 0;
+  }
+  .svg-container svg .element.anim-sediment-herabsinken {
+    opacity: 0;
+  }
+
+  /* Animationen pro Station */
+  @keyframes erscheinen {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes druecken-pfeile {
+    0%, 100% { transform: translateY(0); opacity: 0.85; }
+    50%      { transform: translateY(14px); opacity: 1; }
+  }
+  @keyframes faulschlamm-vergehen {
+    0%   { opacity: 1; }
+    40%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+  @keyframes muttergestein-entstehen {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  @keyframes alkane-erscheinen {
+    0%   { opacity: 0; transform: scale(0.6); }
+    100% { opacity: 1; transform: scale(1); }
+  }
+  /* Öl-Tröpfchen wandern vom Muttergestein nach oben ins Speichergestein */
+  @keyframes oel-aufsteigen {
+    0%   { transform: translateY(0); opacity: 0; }
+    10%  { opacity: 1; }
+    80%  { transform: translateY(-90px); opacity: 1; }
+    100% { transform: translateY(-90px); opacity: 1; }
+  }
+  @keyframes oel-sammeln {
+    0%   { opacity: 0; }
+    100% { opacity: 1; }
+  }
+  /* Sediment-Schicht erscheint weich von oben (opacity + translateY) */
+  @keyframes sediment-herabsinken {
+    0%   { opacity: 0; transform: translateY(-20px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  /* Feine Sediment-Partikel rieseln aus dem Wasser nach unten */
+  @keyframes rieseln {
+    0%   { transform: translateY(-150px); opacity: 0; }
+    10%  { opacity: 0.7; }
+    90%  { opacity: 0.7; }
+    100% { transform: translateY(0); opacity: 0; }
+  }
+  /* Sauerstoffmangel-Symbol pulsiert */
+  @keyframes o2-fehlt-pulsieren {
+    0%, 100% { opacity: 0.6; }
+    50%      { opacity: 1; }
+  }
+  /* Lebewesenreste (grüne Vorgängerschicht) verschwinden im Faulschlamm */
+  @keyframes lebewesen-aufgehen {
+    0%   { opacity: 1; }
+    30%  { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  .anim-erscheinen              { animation: erscheinen 1.8s ease-out forwards; }
+  .anim-druecken-pfeile         { animation: druecken-pfeile 3s ease-in-out infinite; }
+  .anim-faulschlamm-vergehen    { animation: faulschlamm-vergehen 5s ease-in-out forwards; animation-delay: 1s; }
+  .anim-muttergestein-entstehen { animation: muttergestein-entstehen 4s ease-in-out forwards; animation-delay: 3s; opacity: 0; }
+  .anim-alkane                  { animation: alkane-erscheinen 2s ease-out forwards; animation-delay: 5s; opacity: 0; transform-origin: center; transform-box: fill-box; }
+  .anim-aufsteigen-langsam      { animation: oel-aufsteigen 8s ease-in-out infinite; }
+  .anim-oel-sammeln             { animation: oel-sammeln 8s ease-in forwards; animation-delay: 3s; opacity: 0; }
+  .anim-sediment-herabsinken    { animation: sediment-herabsinken 5s ease-out forwards; animation-delay: 1s; opacity: 0; }
+  .anim-rieseln                 { animation: rieseln 4s linear infinite; }
+  .anim-lebewesen-aufgehen      { animation: lebewesen-aufgehen 5s ease-in-out forwards; animation-delay: 3s; }
+  .anim-o2-fehlt                { animation: o2-fehlt-pulsieren 2s ease-in-out infinite; }
+
+  /* Beschriftungen in der Grafik */
+  .svg-beschriftung {
+    fill: white;
+    font-size: 14px;
+    font-weight: 600;
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    paint-order: stroke;
+    stroke: rgba(0,0,0,0.5);
+    stroke-width: 3px;
+    stroke-linejoin: round;
+  }
+
+  /* ============ HILFE-BOX ============ */
+  .hilfe-toggle {
+    background: var(--hilfe-hintergrund);
+    border: 2px solid #f0d97d;
+    color: #8b6914;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 1.5rem 0 0.75rem 0;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    text-align: left;
+  }
+
+  .hilfe-inhalt {
+    background: var(--hilfe-hintergrund);
+    border-left: 4px solid #f0c14b;
+    padding: 1rem 1.25rem;
+    border-radius: 0 8px 8px 0;
+    display: none;
+    margin-bottom: 1.5rem;
+  }
+
+  .hilfe-inhalt.offen { display: block; }
+
+  .hilfe-inhalt h4 {
+    color: #8b6914;
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+
+  .hilfe-inhalt dl {
+    margin-top: 0.5rem;
+  }
+
+  .hilfe-inhalt dt {
+    font-weight: 600;
+    color: var(--prisma-blau-dunkel);
+    margin-top: 0.5rem;
+  }
+
+  .hilfe-inhalt dd {
+    margin-left: 0;
+    color: var(--text-dunkel);
+  }
+
+  /* ============ SELBSTKONTROLLE ============ */
+  .quiz {
+    background: var(--prisma-beige);
+    border-radius: 8px;
+    padding: 1.5rem;
+    margin-top: 1.5rem;
+    border: 2px solid var(--grenze);
+  }
+
+  .quiz h3 {
+    color: var(--prisma-blau-dunkel);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+
+  .quiz-frage {
+    font-weight: 600;
+    margin-bottom: 1rem;
+  }
+
+  .antwort {
+    display: block;
+    background: var(--weiss);
+    border: 2px solid var(--grenze);
+    border-radius: 6px;
+    padding: 0.75rem 1rem;
+    margin-bottom: 0.5rem;
+    cursor: pointer;
+    transition: all 0.15s;
+    font-size: 1rem;
+    width: 100%;
+    text-align: left;
+  }
+
+  .antwort:hover { border-color: var(--prisma-blau); }
+
+  .antwort.richtig {
+    background: #e6f4e6;
+    border-color: var(--erfolg);
+    color: #2d6a2d;
+  }
+
+  .antwort.falsch {
+    background: #fbeaea;
+    border-color: #d9534f;
+    color: #8b2626;
+  }
+
+  .feedback {
+    margin-top: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    display: none;
+    font-weight: 500;
+  }
+
+  .feedback.zeigen { display: block; }
+
+  .feedback.gut {
+    background: #e6f4e6;
+    color: #2d6a2d;
+    border-left: 4px solid var(--erfolg);
+  }
+
+  .feedback.nochmal {
+    background: #fbeaea;
+    color: #8b2626;
+    border-left: 4px solid #d9534f;
+  }
+
+  /* ============ ZEITLEISTE ============ */
+  .zeitleiste-container {
+    background: var(--weiss);
+    border-radius: 12px;
+    padding: 1.5rem 2rem 2rem;
+    margin-top: 2rem;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  }
+
+  .zeitleiste-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+  }
+
+  .zeitleiste-header h2 {
+    color: var(--prisma-blau-dunkel);
+    font-size: 1.2rem;
+    margin: 0;
+  }
+
+  .zeitleiste-controls {
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+  }
+
+  .zeitleiste-btn {
+    background: var(--prisma-blau);
+    color: var(--weiss);
+    border: none;
+    border-radius: 6px;
+    padding: 0.4rem 0.9rem;
+    cursor: pointer;
+    font-size: 1rem;
+    font-weight: 600;
+    transition: background 0.15s;
+  }
+
+  .zeitleiste-btn:hover { background: var(--prisma-blau-dunkel); }
+  .zeitleiste-btn.aktiv { background: var(--prisma-orange); }
+
+  .zeitleiste-slider-bereich {
+    position: relative;
+    margin: 0.5rem 0 0.75rem;
+  }
+
+  .zeitleiste-slider {
+    width: 100%;
+    height: 8px;
+    -webkit-appearance: none;
+    appearance: none;
+    background: var(--prisma-blau-hell);
+    border-radius: 4px;
+    outline: none;
+    cursor: pointer;
+  }
+
+  .zeitleiste-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--prisma-blau);
+    border: 3px solid var(--weiss);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    cursor: grab;
+  }
+
+  .zeitleiste-slider::-moz-range-thumb {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--prisma-blau);
+    border: 3px solid var(--weiss);
+    box-shadow: 0 1px 4px rgba(0,0,0,0.3);
+    cursor: grab;
+  }
+
+  .zeitleiste-markierungen {
+    display: flex;
+    justify-content: space-between;
+    padding: 0 2px;
+    font-size: 0.7rem;
+    color: var(--text-grau);
+  }
+
+  .zeitleiste-info {
+    background: var(--prisma-beige);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-top: 0.75rem;
+    display: flex;
+    gap: 1rem;
+    align-items: flex-start;
+  }
+
+  .zeitleiste-info-symbol {
+    font-size: 2rem;
+    flex-shrink: 0;
+  }
+
+  .zeitleiste-info-text h3 {
+    margin: 0 0 0.25rem;
+    color: var(--prisma-blau-dunkel);
+    font-size: 1rem;
+  }
+
+  .zeitleiste-info-text p {
+    margin: 0;
+    font-size: 0.95rem;
+    color: var(--text-dunkel);
+  }
+
+  .zeitleiste-hinweis {
+    margin-top: 0.75rem;
+    padding: 0.75rem 1rem;
+    background: #fef3e0;
+    border-left: 4px solid var(--prisma-orange);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.9rem;
+    color: #7a5a15;
+    display: none;
+  }
+
+  .zeitleiste-hinweis.sichtbar { display: block; }
+
+  /* ============ RESPONSIV ============ */
+  @media (max-width: 600px) {
+    header { padding: 0.75rem 1rem; flex-direction: column; gap: 0.5rem; }
+    header h1 { font-size: 1.1rem; }
+    main { padding: 1rem; }
+    .station { padding: 1.25rem; }
+    .kacheln { grid-template-columns: repeat(2, 1fr); gap: 0.75rem; }
+    .kachel { min-height: 140px; padding: 1rem; }
+    .kachel-symbol { font-size: 2rem; }
+    .kachel-titel { font-size: 0.9rem; }
+  }
+
+  /* Touch-Optimierung für Tablet */
+  @media (pointer: coarse) {
+    .kachel { min-height: 160px; }
+    .antwort { padding: 1rem 1.25rem; margin-bottom: 0.75rem; font-size: 1.05rem; }
+    .hilfe-toggle { padding: 1rem 1.25rem; font-size: 1.05rem; }
+    .zurueck { padding: 0.75rem 0; font-size: 1.1rem; }
+    .zeitleiste-btn { padding: 0.6rem 1.2rem; font-size: 1.05rem; }
+    .zeitleiste-slider { height: 12px; }
+    .zeitleiste-slider::-webkit-slider-thumb { width: 28px; height: 28px; }
+    .zeitleiste-slider::-moz-range-thumb { width: 28px; height: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Vom Plankton zum Erdöl</h1>
+  <div class="fortschritt" id="fortschritt">0 von 7 erkundet</div>
+</header>
+
+<main>
+
+  <!-- ============ STARTSEITE ============ -->
+  <section id="startseite" class="ansicht aktiv">
+    <div class="intro">
+      <h2>Wie entstehen Erdöl und Erdgas?</h2>
+      <p>Tippe auf die Kacheln, um die einzelnen Schritte der Entstehung zu erkunden. Du kannst sie in beliebiger Reihenfolge öffnen.</p>
+    </div>
+
+    <div class="kacheln" id="kachelraster">
+      <!-- Wird per JavaScript gefüllt -->
+    </div>
+  </section>
+
+  <!-- ============ STATIONSANSICHT ============ -->
+  <section id="stationsansicht" class="ansicht">
+    <button class="zurueck" onclick="zurueckZurStartseite()">← Zurück zur Übersicht</button>
+    <div class="station" id="stationsinhalt">
+      <!-- Wird per JavaScript gefüllt -->
+    </div>
+  </section>
+
+  <!-- ============ PLATZHALTER ZEITLEISTE ============ -->
+  <!-- ============ ZEITLEISTE ============ -->
+  <div class="zeitleiste-container" id="zeitleiste-container">
+    <!-- Gesperrter Zustand: wird angezeigt, solange nicht alle 7 Stationen besucht -->
+    <div id="zeitleiste-gesperrt">
+      <div class="zeitleiste-header">
+        <h2 style="color: #999;">🔒 Zeitleiste</h2>
+      </div>
+      <div style="text-align: center; padding: 1.5rem; color: #999;">
+        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Erkunde alle 7 Stationen, um die Zeitleiste freizuschalten.</p>
+        <p id="zeitleiste-fortschritt-text" style="font-size: 0.95rem;">Noch 7 Stationen übrig.</p>
+      </div>
+    </div>
+
+    <!-- Freigeschalteter Zustand: wird sichtbar, wenn alle 7 besucht -->
+    <div id="zeitleiste-freigeschaltet" style="display: none;">
+      <div class="zeitleiste-header">
+        <h2>⏳ Zeitleiste</h2>
+        <div class="zeitleiste-controls">
+          <button class="zeitleiste-btn" id="play-btn" onclick="zeitleistePlayPause()">▶ Abspielen</button>
+          <button class="zeitleiste-btn" onclick="zeitleisteZuruecksetzen()">↺ Zurück</button>
+        </div>
+      </div>
+
+      <div class="zeitleiste-slider-bereich">
+        <input type="range" class="zeitleiste-slider" id="zeitleiste-slider" min="0" max="100" value="0"
+               oninput="zeitleisteAktualisieren(this.value)"/>
+      </div>
+
+      <div class="zeitleiste-markierungen">
+        <span>500 Mio.</span>
+        <span>400 Mio.</span>
+        <span>300 Mio.</span>
+        <span>200 Mio.</span>
+        <span>100 Mio.</span>
+        <span>Heute</span>
+      </div>
+
+      <div class="zeitleiste-info" id="zeitleiste-info">
+        <!-- SVG-Querschnitt, gesteuert durch den Slider -->
+        <div style="width:100%;">
+          <div class="svg-container" style="margin-bottom:1rem;">
+            <svg id="zeitleiste-svg" viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+              <!-- Himmel -->
+              <rect x="0" y="0" width="800" height="90" fill="#cfe7f5"/>
+              <circle cx="700" cy="40" r="22" fill="#ffd66e" opacity="0.9"/>
+              <!-- Untergrund -->
+              <rect x="0" y="220" width="800" height="230" fill="#7a6248"/>
+              <!-- Meer (fest bis Meeresboden y=220) -->
+              <rect x="0" y="90" width="800" height="130" fill="#4ba3d4"/>
+              <path d="M0,95 Q40,90 80,95 T160,95 T240,95 T320,95 T400,95 T480,95 T560,95 T640,95 T720,95 T800,95" fill="none" stroke="#7fc1de" stroke-width="1.5"/>
+              <!-- Plankton -->
+              <g id="zl-plankton" opacity="0">
+                <circle cx="120" cy="130" r="3.5" fill="#5ab84d"/><circle cx="240" cy="150" r="3.5" fill="#5ab84d"/>
+                <circle cx="360" cy="125" r="3.5" fill="#5ab84d"/><circle cx="480" cy="155" r="3.5" fill="#5ab84d"/>
+                <circle cx="600" cy="135" r="3.5" fill="#5ab84d"/><circle cx="180" cy="180" r="3.5" fill="#5ab84d"/>
+                <circle cx="300" cy="195" r="3.5" fill="#5ab84d"/><circle cx="420" cy="175" r="3.5" fill="#5ab84d"/>
+                <circle cx="540" cy="200" r="3.5" fill="#5ab84d"/><circle cx="660" cy="165" r="3.5" fill="#5ab84d"/>
+                <text x="400" y="145" text-anchor="middle" class="svg-beschriftung" style="font-size:12px">Plankton</text>
+              </g>
+              <!-- Sinkendes Plankton -->
+              <g id="zl-sinkend" opacity="0">
+                <circle cx="150" cy="210" r="3" fill="#8a6b3d"/><circle cx="280" cy="215" r="3" fill="#8a6b3d"/>
+                <circle cx="400" cy="212" r="3" fill="#8a6b3d"/><circle cx="530" cy="217" r="3" fill="#8a6b3d"/>
+                <circle cx="660" cy="213" r="3" fill="#8a6b3d"/>
+                <line x1="180" y1="150" x2="165" y2="210" stroke="#8a6b3d" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+                <line x1="400" y1="155" x2="390" y2="212" stroke="#8a6b3d" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+                <line x1="600" y1="145" x2="610" y2="213" stroke="#8a6b3d" stroke-width="1" stroke-dasharray="3,3" opacity="0.5"/>
+              </g>
+              <!-- Meeresboden -->
+              <g id="zl-meeresboden" opacity="0">
+                <rect x="0" y="220" width="800" height="15" fill="#c9a87a"/>
+              </g>
+              <!-- Faulschlamm -->
+              <g id="zl-faulschlamm" opacity="0">
+                <rect x="0" y="235" width="800" height="50" fill="#3a2f1a"/>
+                <text x="400" y="263" text-anchor="middle" class="svg-beschriftung">Faulschlamm</text>
+              </g>
+              <!-- Sedimentschichten -->
+              <g id="zl-sediment" opacity="0">
+                <rect x="0" y="235" width="800" height="50" fill="#b8956b"/>
+                <text x="400" y="264" text-anchor="middle" class="svg-beschriftung">Sedimentschichten</text>
+              </g>
+              <!-- Faulschlamm unter Sediment -->
+              <g id="zl-faulschlamm-tief" opacity="0">
+                <rect x="0" y="285" width="800" height="50" fill="#3a2f1a"/>
+                <text x="400" y="315" text-anchor="middle" class="svg-beschriftung">Faulschlamm</text>
+              </g>
+              <!-- Muttergestein (ersetzt Faulschlamm) -->
+              <g id="zl-muttergestein" opacity="0">
+                <rect x="0" y="285" width="800" height="50" fill="#4a3a26"/>
+                <text x="400" y="315" text-anchor="middle" class="svg-beschriftung" style="font-size:12px">Muttergestein</text>
+              </g>
+              <!-- Druck-Pfeile -->
+              <g id="zl-druck" opacity="0">
+                <line x1="200" y1="242" x2="200" y2="278" stroke="#d04040" stroke-width="3" stroke-linecap="round"/>
+                <polygon points="193,275 207,275 200,287" fill="#d04040"/>
+                <line x1="400" y1="242" x2="400" y2="278" stroke="#d04040" stroke-width="3" stroke-linecap="round"/>
+                <polygon points="393,275 407,275 400,287" fill="#d04040"/>
+                <line x1="600" y1="242" x2="600" y2="278" stroke="#d04040" stroke-width="3" stroke-linecap="round"/>
+                <polygon points="593,275 607,275 600,287" fill="#d04040"/>
+              </g>
+              <!-- Alkane -->
+              <g id="zl-alkane" opacity="0">
+                <circle cx="250" cy="310" r="5" fill="#2c2c2c"/><circle cx="400" cy="308" r="5" fill="#2c2c2c"/>
+                <circle cx="550" cy="312" r="5" fill="#2c2c2c"/>
+                <text x="400" y="330" text-anchor="middle" class="svg-beschriftung" style="font-size:11px">Alkane (C + H)</text>
+              </g>
+              <!-- Muttergestein tief (Station 6+7) -->
+              <g id="zl-muttergestein-tief" opacity="0">
+                <rect x="0" y="380" width="800" height="40" fill="#4a3a26"/>
+                <text x="400" y="405" text-anchor="middle" class="svg-beschriftung" style="font-size:12px">Muttergestein</text>
+              </g>
+              <!-- Trägergestein -->
+              <g id="zl-traeger" opacity="0">
+                <rect x="0" y="335" width="800" height="45" fill="#a89070"/>
+                <line x1="100" y1="340" x2="140" y2="375" stroke="#7a6248" stroke-width="0.8" opacity="0.5"/>
+                <line x1="300" y1="338" x2="340" y2="376" stroke="#7a6248" stroke-width="0.8" opacity="0.5"/>
+                <line x1="500" y1="340" x2="540" y2="378" stroke="#7a6248" stroke-width="0.8" opacity="0.5"/>
+                <line x1="700" y1="338" x2="740" y2="376" stroke="#7a6248" stroke-width="0.8" opacity="0.5"/>
+                <text x="400" y="361" text-anchor="middle" class="svg-beschriftung" style="font-size:12px">Trägergestein</text>
+              </g>
+              <!-- Speichergestein -->
+              <g id="zl-speicher" opacity="0">
+                <rect x="0" y="285" width="800" height="50" fill="#d4a87a"/>
+                <circle cx="150" cy="300" r="2.5" fill="#fff" opacity="0.7"/>
+                <circle cx="300" cy="315" r="2.5" fill="#fff" opacity="0.7"/>
+                <circle cx="450" cy="298" r="2.5" fill="#fff" opacity="0.7"/>
+                <circle cx="600" cy="318" r="2.5" fill="#fff" opacity="0.7"/>
+                <text x="400" y="319" text-anchor="middle" class="svg-beschriftung" style="font-size:12px">Speichergestein</text>
+              </g>
+              <!-- Öl-Tröpfchen aufsteigend -->
+              <g id="zl-oeltropfen" opacity="0">
+                <ellipse cx="250" cy="370" rx="4" ry="6" fill="#2a1a08"/>
+                <ellipse cx="400" cy="350" rx="4" ry="6" fill="#2a1a08"/>
+                <ellipse cx="550" cy="360" rx="4" ry="6" fill="#2a1a08"/>
+                <line x1="250" y1="400" x2="250" y2="370" stroke="#2a1a08" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="400" y1="400" x2="400" y2="350" stroke="#2a1a08" stroke-width="1" stroke-dasharray="2,2"/>
+                <line x1="550" y1="400" x2="550" y2="360" stroke="#2a1a08" stroke-width="1" stroke-dasharray="2,2"/>
+              </g>
+              <!-- Lagerstätte: Deckgestein + Erdgas + Erdöl -->
+              <g id="zl-lagerstaette" opacity="0">
+                <path d="M 180,285 Q 400,252 620,285 L 620,270 Q 400,237 180,270 Z" fill="#3a3027"/>
+                <text x="400" y="258" text-anchor="middle" class="svg-beschriftung" style="font-size:12px">undurchlässige Schicht</text>
+                <path d="M 180,285 Q 400,268 620,285 Q 400,252 180,285 Z" fill="#f0e68c" opacity="0.9"/>
+                <text x="400" y="278" text-anchor="middle" class="svg-beschriftung" style="font-size:11px">Erdgas</text>
+                <rect x="130" y="294" width="540" height="24" rx="4" fill="#3a2410" opacity="0.85"/>
+                <text x="400" y="310" text-anchor="middle" class="svg-beschriftung" style="font-size:11px">Erdöl</text>
+              </g>
+              <!-- Grundgestein -->
+              <rect x="0" y="420" width="800" height="30" fill="#2a2218"/>
+            </svg>
+          </div>
+          <div style="display:flex;gap:1rem;align-items:flex-start;">
+            <div class="zeitleiste-info-symbol" id="zeitleiste-symbol">🦠</div>
+            <div class="zeitleiste-info-text">
+              <h3 id="zeitleiste-titel">Leben im Meer</h3>
+              <p id="zeitleiste-beschreibung">Vor etwa 500 Millionen Jahren: In den Meeren leben unzählige Kleinstlebewesen – das Plankton.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="zeitleiste-hinweis" id="zeitleiste-hinweis">
+        Erdöl entsteht in Millionen von Jahren. Wir verbrauchen es in wenigen Generationen.
+      </div>
+    </div>
+  </div>
+
+  <!-- ============ FOOTER ============ -->
+  <footer style="margin-top: 2rem; padding: 1.5rem; text-align: center; color: #999; font-size: 0.8rem; border-top: 1px solid var(--grenze);">
+    <p>Begriffe und Inhalte orientiert an: Prisma Chemie 9/10, Differenzierende Ausgabe A, Klett Verlag.</p>
+  </footer>
+
+</main>
+
+<script>
+  // ============ DATEN: 7 STATIONEN ============
+  // Inhalte werden in Schritt 3 finalisiert. Station 3 (Faulschlamm) ist bereits
+  // vollständig ausgearbeitet als Vorlage; die anderen sind Platzhalter.
+
+  const stationen = [
+    {
+      id: 'plankton',
+      titel: 'Leben im Meer',
+      symbol: '🦠',
+      text: 'Vor vielen Millionen Jahren lebten in den Meeren unzählige <strong>kleinste Meereslebewesen</strong> – das <strong>Plankton</strong>. Dazu gehören winzige Algen und Kleinstlebewesen, die nahe der Wasseroberfläche treiben. Sie nutzten das Sonnenlicht und nahmen Kohlenstoffdioxid aus dem Wasser auf. Aus diesen einfachen Stoffen bauten sie ihre Körper aus <strong>Kohlenstoff-Verbindungen</strong> auf. Diese Lebewesen waren der Ausgangsstoff für die Entstehung von Erdöl und Erdgas.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Plankton', erklaerung: 'Sammelbegriff für winzige Lebewesen im Wasser. Dazu gehören pflanzliches Plankton (Algen) und tierisches Plankton (z. B. Kleinstkrebse).' },
+          { begriff: 'Kohlenstoff-Verbindungen', erklaerung: 'Alle organischen Stoffe in Lebewesen enthalten Kohlenstoff. Diese Bausteine werden später entscheidend.' },
+          { begriff: 'Fotosynthese (Vertiefung)', erklaerung: 'Pflanzliches Plankton betreibt Fotosynthese – die im Sonnenlicht gespeicherte Energie steckt damit indirekt auch im späteren Erdöl.' }
+        ]
+      },
+      quiz: {
+        frage: 'Was ist Plankton?',
+        antworten: [
+          { text: 'Eine Pflanze auf dem Meeresboden', richtig: false },
+          { text: 'Winzige Lebewesen, die nahe der Wasseroberfläche treiben', richtig: true },
+          { text: 'Ein Gestein, das tief im Meer liegt', richtig: false }
+        ],
+        feedback_richtig: 'Genau! Plankton sind kleinste pflanzliche und tierische Lebewesen, die in den oberen Wasserschichten leben.',
+        feedback_falsch: 'Plankton lebt nicht am Boden – es treibt frei im Wasser, vor allem nahe der Oberfläche, wo das Sonnenlicht hinkommt.'
+      }
+    },
+    {
+      id: 'absterben',
+      titel: 'Absterben und Absinken',
+      symbol: '⬇️',
+      text: 'Wenn die kleinsten Meereslebewesen sterben, sinken sie zum Meeresboden. Dort sammeln sie sich in dicken Schichten an. Da ständig neue Lebewesen absterben und absinken, entstehen über lange Zeit gewaltige Mengen <strong>organisches Material</strong> am Grund. Damit aus diesem Material später Erdöl entstehen kann, müssen aber zwei besondere Bedingungen erfüllt sein, die du in der nächsten Station kennenlernst.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Organisches Material', erklaerung: 'Alle Stoffe, aus denen Lebewesen aufgebaut sind – also Reste von Pflanzen und Tieren.' },
+          { begriff: 'Wieso so viel Material?', erklaerung: 'Plankton vermehrt sich sehr schnell. Über Millionen Jahre sammeln sich riesige Mengen abgestorbene Lebewesen am Meeresboden.' }
+        ]
+      },
+      quiz: {
+        frage: 'Was passiert mit Plankton nach dem Tod?',
+        antworten: [
+          { text: 'Es löst sich im Wasser auf.', richtig: false },
+          { text: 'Es sinkt zum Meeresboden und sammelt sich dort an.', richtig: true },
+          { text: 'Es wird sofort von Fischen vollständig verzehrt.', richtig: false }
+        ],
+        feedback_richtig: 'Genau. Über lange Zeiträume sammeln sich am Meeresboden riesige Schichten organischen Materials.',
+        feedback_falsch: 'Schau noch einmal in den Text – wohin sinkt das tote Plankton?'
+      }
+    },
+    {
+      // ===== BEISPIELSTATION VOLLSTÄNDIG AUSGEARBEITET =====
+      id: 'faulschlamm',
+      titel: 'Faulschlamm',
+      symbol: '🟤',
+      text: 'Am Meeresboden sammeln sich die abgestorbenen <strong>Kleinstlebewesen</strong> an. Hier herrscht <strong>Sauerstoffmangel</strong>: Es ist zu wenig Sauerstoff vorhanden, damit das organische Material verwesen kann. Stattdessen bildet sich eine schlammige, dunkle Masse – der <strong>Faulschlamm</strong>. Er besteht aus den Resten der Lebewesen und feinen Bestandteilen aus dem Wasser, die sich mit absetzen.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Sauerstoffmangel', erklaerung: 'In tiefen, ruhigen Meeresbecken gelangt kaum frischer Sauerstoff zum Meeresboden. Ohne Sauerstoff können keine Bakterien das tote Material vollständig zersetzen.' },
+          { begriff: 'Verwesung', erklaerung: 'Normale Verwesung braucht Sauerstoff. Fehlt er, bleibt das organische Material erhalten und wird zu Faulschlamm.' },
+          { begriff: 'Muttergestein (Fachbegriff)', erklaerung: 'Aus dem Faulschlamm entsteht später durch Druck und Zeit das sogenannte Muttergestein – das Gestein, in dem das Erdöl tatsächlich gebildet wird.' }
+        ]
+      },
+      quiz: {
+        frage: 'Warum verwesen die abgestorbenen Lebewesen am Meeresboden nicht?',
+        antworten: [
+          { text: 'Weil das Wasser zu kalt ist.', richtig: false },
+          { text: 'Weil am Meeresboden Sauerstoffmangel herrscht.', richtig: true },
+          { text: 'Weil sie sofort von Fischen gefressen werden.', richtig: false }
+        ],
+        feedback_richtig: 'Richtig! Ohne Sauerstoff können die Lebewesen nicht verwesen – das ist die entscheidende Bedingung für die Bildung von Faulschlamm.',
+        feedback_falsch: 'Schau noch einmal in den Text: Was fehlt am Meeresboden, damit normale Verwesung stattfinden könnte?'
+      }
+    },
+    {
+      id: 'sediment',
+      titel: 'Sedimentschichten',
+      symbol: '🏔️',
+      text: 'Im Laufe der Zeit werden über dem Faulschlamm immer neue <strong>Sedimentschichten</strong> abgelagert. Sand, Ton und andere Bestandteile sinken aus dem Wasser nach unten und legen sich Schicht für Schicht auf den Faulschlamm. Diese Schichten werden immer dicker und schwerer. Der Faulschlamm wird dadurch tiefer und tiefer in die Erde gedrückt.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Sedimentschichten', erklaerung: 'Schichten aus unterschiedlichen Gesteinen. Sie bilden sich, wenn Sand und Ton sich am Meeresboden ablagern und sich übereinander stapeln.' },
+          { begriff: 'Was bewirken die Schichten?', erklaerung: 'Sie sind sehr schwer und drücken alles, was darunter liegt, immer weiter nach unten – wichtig für die nächste Station.' }
+        ]
+      },
+      quiz: {
+        frage: 'Welche Rolle spielen die Sedimentschichten?',
+        antworten: [
+          { text: 'Sie bringen frischen Sauerstoff zum Faulschlamm.', richtig: false },
+          { text: 'Sie drücken den Faulschlamm in immer größere Tiefen.', richtig: true },
+          { text: 'Sie lösen den Faulschlamm wieder auf.', richtig: false }
+        ],
+        feedback_richtig: 'Richtig! Durch das Gewicht der Sedimentschichten wandert der Faulschlamm in immer größere Tiefen.',
+        feedback_falsch: 'Überlege noch einmal: Was passiert mit dem Faulschlamm, wenn immer mehr Schichten darüber liegen?'
+      }
+    },
+    {
+      id: 'druck',
+      titel: 'Druck, Hitze, Zeit',
+      symbol: '🔥',
+      text: 'In großer Tiefe herrschen <strong>hoher Druck und hohe Temperatur</strong>. Über <strong>viele Millionen Jahre</strong> wandelt sich der Faulschlamm langsam in ein neues Gestein um. In diesem Gestein entstehen aus den ursprünglichen Eiweißen, Fetten und Kohlenhydraten der Lebewesen neue <strong>Kohlenstoff-Verbindungen</strong> aus Kohlenstoff und Wasserstoff. Das sind genau die Stoffe, die du schon kennst – die <strong>Alkane</strong>! Erdöl ist also ein Gemisch aus vielen verschiedenen Alkanen. Erdgas besteht vor allem aus dem kürzesten Alkan: Methan.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Warum gerade Alkane?', erklaerung: 'Die Lebewesen bestanden aus Kohlenstoff, Wasserstoff, Sauerstoff und Stickstoff. Bei Sauerstoffmangel und hohem Druck werden vor allem die Sauerstoff- und Stickstoff-Anteile abgebaut. Übrig bleiben Verbindungen aus Kohlenstoff und Wasserstoff – also Alkane.' },
+          { begriff: 'Wie lange dauert das?', erklaerung: 'Mindestens 10 000 Jahre, meistens aber viele Millionen Jahre.' },
+          { begriff: 'Muttergestein (Fachbegriff)', erklaerung: 'Das Gestein, das aus dem Faulschlamm entsteht und in dem sich die Kohlenwasserstoffe bilden, heißt fachsprachlich Muttergestein.' },
+          { begriff: 'Methan (Vertiefung)', erklaerung: 'Das einfachste Alkan (CH₄) ist der Hauptbestandteil von Erdgas. Längere Alkane (z. B. C₈H₁₈ Oktan) finden sich im Erdöl.' }
+        ]
+      },
+      quiz: {
+        frage: 'Aus welchen Atomen bestehen die Alkane, die unter Druck und Hitze entstehen?',
+        antworten: [
+          { text: 'Kohlenstoff und Sauerstoff', richtig: false },
+          { text: 'Kohlenstoff und Wasserstoff', richtig: true },
+          { text: 'Stickstoff und Sauerstoff', richtig: false }
+        ],
+        feedback_richtig: 'Genau! Alkane sind Kohlenwasserstoffe – sie bestehen ausschließlich aus Kohlenstoff- und Wasserstoff-Atomen. Erdöl ist also nichts anderes als ein Gemisch aus Alkanen.',
+        feedback_falsch: 'Erinnerst du dich an die Alkane aus dem Unterricht? Welche zwei Atomsorten kommen darin vor?'
+      }
+    },
+    {
+      id: 'wanderung',
+      titel: 'Wanderung',
+      symbol: '↗️',
+      text: 'Erdöl und Erdgas sind leichter als das Gestein, in dem sie entstanden sind. Deshalb steigen sie nach oben – sie wandern aus dem Gestein, in dem sie entstanden sind, durch darüberliegende durchlässige Schichten in ein <strong>poröses Gestein</strong>. Dieses Gestein ist wie ein Schwamm: Es hat viele kleine Hohlräume, in denen sich das Erdöl sammeln kann. Diese <strong>Wanderung</strong> kann viele Millionen Jahre dauern.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Warum steigt Erdöl auf?', erklaerung: 'Erdöl und Erdgas haben eine geringere Dichte als Wasser und Gestein. Wie Öl auf Wasser schwimmt, steigt auch Erdöl in den Gesteinsschichten nach oben.' },
+          { begriff: 'Drei Gesteinsarten (Fachbegriffe)', erklaerung: 'Das Gestein, in dem Erdöl entsteht, heißt Muttergestein. Darüber liegen durchlässige Trägergesteine, durch die das Öl wandert. Schließlich erreicht es ein poröses Speichergestein, in dem es sich sammeln kann.' },
+          { begriff: 'Migration (Fachbegriff)', erklaerung: 'Diese Wanderung wird in der Chemie und Geologie als „Migration" bezeichnet.' }
+        ]
+      },
+      quiz: {
+        frage: 'Warum wandern Erdöl und Erdgas nach oben?',
+        antworten: [
+          { text: 'Weil heißes Wasser sie nach oben drückt.', richtig: false },
+          { text: 'Weil sie eine geringere Dichte haben als das umgebende Gestein und Wasser.', richtig: true },
+          { text: 'Weil Tiere sie an die Oberfläche tragen.', richtig: false }
+        ],
+        feedback_richtig: 'Richtig! Wegen ihrer geringeren Dichte steigen Erdöl und Erdgas nach oben – solange sie auf ihrem Weg nicht von einer undurchlässigen Schicht gestoppt werden.',
+        feedback_falsch: 'Denke an Öl auf Wasser: Warum schwimmt es oben? Genau dasselbe Prinzip wirkt hier.'
+      }
+    },
+    {
+      id: 'lagerstaette',
+      titel: 'Lagerstätte',
+      symbol: '🛢️',
+      text: 'Wenn Erdöl und Erdgas bei ihrer Wanderung nach oben auf eine <strong>undurchlässige Schicht</strong> treffen, können sie nicht weiter aufsteigen. Sie sammeln sich darunter an. So entsteht eine <strong>Lagerstätte</strong>. Weil Erdgas leichter ist als Erdöl, sammelt es sich ganz oben – direkt unter der undurchlässigen Schicht. Darunter liegt das Erdöl. Aus solchen Lagerstätten werden heute Erdöl und Erdgas durch Bohrungen gefördert.',
+      hilfe: {
+        titel: 'Wenn du mehr wissen willst',
+        eintraege: [
+          { begriff: 'Undurchlässige Schicht', erklaerung: 'Eine Gesteinsschicht, durch die weder Öl noch Gas hindurchkommen – meist Ton oder Salz.' },
+          { begriff: 'Bohrungen', erklaerung: 'Mit großen Bohrtürmen werden Lagerstätten an Land erreicht; im Meer kommen Bohrinseln zum Einsatz.' },
+          { begriff: 'Deckgestein (Fachbegriff)', erklaerung: 'Die undurchlässige Schicht heißt fachsprachlich „Deckgestein". Das poröse Gestein darunter, in dem sich das Erdöl sammelt, heißt „Speichergestein".' }
+        ]
+      },
+      quiz: {
+        frage: 'Wodurch entsteht eine Erdöl-Lagerstätte?',
+        antworten: [
+          { text: 'Durch eine künstliche Bohrung', richtig: false },
+          { text: 'Wenn Erdöl bei seiner Wanderung auf eine undurchlässige Schicht trifft und sich darunter sammelt', richtig: true },
+          { text: 'Durch einen Vulkanausbruch im Meer', richtig: false }
+        ],
+        feedback_richtig: 'Genau! Ohne eine undurchlässige Schicht würde das Erdöl bis an die Erdoberfläche aufsteigen und dort verdunsten.',
+        feedback_falsch: 'Schau noch einmal in den Text – was muss zusätzlich zum Faulschlamm und zum Druck noch da sein, damit eine Lagerstätte entsteht?'
+      }
+    }
+  ];
+
+  const besucht = new Set();
+
+  // ============ SVG-QUERSCHNITTSGRAFIK ============
+  // FESTE KOORDINATENTABELLE (konsistent über alle Stationen):
+  //   y=0–90    Himmel
+  //   y=90–220  Meer (immer wenn Meer sichtbar)
+  //   y=220–235 Meeresboden
+  //   y=235–285 Sedimentschichten (ab Station 4)
+  //   y=285–335 Speichergestein (Station 6–7) / Faulschlamm (Station 3–4)
+  //   y=335–380 Trägergestein (ab Station 6)
+  //   y=380–420 Muttergestein (ab Station 5)
+  //   y=420–450 Grundgestein
+
+  function svgGrafik(stationId) {
+
+    const s = {
+      plankton:     { meeresboden:false, sediment:false, faulschlamm:false, muttergestein:false, traegergestein:false, speichergestein:false },
+      absterben:    { meeresboden:true,  sediment:false, faulschlamm:false, muttergestein:false, traegergestein:false, speichergestein:false },
+      faulschlamm:  { meeresboden:true,  sediment:false, faulschlamm:true,  muttergestein:false, traegergestein:false, speichergestein:false },
+      sediment:     { meeresboden:true,  sediment:true,  faulschlamm:true,  muttergestein:false, traegergestein:false, speichergestein:false },
+      druck:        { meeresboden:true,  sediment:true,  faulschlamm:true,  muttergestein:true,  traegergestein:false, speichergestein:false },
+      wanderung:    { meeresboden:true,  sediment:true,  faulschlamm:false, muttergestein:true,  traegergestein:true,  speichergestein:true  },
+      lagerstaette: { meeresboden:true,  sediment:true,  faulschlamm:false, muttergestein:true,  traegergestein:true,  speichergestein:true  },
+    }[stationId] || {};
+
+    const hervorgehoben = {
+      plankton:     ['meer','plankton-lebend'],
+      absterben:    ['meer','plankton-sinkend','meeresboden'],
+      faulschlamm:  ['meeresboden','faulschlamm'],
+      sediment:     ['faulschlamm','sediment'],
+      druck:        ['faulschlamm','muttergestein','druck-pfeile','alkane'],
+      wanderung:    ['muttergestein','traegergestein','speichergestein','oeltropfen','oel-sammlung'],
+      lagerstaette: ['speichergestein','deckgestein','lagerstaette'],
+    }[stationId] || [];
+
+    const dim = id => hervorgehoben.includes(id) ? 'hervorgehoben' : 'gedimmt';
+    const grp = (id, anim) => `element ${dim(id)}${anim ? ' '+anim : ''}`;
+    const lbl = (x, y, text, size=13) =>
+      `<text x="${x}" y="${y}" text-anchor="middle" class="svg-beschriftung" style="font-size:${size}px">${text}</text>`;
+
+    const planktonPos = [
+      [120,130],[180,150],[240,120],[300,160],[360,135],[420,155],[480,125],[540,150],[600,140],[660,160],
+      [150,180],[220,200],[290,185],[360,195],[440,180],[510,200],[580,190],[660,195],
+      [200,210],[330,165],[470,210],[620,170],[700,200]
+    ];
+    const planktonLebend = planktonPos.map(([x,y]) =>
+      `<circle class="plankton-zelle" data-x="${x}" data-y="${y}" cx="${x}" cy="${y}" r="3.5" fill="#5ab84d" stroke="#2d6f24" stroke-width="0.6"/>`
+    ).join('');
+    const planktonSinkend = planktonPos.map(([x,y], i) =>
+      `<circle class="plankton-sinkend" data-startx="${x}" data-starty="${y}" data-zielx="${x+(Math.random()*30-15)}" data-delay="${i*180}" cx="${x}" cy="${y}" r="3.5" fill="#5ab84d" stroke="#2d6f24" stroke-width="0.6"/>`
+    ).join('');
+
+    const alkane = [180,270,360,450,540,630].map(x => `
+      <g transform="translate(${x},400)" class="anim-alkane">
+        <circle cx="0" cy="0" r="6" fill="#2c2c2c"/>
+        <circle cx="-8" cy="-6" r="3" fill="#fff" stroke="#2c2c2c" stroke-width="0.7"/>
+        <circle cx="8" cy="-6" r="3" fill="#fff" stroke="#2c2c2c" stroke-width="0.7"/>
+        <circle cx="-8" cy="6" r="3" fill="#fff" stroke="#2c2c2c" stroke-width="0.7"/>
+        <circle cx="8" cy="6" r="3" fill="#fff" stroke="#2c2c2c" stroke-width="0.7"/>
+      </g>`).join('');
+
+    const druckPfeile = [160,300,460,620].map(x => `
+      <g class="anim-druecken-pfeile">
+        <line x1="${x}" y1="242" x2="${x}" y2="278" stroke="#d04040" stroke-width="3.5" stroke-linecap="round"/>
+        <polygon points="${x-7},275 ${x+7},275 ${x},287" fill="#d04040"/>
+      </g>`).join('');
+
+    const oelTropfen = [200,360,520,680].map((x,i) => `
+      <ellipse class="anim-aufsteigen-langsam" style="animation-delay:${i*1.2}s"
+               cx="${x}" cy="405" rx="5" ry="7" fill="#2a1a08"/>`).join('');
+
+    const oelSammlung = `
+      <g class="anim-oel-sammeln">
+        <rect x="80" y="320" width="640" height="10" rx="5" fill="#2a1a08" opacity="0.6"/>
+        ${lbl(400, 332, 'Erdöl (sammelt sich)', 11)}
+      </g>`;
+
+    const antiklinalePfad = `M 180,285 Q 400,252 620,285`;
+    const lagerstaette = `
+      <g id="gruppe-deckgestein" class="${grp('deckgestein')}">
+        <path d="${antiklinalePfad} L 620,270 Q 400,237 180,270 Z" fill="#3a3027"/>
+        ${lbl(400, 258, 'undurchlässige Schicht', 12)}
+      </g>
+      <g id="gruppe-lagerstaette" class="${grp('lagerstaette')}">
+        <path d="${antiklinalePfad} Q 400,268 180,285 Z" fill="#f0e68c" opacity="0.9"/>
+        ${lbl(400, 278, 'Erdgas', 11)}
+        <rect x="130" y="294" width="540" height="24" rx="4" fill="#3a2410" opacity="0.85"/>
+        ${lbl(400, 310, 'Erdöl', 11)}
+      </g>`;
+
+    return `
+      <div class="svg-container">
+        <svg viewBox="0 0 800 450" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="xMidYMid slice">
+
+          <!-- HIMMEL -->
+          <rect x="0" y="0" width="800" height="90" fill="#cfe7f5"/>
+          <circle cx="700" cy="40" r="22" fill="#ffd66e" opacity="0.9"/>
+
+          <!-- GENERISCHER UNTERGRUND (verhindert Lücken ab Meeresboden) -->
+          ${s.meeresboden ? `<rect x="0" y="220" width="800" height="230" fill="#7a6248"/>` : ''}
+
+          <!-- MEER -->
+          <g class="${grp('meer')}">
+            <rect x="0" y="90" width="800" height="${(s.sediment && !s.speichergestein) ? 195 : 130}" fill="#4ba3d4"/>
+            <path d="M0,95 Q40,90 80,95 T160,95 T240,95 T320,95 T400,95 T480,95 T560,95 T640,95 T720,95 T800,95"
+                  fill="none" stroke="#7fc1de" stroke-width="1.5"/>
+          </g>
+
+          <!-- PLANKTON LEBEND (Station 1) -->
+          ${stationId==='plankton' ? `<g class="${grp('plankton-lebend')}">${planktonLebend}</g>` : ''}
+
+          <!-- PLANKTON SINKEND + SAMMELSCHICHT (Station 2) -->
+          ${stationId==='absterben' ? `
+          <g class="${grp('plankton-sinkend')}">${planktonSinkend}</g>
+          <g style="opacity:0;animation:erscheinen 2s ease-in forwards 4.5s">
+            <rect x="0" y="218" width="800" height="4" fill="#5a8a3a"/>
+            ${lbl(400, 215, 'abgestorbene Lebewesen', 10)}
+          </g>` : ''}
+
+          <!-- MEERESBODEN (ab Station 2, fest bei y=220) -->
+          ${s.meeresboden ? `
+          <g class="${grp('meeresboden')}">
+            <rect x="0" y="220" width="800" height="15" fill="#c9a87a"/>
+          </g>` : ''}
+
+          <!-- SEDIMENTSCHICHTEN (ab Station 4, y=235–285) -->
+          ${s.sediment ? `
+          ${stationId==='sediment' ? `
+          <!-- Rieselnde Sediment-Partikel aus dem Wasser -->
+          <g>
+            ${[80,160,240,320,400,480,560,640,720].map((x,i) => `
+              <circle class="anim-rieseln" style="animation-delay:${i*0.3}s;transform-origin:${x}px 235px"
+                      cx="${x}" cy="235" r="1.3" fill="#a89070" opacity="0"/>
+              <circle class="anim-rieseln" style="animation-delay:${(i*0.3)+1}s;transform-origin:${x+25}px 235px"
+                      cx="${x+25}" cy="235" r="1" fill="#9a8060" opacity="0"/>
+            `).join('')}
+          </g>` : ''}
+          <g class="${grp('sediment', stationId==='sediment' ? 'anim-sediment-herabsinken' : '')}">
+            <rect x="0" y="235" width="800" height="50" fill="#b8956b"/>
+            <circle cx="130" cy="250" r="1.5" fill="#8a6b3d"/>
+            <circle cx="260" cy="265" r="1.5" fill="#8a6b3d"/>
+            <circle cx="400" cy="255" r="1.5" fill="#8a6b3d"/>
+            <circle cx="540" cy="270" r="1.5" fill="#8a6b3d"/>
+            <circle cx="680" cy="252" r="1.5" fill="#8a6b3d"/>
+            <circle cx="200" cy="278" r="1.5" fill="#8a6b3d"/>
+            <circle cx="340" cy="244" r="1.5" fill="#8a6b3d"/>
+            <circle cx="470" cy="278" r="1.5" fill="#8a6b3d"/>
+            ${lbl(400, 264, 'Sedimentschichten')}
+          </g>` : ''}
+
+          <!-- FAULSCHLAMM (Stationen 3, 4, Anfang 5) -->
+          ${s.faulschlamm ? stationId==='faulschlamm' ? `
+          <!-- Station 3: organisches Material → Faulschlamm Übergang -->
+          <!-- Grüne Vorgängerschicht (schmale Schicht, verschwindet langsam) -->
+          <g class="anim-lebewesen-aufgehen">
+            <rect x="0" y="235" width="800" height="6" fill="#5a8a3a"/>
+            ${lbl(400, 232, 'organisches Material', 10)}
+          </g>
+          <!-- O₂-Mangel -->
+          <g class="anim-o2-fehlt">
+            <circle cx="115" cy="175" r="15" fill="#fff" stroke="#d04040" stroke-width="2.5"/>
+            <text x="115" y="180" text-anchor="middle" font-size="13" font-weight="bold" fill="#2c2c2c">O₂</text>
+            <line x1="100" y1="162" x2="130" y2="188" stroke="#d04040" stroke-width="2.5" stroke-linecap="round"/>
+            <text x="155" y="180" font-size="12" font-weight="600" fill="#d04040"
+                  style="paint-order:stroke;stroke:rgba(255,255,255,0.9);stroke-width:3px">kein Sauerstoff</text>
+          </g>
+          <!-- Faulschlamm entsteht: braune Schicht über der grünen, eingeblendet per opacity -->
+          <g class="${grp('faulschlamm')}">
+            <!-- Grüne Basisschicht (sofort sichtbar, wird überdeckt) -->
+            <rect x="0" y="235" width="800" height="50" fill="#5a8a3a" opacity="0.5"/>
+            <!-- Dunkelbraune Schicht darüber, eingeblendet über 5 Sekunden mit 2s Delay -->
+            <rect x="0" y="235" width="800" height="50" fill="#3a2f1a"
+                  style="opacity:0;animation:erscheinen 5s ease-in-out forwards 2s"/>
+          </g>
+          <g style="opacity:0;animation:erscheinen 1.5s ease-in forwards 6s">
+            ${lbl(400, 265, 'Faulschlamm')}
+          </g>
+          ` : `
+          <!-- Stationen 4+5: Faulschlamm statisch -->
+          <g class="${grp('faulschlamm', stationId==='druck' ? 'anim-faulschlamm-vergehen' : '')}">
+            <rect x="0" y="${s.sediment ? 285 : 235}" width="800" height="50" fill="#3a2f1a"/>
+            ${lbl(400, s.sediment ? 315 : 263, 'Faulschlamm')}
+          </g>` : ''}
+
+          <!-- SPEICHERGESTEIN (porös, y=285–335, ab Station 6) -->
+          ${s.speichergestein ? `
+          <g class="${grp('speichergestein', stationId==='wanderung' ? 'anim-erscheinen' : '')}">
+            <rect x="0" y="285" width="800" height="50" fill="#d4a87a"/>
+            <circle cx="100" cy="298" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="220" cy="312" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="340" cy="297" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="460" cy="314" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="580" cy="300" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="700" cy="312" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="160" cy="325" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="400" cy="328" r="2.5" fill="#fff" opacity="0.7"/>
+            <circle cx="640" cy="326" r="2.5" fill="#fff" opacity="0.7"/>
+            ${stationId!=='lagerstaette' ? lbl(400, 319, 'poröses Speichergestein', 12) : ''}
+          </g>` : ''}
+
+          <!-- ÖL-TRÖPFCHEN + SAMMLUNG (Station 6) -->
+          ${stationId==='wanderung' ? `
+          <g class="${grp('oeltropfen')}">${oelTropfen}</g>
+          <g class="${grp('oel-sammlung')}">${oelSammlung}</g>` : ''}
+
+          <!-- TRÄGERGESTEIN (durchlässig, y=335–380, ab Station 6) -->
+          ${s.traegergestein ? `
+          <g class="${grp('traegergestein', stationId==='wanderung' ? 'anim-erscheinen' : '')}">
+            <rect x="0" y="335" width="800" height="45" fill="#a89070"/>
+            <line x1="80"  y1="340" x2="120" y2="375" stroke="#7a6248" stroke-width="0.8" opacity="0.6"/>
+            <line x1="220" y1="338" x2="260" y2="376" stroke="#7a6248" stroke-width="0.8" opacity="0.6"/>
+            <line x1="380" y1="340" x2="430" y2="378" stroke="#7a6248" stroke-width="0.8" opacity="0.6"/>
+            <line x1="530" y1="338" x2="580" y2="376" stroke="#7a6248" stroke-width="0.8" opacity="0.6"/>
+            <line x1="670" y1="340" x2="710" y2="377" stroke="#7a6248" stroke-width="0.8" opacity="0.6"/>
+            ${lbl(400, 361, 'Trägergestein (durchlässig)', 12)}
+          </g>` : ''}
+
+          <!-- MUTTERGESTEIN (y=380–420 in Stationen 6+7; y=285 in Station 5) -->
+          ${s.muttergestein ? `
+          <g class="${grp('muttergestein', stationId==='druck' ? 'anim-muttergestein-entstehen' : '')}">
+            ${stationId==='druck' ? `
+            <rect x="0" y="285" width="800" height="50" fill="#4a3a26"/>
+            ${lbl(400, 315, 'Muttergestein', 12)}
+            ` : `
+            <rect x="0" y="380" width="800" height="40" fill="#4a3a26"/>
+            ${lbl(400, 405, 'Muttergestein', 12)}
+            `}
+          </g>` : ''}
+
+          <!-- DRUCK-PFEILE (Station 5) -->
+          ${stationId==='druck' ? `<g class="${grp('druck-pfeile')}">${druckPfeile}</g>` : ''}
+
+          <!-- ALKANE (Station 5) -->
+          ${stationId==='druck' ? `<g class="${grp('alkane')}">${alkane}</g>` : ''}
+
+          <!-- LAGERSTÄTTE (Station 7) -->
+          ${stationId==='lagerstaette' ? lagerstaette : ''}
+
+          <!-- GRUNDGESTEIN (immer) -->
+          <rect x="0" y="420" width="800" height="30" fill="#2a2218"/>
+
+        </svg>
+      </div>
+    `;
+  }
+
+
+    // ============ PLANKTON-BEWEGUNG ============
+  // Plankton bewegt sich randomisiert im Wasser (Station 1) bzw. sinkt ab (Station 2).
+  // Wird nach dem Rendern der Station ausgeführt.
+  let planktonAnimationId = null;
+
+  function planktonBewegen() {
+    // Bestehende Animation stoppen
+    if (planktonAnimationId !== null) {
+      cancelAnimationFrame(planktonAnimationId);
+      planktonAnimationId = null;
+    }
+
+    const lebende = document.querySelectorAll('.plankton-zelle');
+    if (lebende.length === 0) return;
+
+    // Jeder Punkt bekommt eine eigene Bewegungs-„Persönlichkeit"
+    const punkte = Array.from(lebende).map(el => ({
+      el: el,
+      basisX: parseFloat(el.getAttribute('data-x')),
+      basisY: parseFloat(el.getAttribute('data-y')),
+      phaseX: Math.random() * Math.PI * 2,
+      phaseY: Math.random() * Math.PI * 2,
+      speedX: 0.4 + Math.random() * 0.5,
+      speedY: 0.3 + Math.random() * 0.4,
+      amplX: 6 + Math.random() * 8,
+      amplY: 4 + Math.random() * 6
+    }));
+
+    const start = performance.now();
+    function tick(now) {
+      const t = (now - start) / 1000;
+      punkte.forEach(p => {
+        const dx = Math.sin(t * p.speedX + p.phaseX) * p.amplX;
+        const dy = Math.sin(t * p.speedY + p.phaseY) * p.amplY;
+        p.el.setAttribute('cx', p.basisX + dx);
+        p.el.setAttribute('cy', p.basisY + dy);
+      });
+      planktonAnimationId = requestAnimationFrame(tick);
+    }
+    planktonAnimationId = requestAnimationFrame(tick);
+  }
+
+  function planktonAbsinkenStarten() {
+    // Bestehende Animation stoppen
+    if (planktonAnimationId !== null) {
+      cancelAnimationFrame(planktonAnimationId);
+      planktonAnimationId = null;
+    }
+
+    const sinkende = document.querySelectorAll('.plankton-sinkend');
+    if (sinkende.length === 0) return;
+
+    // Jeder Partikel: erst kurz im Wasser zappeln, dann verzögert absinken
+    const partikel = Array.from(sinkende).map(el => ({
+      el: el,
+      startX: parseFloat(el.getAttribute('data-startx')),
+      startY: parseFloat(el.getAttribute('data-starty')),
+      zielX:  parseFloat(el.getAttribute('data-zielx')),
+      delay:  parseFloat(el.getAttribute('data-delay')),  // ms
+      sinkdauer: 2500 + Math.random() * 1500,  // ms
+      phaseX: Math.random() * Math.PI * 2,
+      speedX: 0.6 + Math.random() * 0.4,
+      amplX: 4 + Math.random() * 4,
+      farbeWechsel: false
+    }));
+
+    const start = performance.now();
+    function tick(now) {
+      const t = (now - start);  // ms
+      partikel.forEach(p => {
+        if (t < p.delay) {
+          // Noch im Wasser — randomisierte Bewegung an Startposition
+          const dx = Math.sin((t/1000) * p.speedX + p.phaseX) * p.amplX;
+          p.el.setAttribute('cx', p.startX + dx);
+          p.el.setAttribute('cy', p.startY);
+        } else {
+          // Sinkphase
+          const fortschritt = Math.min((t - p.delay) / p.sinkdauer, 1);
+          // Sanfter Übergang: ease-in
+          const f = fortschritt * fortschritt;
+          const cx = p.startX + (p.zielX - p.startX) * f;
+          const cy = p.startY + (220 - p.startY) * f;  // Zielboden y=220 (Meeresboden)
+          p.el.setAttribute('cx', cx);
+          p.el.setAttribute('cy', cy);
+          // Wenn am Boden angekommen, Farbe ändern (von lebend-grün zu organisch-braun)
+          if (fortschritt >= 1 && !p.farbeWechsel) {
+            p.el.setAttribute('fill', '#8a6b3d');
+            p.el.setAttribute('stroke', '#4d3a1f');
+            p.farbeWechsel = true;
+          }
+        }
+      });
+      planktonAnimationId = requestAnimationFrame(tick);
+    }
+    planktonAnimationId = requestAnimationFrame(tick);
+  }
+
+  // ============ STATIONEN MISCHEN (Fisher-Yates) ============
+  function mischen(array) {
+    const kopie = [...array];
+    for (let i = kopie.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [kopie[i], kopie[j]] = [kopie[j], kopie[i]];
+    }
+    return kopie;
+  }
+
+  // ============ KACHELN ERZEUGEN ============
+  function kachelnErzeugen() {
+    const gemischt = mischen(stationen);
+    const raster = document.getElementById('kachelraster');
+    raster.innerHTML = '';
+
+    gemischt.forEach(station => {
+      const kachel = document.createElement('button');
+      kachel.className = 'kachel' + (besucht.has(station.id) ? ' besucht' : '');
+      kachel.innerHTML = `
+        <div class="kachel-symbol">${station.symbol}</div>
+        <div class="kachel-titel">${station.titel}</div>
+      `;
+      kachel.onclick = () => stationOeffnen(station.id);
+      raster.appendChild(kachel);
+    });
+  }
+
+  // ============ STATION ÖFFNEN ============
+  function stationOeffnen(id) {
+    const station = stationen.find(s => s.id === id);
+    if (!station) return;
+
+    besucht.add(id);
+    fortschrittAktualisieren();
+
+    const inhalt = document.getElementById('stationsinhalt');
+
+    // Hilfe-Box nur anzeigen, wenn Einträge vorhanden
+    let hilfeHtml = '';
+    if (station.hilfe.eintraege.length > 0) {
+      hilfeHtml = `
+        <button class="hilfe-toggle" onclick="hilfeToggle(this)">
+          💡 ${station.hilfe.titel}
+        </button>
+        <div class="hilfe-inhalt">
+          <h4>Erklärungen</h4>
+          <dl>
+            ${station.hilfe.eintraege.map(e => `
+              <dt>${e.begriff}</dt>
+              <dd>${e.erklaerung}</dd>
+            `).join('')}
+          </dl>
+        </div>
+      `;
+    }
+
+    inhalt.innerHTML = `
+      <div class="station-symbol-gross">${station.symbol}</div>
+      <h2>${station.titel}</h2>
+      ${svgGrafik(station.id)}
+      <p class="station-text">${station.text}</p>
+      ${hilfeHtml}
+      <div class="quiz">
+        <h3>🤔 Selbstkontrolle</h3>
+        <p class="quiz-frage">${station.quiz.frage}</p>
+        <div id="antworten">
+          ${station.quiz.antworten.map((a, i) => `
+            <button class="antwort" onclick="antwortPruefen(this, ${a.richtig}, '${station.id}')">${a.text}</button>
+          `).join('')}
+        </div>
+        <div class="feedback" id="feedback"></div>
+      </div>
+    `;
+
+    document.getElementById('startseite').classList.remove('aktiv');
+    document.getElementById('stationsansicht').classList.add('aktiv');
+    window.scrollTo(0, 0);
+
+    // Plankton-Animation starten, je nach Station
+    if (id === 'plankton') {
+      planktonBewegen();
+    } else if (id === 'absterben') {
+      planktonAbsinkenStarten();
+    } else if (planktonAnimationId !== null) {
+      cancelAnimationFrame(planktonAnimationId);
+      planktonAnimationId = null;
+    }
+  }
+
+  // ============ HILFE-BOX TOGGLE ============
+  function hilfeToggle(button) {
+    const inhalt = button.nextElementSibling;
+    inhalt.classList.toggle('offen');
+  }
+
+  // ============ ANTWORT PRÜFEN ============
+  function antwortPruefen(button, richtig, stationId) {
+    const alle = button.parentElement.querySelectorAll('.antwort');
+    alle.forEach(b => b.disabled = true);
+    button.classList.add(richtig ? 'richtig' : 'falsch');
+
+    const station = stationen.find(s => s.id === stationId);
+    const feedback = document.getElementById('feedback');
+    feedback.className = 'feedback zeigen ' + (richtig ? 'gut' : 'nochmal');
+    feedback.textContent = richtig
+      ? (station.quiz.feedback_richtig || 'Richtig!')
+      : (station.quiz.feedback_falsch || 'Schau noch einmal in den Text.');
+  }
+
+  // ============ ZURÜCK ZUR STARTSEITE ============
+  function zurueckZurStartseite() {
+    // Laufende Animation stoppen
+    if (planktonAnimationId !== null) {
+      cancelAnimationFrame(planktonAnimationId);
+      planktonAnimationId = null;
+    }
+    document.getElementById('stationsansicht').classList.remove('aktiv');
+    document.getElementById('startseite').classList.add('aktiv');
+    kachelnErzeugen();
+    window.scrollTo(0, 0);
+  }
+
+  // ============ FORTSCHRITT AKTUALISIEREN ============
+  function fortschrittAktualisieren() {
+    const anzahl = besucht.size;
+    const gesamt = stationen.length;
+    document.getElementById('fortschritt').textContent =
+      `${anzahl} von ${gesamt} erkundet`;
+
+    // Zeitleisten-Fortschrittstext aktualisieren
+    const restlich = gesamt - anzahl;
+    const fortschrittText = document.getElementById('zeitleiste-fortschritt-text');
+    if (fortschrittText) {
+      if (restlich > 1) {
+        fortschrittText.textContent = `Noch ${restlich} Stationen übrig.`;
+      } else if (restlich === 1) {
+        fortschrittText.textContent = `Noch 1 Station übrig.`;
+      }
+    }
+
+    // Zeitleiste freischalten, wenn alle Stationen besucht
+    if (anzahl >= gesamt) {
+      zeitleisteFreischalten();
+    }
+  }
+
+  function zeitleisteFreischalten() {
+    const gesperrt = document.getElementById('zeitleiste-gesperrt');
+    const freigeschaltet = document.getElementById('zeitleiste-freigeschaltet');
+    if (gesperrt) gesperrt.style.display = 'none';
+    if (freigeschaltet) freigeschaltet.style.display = 'block';
+  }
+
+  // ============ INITIALISIERUNG ============
+  kachelnErzeugen();
+
+  // ============ LEHRKRAFT-MODUS (Strg+L) ============
+  // Schaltet alle Stationen als besucht frei und aktiviert die Zeitleiste sofort.
+  document.addEventListener('keydown', function(e) {
+    if (e.ctrlKey && e.key === 'l') {
+      e.preventDefault();
+      stationen.forEach(s => besucht.add(s.id));
+      fortschrittAktualisieren();
+      kachelnErzeugen();
+    }
+  });
+
+  // ============ ZEITLEISTE ============
+  const zeitleistenPhasen = [
+    {
+      min: 0, max: 14,
+      symbol: '🦠',
+      titel: 'Leben im Meer',
+      text: 'Vor etwa 500 Millionen Jahren: In den Meeren leben unzählige Kleinstlebewesen – das Plankton. Sie betreiben Fotosynthese und bauen ihre Körper aus Kohlenstoff-Verbindungen auf.',
+      zeit: 'vor ~500–400 Mio. Jahren'
+    },
+    {
+      min: 15, max: 29,
+      symbol: '⬇️',
+      titel: 'Absterben und Absinken',
+      text: 'Das Plankton stirbt und sinkt zum Meeresboden. Über Millionen Jahre sammeln sich gewaltige Mengen organisches Material am Grund.',
+      zeit: 'vor ~400–350 Mio. Jahren'
+    },
+    {
+      min: 30, max: 44,
+      symbol: '🟤',
+      titel: 'Faulschlammbildung',
+      text: 'Am Meeresboden herrscht Sauerstoffmangel. Das organische Material kann nicht verwesen – stattdessen bildet sich Faulschlamm aus Lebewesenresten und feinen Wasserbestandteilen.',
+      zeit: 'vor ~350–300 Mio. Jahren'
+    },
+    {
+      min: 45, max: 59,
+      symbol: '🏔️',
+      titel: 'Sedimentschichten',
+      text: 'Sand, Ton und andere Bestandteile lagern sich Schicht für Schicht über dem Faulschlamm ab. Ihr Gewicht drückt den Faulschlamm immer tiefer in die Erde.',
+      zeit: 'vor ~300–200 Mio. Jahren'
+    },
+    {
+      min: 60, max: 74,
+      symbol: '🔥',
+      titel: 'Druck, Hitze, Zeit',
+      text: 'In großer Tiefe wandelt sich der Faulschlamm unter hohem Druck und hoher Temperatur langsam in Muttergestein um. Darin bilden sich Kohlenwasserstoffe – die Alkane!',
+      zeit: 'vor ~200–100 Mio. Jahren'
+    },
+    {
+      min: 75, max: 89,
+      symbol: '↗️',
+      titel: 'Wanderung',
+      text: 'Erdöl und Erdgas steigen wegen ihrer geringeren Dichte aus dem Muttergestein durch durchlässiges Trägergestein nach oben ins poröse Speichergestein.',
+      zeit: 'vor ~100–10 Mio. Jahren'
+    },
+    {
+      min: 90, max: 100,
+      symbol: '🛢️',
+      titel: 'Lagerstätte',
+      text: 'Eine undurchlässige Schicht stoppt den Aufstieg. Erdgas sammelt sich oben, Erdöl darunter. So entsteht eine Lagerstätte, aus der wir heute Erdöl und Erdgas fördern.',
+      zeit: 'vor ~10 Mio. Jahren – heute'
+    }
+  ];
+
+  let zeitleisteInterval = null;
+  let zeitleisteLaeuft = false;
+
+  function zeitleisteAktualisieren(wert) {
+    const val = parseInt(wert);
+    const phase = zeitleistenPhasen.find(p => val >= p.min && val <= p.max);
+    if (!phase) return;
+
+    document.getElementById('zeitleiste-symbol').textContent = phase.symbol;
+    document.getElementById('zeitleiste-titel').textContent = phase.titel;
+    document.getElementById('zeitleiste-beschreibung').textContent = phase.text;
+
+    // Bewertungshinweis nur am Ende einblenden
+    const hinweis = document.getElementById('zeitleiste-hinweis');
+    if (val >= 90) {
+      hinweis.classList.add('sichtbar');
+    } else {
+      hinweis.classList.remove('sichtbar');
+    }
+
+    // ===== SVG-Grafik synchron steuern =====
+    // Alle Elemente: ID → Opacity pro Phase
+    const elemente = {
+      'zl-plankton':           val <= 29 ? 1 : 0,
+      'zl-sinkend':            val >= 15 && val <= 44 ? 1 : 0,
+      'zl-meeresboden':        1,
+      'zl-faulschlamm':        val >= 30 && val <= 44 ? 1 : 0,         // Faulschlamm direkt auf Boden (vor Sediment)
+      'zl-sediment':           val >= 45 ? 1 : 0,                       // Sedimentschichten
+      'zl-faulschlamm-tief':   val >= 45 && val <= 74 ? 1 : 0,         // Faulschlamm unter Sediment
+      'zl-druck':              val >= 60 && val <= 74 ? 1 : 0,          // Druck-Pfeile
+      'zl-muttergestein':      val >= 65 && val <= 74 ? 1 : 0,         // Muttergestein (ersetzt Faulschlamm)
+      'zl-alkane':             val >= 68 && val <= 74 ? 1 : 0,          // Alkane im Muttergestein
+      'zl-muttergestein-tief': val >= 75 ? 1 : 0,                       // Muttergestein tief (Station 6+7)
+      'zl-traeger':            val >= 75 ? 1 : 0,                       // Trägergestein
+      'zl-speicher':           val >= 75 ? 1 : 0,                       // Speichergestein
+      'zl-oeltropfen':         val >= 75 && val <= 89 ? 1 : 0,         // Öl-Tröpfchen steigen auf
+      'zl-lagerstaette':       val >= 90 ? 1 : 0,                       // Lagerstätte mit Deckgestein
+    };
+
+    // Faulschlamm-tief ausblenden wenn Muttergestein erscheint
+    if (val >= 65 && val <= 74) {
+      elemente['zl-faulschlamm-tief'] = Math.max(0, 1 - (val - 65) / 5);
+    }
+
+    for (const [id, opacity] of Object.entries(elemente)) {
+      const el = document.getElementById(id);
+      if (el) el.setAttribute('opacity', opacity);
+    }
+  }
+
+  function zeitleistePlayPause() {
+    const btn = document.getElementById('play-btn');
+    const slider = document.getElementById('zeitleiste-slider');
+
+    if (zeitleisteLaeuft) {
+      // Pause
+      clearInterval(zeitleisteInterval);
+      zeitleisteLaeuft = false;
+      btn.textContent = '▶ Abspielen';
+      btn.classList.remove('aktiv');
+    } else {
+      // Play
+      if (parseInt(slider.value) >= 100) slider.value = 0;
+      zeitleisteLaeuft = true;
+      btn.textContent = '⏸ Pause';
+      btn.classList.add('aktiv');
+
+      zeitleisteInterval = setInterval(() => {
+        let val = parseInt(slider.value);
+        if (val >= 100) {
+          clearInterval(zeitleisteInterval);
+          zeitleisteLaeuft = false;
+          btn.textContent = '▶ Abspielen';
+          btn.classList.remove('aktiv');
+          return;
+        }
+        slider.value = val + 1;
+        zeitleisteAktualisieren(slider.value);
+      }, 250); // 25 Sekunden für den kompletten Durchlauf
+    }
+  }
+
+  function zeitleisteZuruecksetzen() {
+    const slider = document.getElementById('zeitleiste-slider');
+    const btn = document.getElementById('play-btn');
+
+    if (zeitleisteLaeuft) {
+      clearInterval(zeitleisteInterval);
+      zeitleisteLaeuft = false;
+      btn.textContent = '▶ Abspielen';
+      btn.classList.remove('aktiv');
+    }
+    slider.value = 0;
+    zeitleisteAktualisieren(0);
+  }
+</script>
+
+</body>
+</html>
