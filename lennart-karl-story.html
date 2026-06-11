@@ -98,6 +98,8 @@
 </head>
 <body>
 <canvas id="c3d"></canvas>
+<div style="position:fixed;left:10px;bottom:max(8px,env(safe-area-inset-bottom));z-index:50;
+  font-size:10px;letter-spacing:.18em;opacity:.55;pointer-events:none;">BUILD 0.3</div>
 
 <!-- HUD -->
 <div id="hud">
@@ -434,6 +436,7 @@ const game = {
 const playerVel = new THREE.Vector3();
 const ballVel = new THREE.Vector3();
 let kickCooldown = 0;
+let ballPrevZ = 0;
 
 const pitch = buildBolzplatz();
 const player = buildPlayer();
@@ -475,6 +478,7 @@ const tmpV = new THREE.Vector3();
 
 function updatePlay(dt){
   keyboardInput();
+  ballPrevZ = ball.position.z;
   game.time += dt;
   kickCooldown = Math.max(0, kickCooldown - dt);
 
@@ -509,25 +513,22 @@ function updatePlay(dt){
   u.armL.rotation.x = -Math.sin(u.phase)*sw*.8;
   u.armR.rotation.x =  Math.sin(u.phase)*sw*.8;
 
-  // --- Dribbeln: enge Ballführung ---
+  // --- Dribbeln: enge Ballführung, positionsbasiert (Build 0.3) ---
   const toBall = tmpV.subVectors(ball.position, player.position); toBall.y = 0;
   const dist = toBall.length();
-  if(dist < .68 && kickCooldown <= 0 && speed > .6){
-    const dir = playerVel.clone().normalize();
-    const touch = wantsSprint ? 1.18 : 0.98;   // kürzere Touches = Ball bleibt am Fuß
-    ballVel.copy(dir).multiplyScalar(speed * touch + .5);
-    kickCooldown = .2;
+  const CONTROL_R = 2.0;   // Kontrollradius – skaliert später mit dem Attribut "Technik"
+  if(dist < CONTROL_R && speed > .3){
+    // Ball klebt weich an einem Punkt vor dem Fuß; beim Sprint bewusst lockerer
+    const forward = playerVel.clone().normalize();
+    const ahead = player.position.clone().addScaledVector(forward, .55);
+    ahead.y = .24;
+    const grip = wantsSprint ? 5 : 10;
+    ball.position.lerp(ahead, Math.min(1, grip*dt));
+    ballVel.copy(playerVel);
+  } else if(dist < .9 && speed <= .3){
+    // Spieler steht: Ball bleibt liegen
+    ballVel.multiplyScalar(Math.pow(.02, dt));
   }
-  // Führungs-Assistent: Ball wird weich auf den Laufweg gelenkt
-  // (CONTROL_R / ASSIST sind die Stellschrauben – skaliert später mit dem Attribut "Technik")
-  const CONTROL_R = 1.8, ASSIST = 10;
-  if(dist < CONTROL_R && speed > .4){
-    const ahead = player.position.clone().addScaledVector(playerVel.clone().normalize(), .5);
-    const want = tmpV.subVectors(ahead, ball.position).setY(0).multiplyScalar(ASSIST);
-    ballVel.lerp(want.clampLength(0, speed*1.5 + 2), Math.min(1, 6*dt));
-  }
-  // Stoppt der Spieler, bleibt der Ball liegen statt wegzurollen
-  if(dist < .9 && speed < .6) ballVel.multiplyScalar(Math.pow(.02, dt));
 
   // --- Ballphysik ---
   ballVel.multiplyScalar(Math.pow(.34, dt));   // Rollreibung
@@ -547,8 +548,7 @@ function updatePlay(dt){
   // --- Hütchen-Tore prüfen ---
   if(game.gateIndex < GATES.length){
     const gm = gateMeshes[game.gateIndex];
-    const prevZ = ball.position.z - ballVel.z*dt;   // Position letzter Frame (genähert)
-    const crossed = (prevZ - gm.z) * (ball.position.z - gm.z) <= 0 &&
+    const crossed = (ballPrevZ - gm.z) * (ball.position.z - gm.z) <= 0 &&
                     Math.abs(ball.position.x - gm.x) < GATE_HALF;
     if(crossed){
       gm.done = true;
