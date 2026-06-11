@@ -509,20 +509,25 @@ function updatePlay(dt){
   u.armL.rotation.x = -Math.sin(u.phase)*sw*.8;
   u.armR.rotation.x =  Math.sin(u.phase)*sw*.8;
 
-  // --- Dribbeln: Ball anschieben, wenn nah dran ---
+  // --- Dribbeln: enge Ballführung ---
   const toBall = tmpV.subVectors(ball.position, player.position); toBall.y = 0;
   const dist = toBall.length();
-  if(dist < .62 && kickCooldown <= 0 && speed > .6){
+  if(dist < .68 && kickCooldown <= 0 && speed > .6){
     const dir = playerVel.clone().normalize();
-    const touch = wantsSprint ? 1.45 : 1.18;
-    ballVel.copy(dir).multiplyScalar(speed * touch + 1.2);
-    kickCooldown = .22;
+    const touch = wantsSprint ? 1.18 : 0.98;   // kürzere Touches = Ball bleibt am Fuß
+    ballVel.copy(dir).multiplyScalar(speed * touch + .5);
+    kickCooldown = .2;
   }
-  // sanfter Magnet: Ball bleibt führbar
-  if(dist < 1.1 && speed > .6 && ballVel.length() < speed*1.6){
-    const ahead = player.position.clone().addScaledVector(playerVel.clone().normalize(), .55);
-    ballVel.addScaledVector(tmpV.subVectors(ahead, ball.position).setY(0), 2.2*dt*6);
+  // Führungs-Assistent: Ball wird weich auf den Laufweg gelenkt
+  // (CONTROL_R / ASSIST sind die Stellschrauben – skaliert später mit dem Attribut "Technik")
+  const CONTROL_R = 1.8, ASSIST = 10;
+  if(dist < CONTROL_R && speed > .4){
+    const ahead = player.position.clone().addScaledVector(playerVel.clone().normalize(), .5);
+    const want = tmpV.subVectors(ahead, ball.position).setY(0).multiplyScalar(ASSIST);
+    ballVel.lerp(want.clampLength(0, speed*1.5 + 2), Math.min(1, 6*dt));
   }
+  // Stoppt der Spieler, bleibt der Ball liegen statt wegzurollen
+  if(dist < .9 && speed < .6) ballVel.multiplyScalar(Math.pow(.02, dt));
 
   // --- Ballphysik ---
   ballVel.multiplyScalar(Math.pow(.34, dt));   // Rollreibung
