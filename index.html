@@ -725,6 +725,28 @@ function TeacherDashboard({ user, onLogout, cards, roundness, onShowAll }) {
         </div>
       </div>
 
+      {/* ── LENNART-KARL STORY ── */}
+      <div style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'28px 32px', marginTop:20 }}>
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:16, flexWrap:'wrap', gap:10 }}>
+          <div>
+            <div style={{ fontSize:15, fontWeight:800, marginBottom:4 }}>Lennart &amp; Karl – Story</div>
+            <div style={{ fontSize:13, color:'oklch(55% 0.01 260)' }}>Interne Story · nur im Lehrerbereich sichtbar</div>
+          </div>
+          <a href="lennart-karl-story.html" target="_blank" rel="noopener noreferrer" style={{
+            padding:'9px 18px', borderRadius:roundness, background:'oklch(60% 0.17 230)', color:'#fff',
+            fontFamily:'inherit', fontSize:13, fontWeight:700, textDecoration:'none', whiteSpace:'nowrap',
+          }}>In neuem Tab öffnen ↗</a>
+        </div>
+        <div style={{ borderRadius:roundness-4, overflow:'hidden', border:'1.5px solid oklch(91% 0.005 260)', background:'#fff' }}>
+          <iframe
+            src="lennart-karl-story.html"
+            title="Lennart & Karl Story"
+            style={{ width:'100%', height:520, border:'none', display:'block' }}
+            loading="lazy"
+          />
+        </div>
+      </div>
+
       {/* ── QR-CODE GENERATOR ── */}
       <div style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'28px 32px', marginTop:20 }}>
         <div style={{ fontSize:15, fontWeight:800, marginBottom:4 }}>QR-Code Generator</div>
