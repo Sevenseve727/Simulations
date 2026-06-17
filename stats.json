@@ -1,7 +1,7 @@
 {
-  "updated": "2026-06-16T09:23:54.142Z",
+  "updated": "2026-06-17T09:01:19.604Z",
   "paths": {
-    "/Simulations": 16,
+    "/Simulations": 17,
     "lernumgebung/chem/11": 5,
     "lernumgebung/chem/15": 4,
     "lernumgebung/chem/12": 4,
@@ -11,12 +11,8 @@
     "lernumgebung/chem/10": 1,
     "lernumgebung/phys/14": 1
   },
-  "total": 38,
+  "total": 39,
   "daily14": [
-    {
-      "day": "2026-06-03",
-      "hits": 2
-    },
     {
       "day": "2026-06-04",
       "hits": 1
@@ -67,6 +63,10 @@
     },
     {
       "day": "2026-06-16",
+      "hits": 1
+    },
+    {
+      "day": "2026-06-17",
       "hits": 0
     }
   ]
