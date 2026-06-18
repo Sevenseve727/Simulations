@@ -1,0 +1,1680 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>Vom Bolzplatz nach München – Ein Fan-Spiel</title>
+<style>
+  :root{
+    --gras:#1e4d2b; --wald:#0e2818; --kreide:#f4f1e4;
+    --abend:#f0a830; --rot:#c4302b; --ink:#10130e;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  html,body{width:100%;height:100%;overflow:hidden;background:var(--wald);
+    font-family:-apple-system,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+    touch-action:none;user-select:none;-webkit-user-select:none;color:var(--kreide);}
+  #c3d{position:fixed;inset:0;display:block;}
+  #build{position:fixed;left:10px;bottom:max(8px,env(safe-area-inset-bottom));z-index:50;
+    font-size:10px;letter-spacing:.18em;opacity:.55;pointer-events:none;}
+
+  .overlay{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;
+    background:radial-gradient(ellipse at 50% 30%, rgba(30,77,43,.92), rgba(14,40,24,.97));
+    z-index:30;padding:20px;}
+  .card{max-width:580px;width:100%;text-align:center;}
+  .eyebrow{font-size:12px;letter-spacing:.32em;text-transform:uppercase;color:var(--abend);margin-bottom:14px;}
+  h1{font-size:clamp(30px,6vw,52px);line-height:1.02;letter-spacing:-.01em;font-weight:800;text-transform:uppercase;}
+  h1 .thin{display:block;font-weight:300;font-size:.45em;letter-spacing:.18em;margin-top:8px;opacity:.85;}
+  h2{font-size:clamp(22px,4.5vw,34px);text-transform:uppercase;letter-spacing:.02em;margin-bottom:10px;}
+  .story{font-size:clamp(14px,2.4vw,17px);line-height:1.6;opacity:.92;margin:16px auto 6px;max-width:48ch;}
+  .aufgabe{margin:18px auto 0;max-width:48ch;border:1px solid rgba(244,241,228,.3);
+    border-left:4px solid var(--abend);padding:12px 16px;text-align:left;font-size:14px;line-height:1.5;
+    background:rgba(0,0,0,.18);}
+  .aufgabe b{color:var(--abend);letter-spacing:.12em;font-size:11px;display:block;margin-bottom:4px;}
+  .btn{display:inline-block;margin-top:26px;padding:16px 44px;font-size:17px;font-weight:800;
+    letter-spacing:.14em;text-transform:uppercase;color:var(--ink);background:var(--kreide);
+    border:none;border-radius:3px;cursor:pointer;box-shadow:0 4px 0 rgba(0,0,0,.35);}
+  .btn:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(0,0,0,.35);}
+  .btn.ghost{background:transparent;color:var(--kreide);border:1px solid rgba(244,241,228,.45);box-shadow:none;margin-left:10px;}
+  .footnote{position:absolute;bottom:14px;left:0;right:0;text-align:center;font-size:11px;opacity:.55;letter-spacing:.06em;padding:0 16px;}
+
+  .attrs{display:grid;grid-template-columns:1fr 1fr;gap:10px 26px;max-width:380px;margin:24px auto 0;text-align:left;}
+  .attr{font-size:11px;letter-spacing:.18em;text-transform:uppercase;opacity:.9;}
+  .attr .val{float:right;color:var(--abend);}
+  .bar{height:5px;background:rgba(244,241,228,.18);margin-top:5px;border-radius:2px;overflow:hidden;}
+  .bar i{display:block;height:100%;background:var(--abend);border-radius:2px;transition:width .6s;}
+
+  .optwrap{display:grid;gap:14px;margin-top:24px;}
+  @media(min-width:600px){.optwrap{grid-template-columns:1fr 1fr;}}
+  .opt{pointer-events:auto;cursor:pointer;text-align:left;padding:16px 18px;border-radius:4px;
+    border:1px solid rgba(244,241,228,.35);background:rgba(0,0,0,.22);color:var(--kreide);
+    font-family:inherit;transition:border-color .15s, background .15s;}
+  .opt:active{background:rgba(240,168,48,.18);border-color:var(--abend);}
+  .opt b{display:block;font-size:16px;text-transform:uppercase;letter-spacing:.06em;margin-bottom:6px;}
+  .opt p{font-size:13px;line-height:1.5;opacity:.85;margin-bottom:10px;}
+  .opt .fx{font-size:12px;letter-spacing:.06em;}
+  .fx .plus{color:#7dd87f;} .fx .minus{color:#e88b86;}
+
+  .stars{font-size:46px;letter-spacing:.18em;margin:8px 0 4px;}
+  .stars .off{opacity:.22;}
+  .resultzeit{font-size:15px;opacity:.85;}
+
+  #hud{position:fixed;inset:0;z-index:20;pointer-events:none;display:none;}
+  #topbar{position:absolute;top:max(10px,env(safe-area-inset-top));left:0;right:0;
+    display:flex;justify-content:center;gap:14px;align-items:center;}
+  .pill{background:rgba(14,40,24,.78);border:1px solid rgba(244,241,228,.22);border-radius:999px;
+    padding:8px 18px;font-size:14px;font-weight:700;letter-spacing:.08em;backdrop-filter:blur(4px);}
+  .pill small{font-weight:400;opacity:.7;font-size:10px;letter-spacing:.2em;display:block;text-transform:uppercase;}
+  #btnPause{position:absolute;top:max(10px,env(safe-area-inset-top));right:12px;pointer-events:auto;
+    width:42px;height:42px;border-radius:50%;border:1px solid rgba(244,241,228,.3);
+    background:rgba(14,40,24,.78);color:var(--kreide);font-size:17px;cursor:pointer;}
+
+  #stamina{position:absolute;right:24px;bottom:calc(150px + env(safe-area-inset-bottom));width:96px;height:7px;
+    background:rgba(0,0,0,.45);border-radius:4px;overflow:hidden;border:1px solid rgba(244,241,228,.25);}
+  #stamina i{display:block;height:100%;width:100%;background:var(--abend);}
+
+  #joyBase{position:absolute;width:120px;height:120px;border-radius:50%;
+    border:2px solid rgba(244,241,228,.35);background:rgba(244,241,228,.07);display:none;}
+  #joyKnob{position:absolute;width:54px;height:54px;border-radius:50%;
+    background:rgba(244,241,228,.85);left:33px;top:33px;box-shadow:0 2px 8px rgba(0,0,0,.4);}
+  #btnSprint{position:absolute;right:20px;bottom:calc(46px + env(safe-area-inset-bottom));
+    width:92px;height:92px;border-radius:50%;pointer-events:auto;
+    border:2px solid rgba(244,241,228,.4);background:rgba(196,48,43,.75);
+    color:var(--kreide);font-weight:800;font-size:13px;letter-spacing:.14em;cursor:pointer;}
+  #btnSprint.active{background:rgba(240,168,48,.9);color:var(--ink);}
+  #btnShoot{position:absolute;right:124px;bottom:calc(64px + env(safe-area-inset-bottom));
+    width:78px;height:78px;border-radius:50%;pointer-events:auto;display:none;
+    border:2px solid rgba(244,241,228,.4);background:rgba(244,241,228,.85);
+    color:var(--ink);font-weight:800;font-size:12px;letter-spacing:.12em;cursor:pointer;}
+  #btnPass{position:absolute;right:212px;bottom:calc(46px + env(safe-area-inset-bottom));
+    width:70px;height:70px;border-radius:50%;pointer-events:auto;display:none;
+    border:2px solid rgba(244,241,228,.4);background:rgba(29,79,140,.8);
+    color:var(--kreide);font-weight:800;font-size:12px;letter-spacing:.12em;cursor:pointer;}
+  #btnTrick{position:absolute;right:118px;bottom:calc(146px + env(safe-area-inset-bottom));
+    width:74px;height:74px;border-radius:50%;pointer-events:auto;display:none;
+    border:2px solid rgba(240,168,48,.6);background:rgba(240,168,48,.25);
+    color:var(--abend);font-weight:800;font-size:12px;letter-spacing:.1em;cursor:pointer;opacity:.45;transition:opacity .2s, transform .2s;}
+  #btnTrick.ready{opacity:1;box-shadow:0 0 18px rgba(240,168,48,.7);background:rgba(240,168,48,.85);color:var(--ink);}
+  #btnTrick.ready:active{transform:scale(.92);}
+  #witzWrap{position:absolute;left:24px;top:calc(58px + env(safe-area-inset-top));width:170px;}
+  #witzLabel{font-size:10px;letter-spacing:.24em;text-transform:uppercase;opacity:.7;margin-bottom:4px;}
+  #witz{height:9px;background:rgba(0,0,0,.45);border-radius:5px;overflow:hidden;border:1px solid rgba(240,168,48,.4);}
+  #witz i{display:block;height:100%;width:0%;background:linear-gradient(90deg,#f0a830,#ffd87a);transition:width .12s;}
+  #aim{position:absolute;width:30px;height:30px;border:2px solid var(--abend);border-radius:50%;
+    margin:-15px 0 0 -15px;pointer-events:none;display:none;box-shadow:0 0 10px rgba(240,168,48,.8);}
+  #aim::after{content:'';position:absolute;inset:11px;border-radius:50%;background:var(--abend);}
+  #touchHint{position:absolute;left:24px;bottom:calc(60px + env(safe-area-inset-bottom));
+    font-size:12px;opacity:.55;letter-spacing:.08em;max-width:150px;line-height:1.5;}
+
+  #flash{position:absolute;top:34%;left:0;right:0;text-align:center;font-size:clamp(26px,5vw,44px);
+    font-weight:800;text-transform:uppercase;letter-spacing:.1em;color:var(--abend);
+    opacity:0;transition:opacity .15s;text-shadow:0 3px 14px rgba(0,0,0,.5);}
+  #flash.bad{color:#e88b86;}
+
+  #rotate{display:none;}
+  @media (orientation:portrait){
+    #rotate{display:flex;position:fixed;inset:0;z-index:60;background:rgba(14,40,24,.96);
+      align-items:center;justify-content:center;flex-direction:column;gap:12px;text-align:center;padding:30px;}
+    #rotate .ico{font-size:48px;animation:spin 2.4s ease infinite;}
+    @keyframes spin{0%,60%,100%{transform:rotate(0)}30%{transform:rotate(90deg)}}
+  }
+</style>
+</head>
+<body>
+<canvas id="c3d"></canvas>
+<div id="build">BUILD 0.7</div>
+
+<div id="hud">
+  <div id="topbar">
+    <div class="pill"><small>Zeit</small><span id="hudZeit">0.0 s</span></div>
+    <div class="pill"><small id="hudObjLabel">Ziel</small><span id="hudObj">–</span></div>
+  </div>
+  <button id="btnPause">⏸</button>
+  <div id="stamina"><i id="staminaFill"></i></div>
+  <div id="joyBase"><div id="joyKnob"></div></div>
+  <button id="btnTrick">TRICK</button>
+  <button id="btnPass">PASS</button>
+  <button id="btnShoot">SCHUSS</button>
+  <button id="btnSprint">SPRINT</button>
+  <div id="witzWrap"><div id="witzLabel">Spielwitz</div><div id="witz"><i id="witzFill"></i></div></div>
+  <div id="touchHint">Linke Hälfte: Finger ziehen = laufen</div>
+  <div id="flash"></div>
+  <div id="aim"></div>
+</div>
+
+<div class="overlay" id="ovMenu">
+  <div class="card">
+    <div class="eyebrow">Ein inoffizielles Fan-Spiel · 5 Kapitel</div>
+    <h1>Vom Bolzplatz<br>nach München<span class="thin">Die Lennart-Karl-Story</span></h1>
+    <div class="attrs" id="menuAttrs"></div>
+    <button class="btn" id="btnStart">Anpfiff</button>
+    <div class="footnote">Fan-Projekt zu öffentlich bekannten Karrierestationen · nicht offiziell · deine Entscheidungen formen die Attribute</div>
+  </div>
+</div>
+
+<div class="overlay" id="ovStory" style="display:none">
+  <div class="card">
+    <div class="eyebrow" id="stEyebrow"></div>
+    <h2 id="stTitle"></h2>
+    <p class="story" id="stText"></p>
+    <div class="aufgabe"><b>Aufgabe</b><span id="stAufgabe"></span></div>
+    <button class="btn" id="btnPlay">Los geht's</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovDecision" style="display:none">
+  <div class="card">
+    <div class="eyebrow" id="dcEyebrow"></div>
+    <h2 id="dcTitle"></h2>
+    <p class="story" id="dcText"></p>
+    <div class="optwrap" id="dcOpts"></div>
+  </div>
+</div>
+
+<div class="overlay" id="ovPause" style="display:none">
+  <div class="card">
+    <h2>Pause</h2>
+    <button class="btn" id="btnResume">Weiter</button>
+    <button class="btn ghost" id="btnRestart">Neustart</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovResult" style="display:none">
+  <div class="card">
+    <div class="eyebrow" id="resEyebrow"></div>
+    <h2 id="resTitle">Abpfiff!</h2>
+    <div class="stars" id="resStars"></div>
+    <div class="resultzeit" id="resZeit"></div>
+    <p class="story" id="resText"></p>
+    <button class="btn" id="btnAgain">Nochmal</button>
+    <button class="btn ghost" id="btnNext">Weiter →</button>
+  </div>
+</div>
+
+<div class="overlay" id="ovEnd" style="display:none">
+  <div class="card">
+    <div class="eyebrow">Abspann · Die Lennart-Karl-Story</div>
+    <h2>Eine Reise</h2>
+    <p class="story" id="endText"></p>
+    <div class="attrs" id="endAttrs"></div>
+    <button class="btn" id="btnEndRestart">Von vorn</button>
+    <div class="footnote">Danke fürs Spielen · ein Fan-Projekt zu öffentlich bekannten Karrierestationen · nicht offiziell</div>
+  </div>
+</div>
+
+<div id="rotate"><div class="ico">📱</div><div><b>Dreh dein Tablet quer</b><br><span style="opacity:.7;font-size:14px">Das Spiel ist für Querformat gebaut.</span></div></div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+"use strict";
+/* =====================================================================
+   VOM BOLZPLATZ NACH MÜNCHEN – Build 0.5
+   + Entscheidung 2022, Kapitel 3 (3v3 am Bayern Campus), Pass-System
+   ===================================================================== */
+
+// ---------- Renderer & Szene ----------
+const canvas = document.getElementById('c3d');
+const renderer = new THREE.WebGLRenderer({canvas, antialias:true});
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 1.75));
+renderer.setSize(innerWidth, innerHeight);
+
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(46, innerWidth/innerHeight, 0.1, 200);
+
+const hemi = new THREE.HemisphereLight(0xffe6b0, 0x14301c, 0.85);
+scene.add(hemi);
+const sun = new THREE.DirectionalLight(0xffc878, 1.0);
+sun.position.set(-18, 26, 10);
+scene.add(sun);
+
+addEventListener('resize', () => {
+  camera.aspect = innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+
+// ---------- Helfer ----------
+const M = (g, m) => new THREE.Mesh(g, m);
+const mat = (c) => new THREE.MeshLambertMaterial({color:c});
+const tmpV = new THREE.Vector3(), tmpB = new THREE.Vector3(), tmpC = new THREE.Vector3(), tmpD = new THREE.Vector3();
+const clamp = THREE.MathUtils.clamp;
+
+function canvasTexture(size, draw){
+  const cv = document.createElement('canvas'); cv.width = cv.height = size;
+  draw(cv.getContext('2d'), size);
+  return new THREE.CanvasTexture(cv);
+}
+
+// ---------- Spielzustand ----------
+const FIELD = { w: 30, l: 44 };
+const GOAL_Z = -18, GOAL_HALF = 2.2;
+const BX = FIELD.w/2 - .6, BZ = FIELD.l/2 - .6;
+
+const game = {
+  state: 'menu',
+  chapter: 1,
+  time: 0,
+  stamina: 100,
+  finished: false,
+  attrs: { tempo:62, technik:70, abschluss:48, moral:80 },
+  decisions: {},
+};
+const playerVel = new THREE.Vector3();
+const ballVel = new THREE.Vector3();
+let ballPrevZ = 0, shotLock = 0;
+
+// Spielwitz-Meter + Zeitlupe
+let witz = 0;                 // 0..100
+let slowmo = 0;               // verbleibende Slowmo-Zeit (in Echtzeit-Sekunden)
+let timeScale = 1;            // globaler Zeitfaktor fürs Gameplay
+function addWitz(v){
+  witz = Math.min(100, witz + v);
+  const f = document.getElementById('witzFill'); if(f) f.style.width = witz + '%';
+  const bt = document.getElementById('btnTrick'); if(bt) bt.classList.toggle('ready', witz >= 100);
+}
+function triggerTrick(){
+  if(witz < 100 || slowmo > 0) return;
+  if(!CH[game.chapter].canTrick) return;
+  witz = 0; addWitz(0);
+  slowmo = 2.2;
+  flash('Spielwitz!');
+}
+
+// ---------- Gemeinsame Welt ----------
+const outer = M(new THREE.PlaneGeometry(220, 220), mat(0x1c3f26));
+outer.rotation.x = -Math.PI/2; outer.position.y = -0.02; scene.add(outer);
+
+function makeGoal(){
+  const g = new THREE.Group();
+  const postM = mat(0xf4f1e4);
+  const gp = new THREE.CylinderGeometry(0.07,0.07,2,8);
+  const l = M(gp,postM); l.position.set(-GOAL_HALF,1,0); g.add(l);
+  const r = M(gp,postM); r.position.set( GOAL_HALF,1,0); g.add(r);
+  const cb = M(new THREE.CylinderGeometry(0.07,0.07,GOAL_HALF*2,8), postM);
+  cb.rotation.z = Math.PI/2; cb.position.y = 2; g.add(cb);
+  const net = M(new THREE.PlaneGeometry(GOAL_HALF*2,2),
+    new THREE.MeshBasicMaterial({color:0xf4f1e4, wireframe:true, transparent:true, opacity:.28}));
+  net.position.set(0,1,-0.5); g.add(net);
+  return g;
+}
+const goalSouth = makeGoal(); goalSouth.position.set(0,0,GOAL_Z); scene.add(goalSouth);
+const goalNorth = makeGoal(); goalNorth.position.set(0,0,-GOAL_Z); goalNorth.rotation.y = Math.PI;
+goalNorth.visible = false; scene.add(goalNorth);
+
+// ---------- Figuren ----------
+function buildHumanoid(shirtC, shortsC, hairC){
+  const p = new THREE.Group();
+  const shirt = mat(shirtC), shorts = mat(shortsC), skin = mat(0xe8b88a), hairM = mat(hairC);
+  const torso = M(new THREE.BoxGeometry(.5,.62,.3), shirt); torso.position.y=1.02; p.add(torso);
+  const head  = M(new THREE.SphereGeometry(.21,10,10), skin); head.position.y=1.52; p.add(head);
+  const hair  = M(new THREE.SphereGeometry(.215,10,8,0,Math.PI*2,0,1.2), hairM); hair.position.y=1.56; p.add(hair);
+  const legG = new THREE.BoxGeometry(.16,.5,.18);
+  const legL = M(legG, shorts); legL.position.set(-.13,.46,0);
+  const legR = M(legG, shorts); legR.position.set(.13,.46,0);
+  p.add(legL); p.add(legR);
+  const armG = new THREE.BoxGeometry(.11,.46,.13);
+  const armL = M(armG, shirt); armL.position.set(-.33,1.05,0);
+  const armR = M(armG, shirt); armR.position.set(.33,1.05,0);
+  p.add(armL); p.add(armR);
+  const sh = M(new THREE.CircleGeometry(.42,16), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.3}));
+  sh.rotation.x = -Math.PI/2; sh.position.y = .015; p.add(sh);
+  p.userData = {legL,legR,armL,armR,phase:0,shirt,shorts,vel:new THREE.Vector3()};
+  scene.add(p);
+  return p;
+}
+function setKit(fig, shirtC, shortsC){
+  fig.userData.shirt.color.set(shirtC);
+  fig.userData.shorts.color.set(shortsC);
+}
+function animateRun(fig, speed, dt){
+  const u = fig.userData;
+  u.phase += speed * dt * 2.4;
+  const sw = Math.min(1, speed/6) * .7;
+  u.legL.rotation.x =  Math.sin(u.phase)*sw;
+  u.legR.rotation.x = -Math.sin(u.phase)*sw;
+  u.armL.rotation.x = -Math.sin(u.phase)*sw*.8;
+  u.armR.rotation.x =  Math.sin(u.phase)*sw*.8;
+}
+// Eine Figur Richtung Zielpunkt bewegen, gibt Geschwindigkeit zurück
+function seek(fig, tx, tz, speed, dt){
+  const move = tmpD.set(tx - fig.position.x, 0, tz - fig.position.z);
+  const md = move.length();
+  if(md < .06){ animateRun(fig, 0, dt); return 0; }
+  move.normalize();
+  const v = Math.min(speed, md/dt);
+  fig.position.addScaledVector(move, v*dt);
+  fig.position.x = clamp(fig.position.x, -BX, BX);
+  fig.position.z = clamp(fig.position.z, -BZ, BZ);
+  fig.rotation.y = Math.atan2(move.x, move.z);
+  animateRun(fig, v, dt);
+  return v;
+}
+
+const player = buildHumanoid(0xf4f1e4, 0x1d4f8c, 0x7a5a32);
+const defender = buildHumanoid(0xc4302b, 0x18181a, 0x2b2b2e);
+defender.visible = false;
+const mates = [buildHumanoid(0xc4302b, 0x18181a, 0x3a2a18), buildHumanoid(0xc4302b, 0x18181a, 0x111111)];
+const opps  = [buildHumanoid(0x2c4e7e, 0x18181a, 0x2b2b2e), buildHumanoid(0x2c4e7e, 0x18181a, 0x6b4a2c), buildHumanoid(0x2c4e7e, 0x18181a, 0x111111)];
+[...mates, ...opps].forEach(f => f.visible = false);
+
+// Goldener Ring unter Karl (Orientierung im 3v3)
+const playerRing = M(new THREE.RingGeometry(.5,.62,24),
+  new THREE.MeshBasicMaterial({color:0xf0a830, transparent:true, opacity:.85, side:THREE.DoubleSide}));
+playerRing.rotation.x = -Math.PI/2; playerRing.position.y = .02;
+playerRing.visible = false; scene.add(playerRing);
+
+// ---------- Ball ----------
+const ball = (()=>{
+  const tex = canvasTexture(128,(ctx,s)=>{
+    ctx.fillStyle='#f6f3e8'; ctx.fillRect(0,0,s,s);
+    ctx.fillStyle='#1a1a18';
+    [[.2,.25],[.65,.15],[.45,.55],[.85,.6],[.15,.75],[.6,.85]].forEach(([x,y])=>{
+      ctx.beginPath(); ctx.arc(x*s,y*s,s*.1,0,7); ctx.fill();
+    });
+  });
+  const b = M(new THREE.SphereGeometry(.24,14,12), new THREE.MeshLambertMaterial({map:tex}));
+  const sh = M(new THREE.CircleGeometry(.22,12), new THREE.MeshBasicMaterial({color:0x000000,transparent:true,opacity:.3}));
+  sh.rotation.x=-Math.PI/2; scene.add(sh);
+  b.userData.shadow = sh;
+  scene.add(b);
+  return b;
+})();
+
+// ---------- Welt 1: Bolzplatz Frammersbach ----------
+const world1 = new THREE.Group();
+{
+  const grassTex = canvasTexture(512, (ctx,s)=>{
+    ctx.fillStyle = '#2c6b3a'; ctx.fillRect(0,0,s,s);
+    for(let i=0;i<8;i++){ if(i%2){ ctx.fillStyle='rgba(0,0,0,.08)'; ctx.fillRect(0, i*s/8, s, s/8);} }
+    ctx.fillStyle = 'rgba(120,96,52,.30)';
+    [[.5,.86,.10],[.5,.12,.09],[.3,.5,.05],[.72,.4,.045],[.45,.65,.04]].forEach(([x,y,r])=>{
+      ctx.beginPath(); ctx.ellipse(x*s,y*s,r*s,r*s*.6,0,0,7); ctx.fill(); });
+    ctx.strokeStyle = 'rgba(244,241,228,.75)'; ctx.lineWidth = 5;
+    ctx.strokeRect(s*.06, s*.045, s*.88, s*.91);
+    ctx.beginPath(); ctx.moveTo(s*.06, s*.5); ctx.lineTo(s*.94, s*.5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(s*.5, s*.5, s*.1, 0, 7); ctx.stroke();
+  });
+  const ground = M(new THREE.PlaneGeometry(FIELD.w, FIELD.l), new THREE.MeshLambertMaterial({map:grassTex}));
+  ground.rotation.x = -Math.PI/2; world1.add(ground);
+
+  const post = new THREE.BoxGeometry(0.14, 0.9, 0.14);
+  const rail = new THREE.BoxGeometry(1, 0.1, 0.08);
+  const wood = mat(0x6b4a2c);
+  function fenceLine(x0,z0,x1,z1){
+    const dx=x1-x0, dz=z1-z0, len=Math.hypot(dx,dz), n=Math.round(len/2.2);
+    for(let i=0;i<=n;i++){
+      const p = M(post, wood);
+      p.position.set(x0+dx*i/n, 0.45, z0+dz*i/n); world1.add(p);
+      if(i<n){
+        const r = M(rail, wood);
+        r.scale.x = len/n;
+        r.position.set(x0+dx*(i+0.5)/n, 0.66, z0+dz*(i+0.5)/n);
+        r.rotation.y = Math.atan2(dx,dz)-Math.PI/2; world1.add(r);
+      }
+    }
+  }
+  const hw=FIELD.w/2+1.4, hl=FIELD.l/2+1.4;
+  fenceLine(-hw,-hl, hw,-hl); fenceLine(-hw,hl, hw,hl);
+  fenceLine(-hw,-hl,-hw,hl);  fenceLine( hw,-hl, hw,hl);
+
+  const trunkG = new THREE.CylinderGeometry(0.22,0.32,1.6,6);
+  const leafG  = new THREE.ConeGeometry(1.7,3.4,7);
+  const trunkM = mat(0x4a3320);
+  for(let i=0;i<34;i++){
+    const a = i/34*Math.PI*2 + Math.sin(i*7)*0.2;
+    const r = 27 + (i*37 % 13);
+    const x = Math.cos(a)*r, z = Math.sin(a)*r*1.15;
+    const t = new THREE.Group();
+    const trunk = M(trunkG, trunkM); trunk.position.y = .8; t.add(trunk);
+    const base = 0x1a4d28 + ((i*23)%3)*0x000a04;
+    const leaf = M(leafG, mat(base)); leaf.position.y = 3.0; t.add(leaf);
+    const leaf2 = M(leafG, mat(base)); leaf2.scale.set(.7,.7,.7); leaf2.position.y = 4.4; t.add(leaf2);
+    const s = 0.9 + (i*13%10)/14;
+    t.scale.set(s,s,s); t.position.set(x,0,z);
+    world1.add(t);
+  }
+  scene.add(world1);
+}
+
+// ---------- Trainingsplatz-Bauer (Welt 2 + 3) ----------
+function buildTrainingWorld(bandColors){
+  const w = new THREE.Group();
+  const grassTex = canvasTexture(512, (ctx,s)=>{
+    ctx.fillStyle = '#2f7a40'; ctx.fillRect(0,0,s,s);
+    for(let i=0;i<10;i++){ if(i%2){ ctx.fillStyle='rgba(0,0,0,.07)'; ctx.fillRect(0, i*s/10, s, s/10);} }
+    ctx.strokeStyle = 'rgba(255,255,255,.85)'; ctx.lineWidth = 4;
+    ctx.strokeRect(s*.06, s*.045, s*.88, s*.91);
+    ctx.strokeRect(s*.28, s*.045, s*.44, s*.16);
+    ctx.strokeRect(s*.28, s*.795, s*.44, s*.16);
+    ctx.beginPath(); ctx.moveTo(s*.06, s*.5); ctx.lineTo(s*.94, s*.5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(s*.5, s*.5, s*.1, 0, 7); ctx.stroke();
+  });
+  const ground = M(new THREE.PlaneGeometry(FIELD.w, FIELD.l), new THREE.MeshLambertMaterial({map:grassTex}));
+  ground.rotation.x = -Math.PI/2; ground.position.y = .001; w.add(ground);
+
+  const bandG = new THREE.BoxGeometry(2.8, 0.85, 0.14);
+  for(let end of [-1,1]){
+    for(let i=0;i<10;i++){
+      const b = M(bandG, mat(bandColors[i%bandColors.length]));
+      b.position.set(-13.2 + i*2.95, .42, end*(FIELD.l/2+1)); w.add(b);
+    }
+  }
+  for(let side of [-1,1]){
+    for(let i=0;i<13;i++){
+      const b = M(bandG, mat(bandColors[(i+1)%bandColors.length]));
+      b.position.set(side*(FIELD.w/2+1), .42, -19 + i*3.2);
+      b.rotation.y = Math.PI/2; w.add(b);
+    }
+  }
+  const poleG = new THREE.CylinderGeometry(.16,.2,11,8);
+  const lampG = new THREE.BoxGeometry(1.8,.7,.25);
+  [[-18,-23],[18,-23],[-18,23],[18,23]].forEach(([x,z])=>{
+    const p = M(poleG, mat(0x4a4a4f)); p.position.set(x,5.5,z); w.add(p);
+    const l = M(lampG, new THREE.MeshBasicMaterial({color:0xfff2cc})); l.position.set(x,10.6,z);
+    l.lookAt(0,0,0); w.add(l);
+  });
+  w.visible = false;
+  scene.add(w);
+  return w;
+}
+const world2 = buildTrainingWorld([0xc4302b, 0x18181a, 0xf4f1e4]);   // Riederwald: rot/schwarz/weiß
+const world3 = buildTrainingWorld([0xc4302b, 0xf4f1e4]);             // Campus: rot/weiß
+
+// ---------- Welt 4: Stadion (Brügge-Nacht) ----------
+const crowdSprites = [];
+const world4 = (()=>{
+  const w = new THREE.Group();
+
+  // Rasen mit echten Stadion-Linien
+  const grassTex = canvasTexture(512, (ctx,s)=>{
+    ctx.fillStyle = '#246b34'; ctx.fillRect(0,0,s,s);
+    for(let i=0;i<14;i++){ if(i%2){ ctx.fillStyle='rgba(255,255,255,.04)'; ctx.fillRect(0, i*s/14, s, s/14);} }
+    ctx.strokeStyle = 'rgba(255,255,255,.92)'; ctx.lineWidth = 4;
+    ctx.strokeRect(s*.05, s*.04, s*.9, s*.92);
+    ctx.strokeRect(s*.27, s*.04, s*.46, s*.17);   // Strafraum oben
+    ctx.strokeRect(s*.38, s*.04, s*.24, s*.07);   // 5er oben
+    ctx.beginPath(); ctx.arc(s*.5, s*.5, s*.11, 0, 7); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(s*.05,s*.5); ctx.lineTo(s*.95,s*.5); ctx.stroke();
+    ctx.beginPath(); ctx.arc(s*.5,s*.17,s*.06,Math.PI*.15,Math.PI*.85); ctx.stroke(); // Elfmeterbogen
+  });
+  const ground = M(new THREE.PlaneGeometry(FIELD.w, FIELD.l), new THREE.MeshLambertMaterial({map:grassTex}));
+  ground.rotation.x = -Math.PI/2; ground.position.y = .001; w.add(ground);
+
+  // Werbebanden
+  const adColors = [0x1a3a8a, 0xc4302b, 0x107a3a, 0xd8a020];
+  const adG = new THREE.BoxGeometry(2.6, .8, .12);
+  for(let side of [-1,1]){
+    for(let i=0;i<13;i++){
+      const b = M(adG, mat(adColors[(i+(side>0?1:0))%adColors.length]));
+      b.position.set(side*(FIELD.w/2+1.2), .5, -19 + i*3.2);
+      b.rotation.y = Math.PI/2; w.add(b);
+    }
+  }
+  for(let end of [-1,1]) for(let i=0;i<9;i++){
+    const b = M(adG, mat(adColors[(i+2)%adColors.length]));
+    b.position.set(-12 + i*3, .5, end*(FIELD.l/2+1.2)); w.add(b);
+  }
+
+  // Tribünen-Rohbau (geneigte Ränge) rund ums Feld
+  const standMat = mat(0x2a2d3a);
+  function stand(px, pz, len, rotY){
+    const tier = new THREE.Group();
+    const ramp = M(new THREE.BoxGeometry(len, 9, 13), standMat);
+    ramp.position.set(0, 4.5, 0);
+    ramp.rotation.x = -0.52;
+    tier.add(ramp);
+    tier.position.set(px, 0, pz);
+    tier.rotation.y = rotY;
+    w.add(tier);
+    return {len, rotY, px, pz};
+  }
+  const stands = [
+    stand(0, -(FIELD.l/2+7), 40, 0),
+    stand(0,  (FIELD.l/2+7), 40, Math.PI),
+    stand(-(FIELD.w/2+7), 0, 52, Math.PI/2),
+    stand( (FIELD.w/2+7), 0, 52, -Math.PI/2),
+  ];
+
+  // Zuschauer als farbige Punkt-Wolke auf den Rängen (billig & stimmungsvoll)
+  const dotTex = canvasTexture(32,(ctx,s)=>{
+    const g=ctx.createRadialGradient(s/2,s/2,0,s/2,s/2,s/2);
+    g.addColorStop(0,'rgba(255,255,255,1)'); g.addColorStop(1,'rgba(255,255,255,0)');
+    ctx.fillStyle=g; ctx.fillRect(0,0,s,s);
+  });
+  stands.forEach(st=>{
+    const N = Math.round(st.len*26);
+    const geo = new THREE.BufferGeometry();
+    const pos = new Float32Array(N*3), col = new Float32Array(N*3);
+    const c = new THREE.Color();
+    for(let i=0;i<N;i++){
+      const lx = (Math.random()-.5)*st.len;
+      const depth = Math.random();              // 0 vorn … 1 hinten/oben
+      const ly = 1.2 + depth*7.4;
+      const lz = (FIELD.l/2+2.2) + depth*11;    // relativ zur Feldmitte, vor Rotation
+      // in Welt rotieren
+      const ca = Math.cos(st.rotY), sa = Math.sin(st.rotY);
+      pos[i*3]   = st.px + (lx*ca + lz*sa);
+      pos[i*3+1] = ly;
+      pos[i*3+2] = st.pz + (-lx*sa + lz*ca);
+      // Farbmix: viel Blau/Rot (Heimfarben) + neutrale Töne
+      const r = Math.random();
+      if(r<.4) c.setHex(0x2a3f8a); else if(r<.7) c.setHex(0xb83028);
+      else c.setHSL(Math.random(), .25, .55);
+      col[i*3]=c.r; col[i*3+1]=c.g; col[i*3+2]=c.b;
+    }
+    geo.setAttribute('position', new THREE.BufferAttribute(pos,3));
+    geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+    const pm = new THREE.PointsMaterial({size:.5, map:dotTex, vertexColors:true,
+      transparent:true, alphaTest:.4, depthWrite:false});
+    const pts = new THREE.Points(geo, pm);
+    pts.userData.base = pos.slice();
+    pts.userData.phase = Math.random()*6;
+    w.add(pts); crowdSprites.push(pts);
+  });
+
+  // Flutlichtmasten
+  const poleG = new THREE.CylinderGeometry(.2,.28,17,8);
+  const panelG = new THREE.BoxGeometry(3.4,1.4,.3);
+  [[-23,-27],[23,-27],[-23,27],[23,27]].forEach(([x,z])=>{
+    const p = M(poleG, mat(0x3a3d48)); p.position.set(x,8.5,z); w.add(p);
+    const panel = M(panelG, new THREE.MeshBasicMaterial({color:0xfffbe8}));
+    panel.position.set(x,16.6,z); panel.lookAt(0,0,0); w.add(panel);
+    const fl = new THREE.PointLight(0xfff2d0, .5, 90); fl.position.set(x,16,z); w.add(fl);
+  });
+
+  w.visible = false;
+  scene.add(w);
+  return w;
+})();
+
+function animateCrowd(t, intensity){
+  crowdSprites.forEach(pts=>{
+    const base = pts.userData.base;
+    const arr = pts.geometry.attributes.position.array;
+    const amp = .08 + intensity*.5;
+    for(let i=1;i<arr.length;i+=3){
+      arr[i] = base[i] + Math.sin(t*4 + base[i-1]*0.6 + pts.userData.phase) * amp;
+    }
+    pts.geometry.attributes.position.needsUpdate = true;
+  });
+}
+
+function showWorld(n){
+  world1.visible = (n===1);
+  world2.visible = (n===2);
+  world3.visible = (n===3);
+  world4.visible = (n===4);
+  goalNorth.visible = (n===3);
+  if(n===1){
+    scene.background = new THREE.Color(0x0e2818);
+    scene.fog = new THREE.Fog(0x0e2818, 38, 95);
+    hemi.color.set(0xffe6b0); hemi.groundColor.set(0x14301c); hemi.intensity=.85;
+    sun.color.set(0xffc878); sun.intensity=1.0;
+  } else if(n===4){
+    scene.background = new THREE.Color(0x05060f);
+    scene.fog = new THREE.Fog(0x05060f, 55, 130);
+    hemi.color.set(0xbcc8e8); hemi.groundColor.set(0x16331f); hemi.intensity=.7;
+    sun.color.set(0xeef2ff); sun.intensity=.8;
+  } else {
+    scene.background = new THREE.Color(0x9cc0d8);
+    scene.fog = new THREE.Fog(0x9cc0d8, 50, 120);
+    hemi.color.set(0xeaf4ff); hemi.groundColor.set(0x2a5a34); hemi.intensity=1.0;
+    sun.color.set(0xfff4d8); sun.intensity=1.05;
+  }
+}
+
+// ---------- Hütchen-Tore (Kapitel 1) ----------
+const GATES = [
+  [ 0, 10], [-5, 5.5], [ 5, 1.5], [-6, -2.5],
+  [ 4.5, -6], [-3.5, -9.5], [ 3.5, -12.5], [ 0, -15]
+];
+const GATE_HALF = 1.35;
+let gateMeshes = [];
+const arrowMesh = M(new THREE.ConeGeometry(.34,.8,4), new THREE.MeshBasicMaterial({color:0xf0a830}));
+arrowMesh.rotation.x = Math.PI; arrowMesh.visible = false; scene.add(arrowMesh);
+const ringMesh = M(new THREE.RingGeometry(GATE_HALF-.15, GATE_HALF+.15, 32),
+  new THREE.MeshBasicMaterial({color:0xf0a830, transparent:true, opacity:.4, side:THREE.DoubleSide}));
+ringMesh.rotation.x = -Math.PI/2; ringMesh.position.y = .02; ringMesh.visible = false; scene.add(ringMesh);
+
+function buildGates(){
+  gateMeshes.forEach(gm => scene.remove(gm.group));
+  gateMeshes = [];
+  const coneG = new THREE.ConeGeometry(.22,.5,8);
+  GATES.forEach(([x,z])=>{
+    const group = new THREE.Group();
+    const c1 = M(coneG, mat(0xe8762c)); c1.position.set(-GATE_HALF,.25,0);
+    const c2 = M(coneG, mat(0xe8762c)); c2.position.set( GATE_HALF,.25,0);
+    group.add(c1); group.add(c2);
+    group.position.set(x,0,z);
+    scene.add(group);
+    gateMeshes.push({group, c1, c2, x, z});
+  });
+}
+function clearGates(){
+  gateMeshes.forEach(gm => scene.remove(gm.group));
+  gateMeshes = [];
+  arrowMesh.visible = ringMesh.visible = false;
+}
+
+// ---------- Attribute → Spielwerte ----------
+function derived(){
+  const a = game.attrs;
+  return {
+    baseSpeed: 5.2 + a.tempo/100*2.4,
+    sprintBonus: 3.0,
+    grip: 0.7 + a.technik/100*0.6,
+    controlR: 1.5 + a.technik/100*0.9,
+    shotPower: 11 + a.abschluss/100*8,
+    passPower: 8.5,
+    regen: 11 + a.moral/100*10,
+  };
+}
+
+// ---------- Eingabe ----------
+const input = { x:0, z:0, sprint:false };
+const joyBase = document.getElementById('joyBase');
+const joyKnob = document.getElementById('joyKnob');
+let joyId = null, joyOrigin = {x:0,y:0};
+const JOY_R = 52;
+
+function joyStart(px, py, id){
+  joyId = id; joyOrigin = {x:px, y:py};
+  joyBase.style.display = 'block';
+  joyBase.style.left = (px-60)+'px'; joyBase.style.top = (py-60)+'px';
+  joyMove(px,py);
+}
+function joyMove(px, py){
+  let dx = px - joyOrigin.x, dy = py - joyOrigin.y;
+  const d = Math.hypot(dx,dy);
+  if(d > JOY_R){ dx *= JOY_R/d; dy *= JOY_R/d; }
+  joyKnob.style.left = (33+dx)+'px'; joyKnob.style.top = (33+dy)+'px';
+  input.x = dx/JOY_R; input.z = dy/JOY_R;
+}
+function joyEnd(){
+  joyId = null; input.x = 0; input.z = 0;
+  joyBase.style.display = 'none';
+}
+addEventListener('pointerdown', e=>{
+  if(game.state !== 'play') return;
+  if(e.target.closest('button')) return;
+  if(e.clientX < innerWidth*0.55 && joyId === null) joyStart(e.clientX, e.clientY, e.pointerId);
+});
+addEventListener('pointermove', e=>{ if(e.pointerId === joyId) joyMove(e.clientX, e.clientY); });
+addEventListener('pointerup',   e=>{ if(e.pointerId === joyId) joyEnd(); });
+addEventListener('pointercancel', e=>{ if(e.pointerId === joyId) joyEnd(); });
+
+const btnSprint = document.getElementById('btnSprint');
+btnSprint.addEventListener('pointerdown', e=>{ e.preventDefault(); input.sprint = true; btnSprint.classList.add('active'); });
+addEventListener('pointerup', ()=>{ input.sprint = false; btnSprint.classList.remove('active'); });
+
+const btnShoot = document.getElementById('btnShoot');
+btnShoot.addEventListener('pointerdown', e=>{ e.preventDefault(); shoot(); });
+const btnPass = document.getElementById('btnPass');
+btnPass.addEventListener('pointerdown', e=>{ e.preventDefault(); pass(); });
+const btnTrick = document.getElementById('btnTrick');
+btnTrick.addEventListener('pointerdown', e=>{ e.preventDefault(); triggerTrick(); });
+
+const keys = {};
+addEventListener('keydown', e=>{
+  keys[e.key.toLowerCase()] = true;
+  if(e.code === 'Space' && !e.repeat) shoot();
+  if(e.key.toLowerCase() === 'x' && !e.repeat) pass();
+  if(e.key.toLowerCase() === 'c' && !e.repeat) triggerTrick();
+});
+addEventListener('keyup', e=>{ keys[e.key.toLowerCase()] = false; });
+function keyboardInput(){
+  let kx=0, kz=0;
+  if(keys['arrowleft']||keys['a']) kx -= 1;
+  if(keys['arrowright']||keys['d']) kx += 1;
+  if(keys['arrowup']||keys['w']) kz -= 1;
+  if(keys['arrowdown']||keys['s']) kz += 1;
+  if(kx||kz){ const l=Math.hypot(kx,kz); input.x=kx/l; input.z=kz/l; }
+  else if(joyId===null){ input.x=0; input.z=0; }
+  if(keys['shift']) input.sprint = true;
+  else if(!btnSprint.classList.contains('active')) input.sprint = false;
+}
+
+// ---------- Aktionen ----------
+function shoot(){
+  const ch = CH[game.chapter];
+  if(game.state !== 'play' || !ch.canShoot) return;
+  if(ball.position.distanceTo(player.position) > 1.7) return;
+  const facing = tmpV.set(Math.sin(player.rotation.y), 0, Math.cos(player.rotation.y));
+  let dir;
+  if(ch.aimCorner){
+    // langes Eck: Zielpunkt seitlich im Tor
+    const side = player.position.x <= 0 ? 1 : -1;
+    const target = tmpB.set(side*(GOAL_HALF - .45), 0, GOAL_Z - .1);
+    dir = target.sub(ball.position).setY(0).normalize();
+  } else {
+    const toGoal = tmpB.set(0,0,GOAL_Z).sub(ball.position).setY(0).normalize();
+    dir = facing.angleTo(toGoal) < 0.9 ? toGoal : facing;
+  }
+  ballVel.copy(dir).multiplyScalar(derived().shotPower + (ch.aimCorner?2:0));
+  shotLock = .5;
+  if(ch.onPlayerRelease) ch.onPlayerRelease();
+  if(elAim) elAim.style.display = 'none';
+  flash('Schuss!');
+}
+function pass(){
+  const ch = CH[game.chapter];
+  if(game.state !== 'play' || !ch.canPass) return;
+  if(ball.position.distanceTo(player.position) > 1.7) return;
+  // nächster Mitspieler, leicht Richtung gegnerisches Tor vorgelegt
+  let best = null, bd = 1e9;
+  mates.forEach(m=>{ const d = m.position.distanceTo(player.position); if(d < bd){bd=d; best=m;} });
+  if(!best) return;
+  const target = tmpB.copy(best.position); target.z -= 1.2;
+  const dir = target.sub(ball.position).setY(0);
+  const dist = dir.length(); dir.normalize();
+  ballVel.copy(dir).multiplyScalar(derived().passPower + dist*.35);
+  shotLock = .45;
+  if(ch.onPlayerRelease) ch.onPlayerRelease();
+}
+
+// ---------- HUD ----------
+const elZeit = document.getElementById('hudZeit');
+const elObj = document.getElementById('hudObj');
+const elObjLabel = document.getElementById('hudObjLabel');
+const elStamina = document.getElementById('staminaFill');
+const elFlash = document.getElementById('flash');
+let flashTimer = null;
+
+function updateHUD(){
+  elZeit.textContent = game.time.toFixed(1) + ' s';
+  const ch = CH[game.chapter];
+  elObjLabel.textContent = ch.hudLabel;
+  elObj.textContent = ch.hudValue();
+  elStamina.style.width = game.stamina + '%';
+}
+function flash(text, bad){
+  elFlash.textContent = text;
+  elFlash.classList.toggle('bad', !!bad);
+  elFlash.style.opacity = 1;
+  clearTimeout(flashTimer);
+  flashTimer = setTimeout(()=> elFlash.style.opacity = 0, 750);
+}
+
+// Ziel-Reticle: projiziert einen Punkt im langen Eck auf den Bildschirm
+const elAim = document.getElementById('aim');
+function updateAim(visible){
+  if(!visible){ elAim.style.display = 'none'; return; }
+  // Karl visiert das vom Tormittelpunkt entferntere Eck an
+  const side = player.position.x <= 0 ? 1 : -1;
+  tmpV.set(side * (GOAL_HALF - .4), 1.0, GOAL_Z - .2);
+  const p = tmpV.clone().project(camera);
+  if(p.z > 1){ elAim.style.display = 'none'; return; }
+  elAim.style.display = 'block';
+  elAim.style.left = ((p.x*.5+.5)*innerWidth) + 'px';
+  elAim.style.top  = ((-p.y*.5+.5)*innerHeight) + 'px';
+}
+
+// ---------- Gemeinsame Spielphysik ----------
+function physicsStep(dt){
+  const d = derived();
+  keyboardInput();
+  ballPrevZ = ball.position.z;
+  game.time += dt;
+  shotLock = Math.max(0, shotLock - dt);
+
+  const wantsSprint = input.sprint && game.stamina > 2;
+  if(wantsSprint && (input.x||input.z)) game.stamina = Math.max(0, game.stamina - 26*dt);
+  else game.stamina = Math.min(100, game.stamina + d.regen*dt);
+  const maxSpeed = wantsSprint ? d.baseSpeed + d.sprintBonus : d.baseSpeed;
+
+  tmpV.set(input.x, 0, input.z);
+  if(tmpV.lengthSq() > 1) tmpV.normalize();
+  const accel = 34;
+  playerVel.x += (tmpV.x*maxSpeed - playerVel.x) * Math.min(1, accel*dt/maxSpeed);
+  playerVel.z += (tmpV.z*maxSpeed - playerVel.z) * Math.min(1, accel*dt/maxSpeed);
+  player.position.addScaledVector(playerVel, dt);
+  player.position.x = clamp(player.position.x, -BX, BX);
+  player.position.z = clamp(player.position.z, -BZ, BZ);
+
+  const speed = playerVel.length();
+  if(speed > .4) player.rotation.y = Math.atan2(playerVel.x, playerVel.z);
+  animateRun(player, speed, dt);
+  playerRing.position.set(player.position.x, .02, player.position.z);
+
+  // Karls Ballführung (Kapitel kann sie situativ einschränken, z. B. Tackling im 3v3)
+  const ch = CH[game.chapter];
+  const toBall = tmpV.subVectors(ball.position, player.position); toBall.y = 0;
+  const dist = toBall.length();
+  const allowed = ch.allowControl ? ch.allowControl(dist) : true;
+  if(shotLock <= 0 && dist < d.controlR && speed > .3 && allowed){
+    const forward = tmpB.copy(playerVel).normalize();
+    const ahead = tmpC.copy(player.position).addScaledVector(forward, .55);
+    ahead.y = .24;
+    const grip = (wantsSprint ? 5 : 10) * d.grip;
+    ball.position.lerp(ahead, Math.min(1, grip*dt));
+    ballVel.copy(playerVel);
+    if(ch.onPlayerControl) ch.onPlayerControl();
+    if(ch.canTrick && speed > 2) addWitz(speed * dt * 1.6);   // Spielwitz lädt beim Dribbeln
+  } else if(shotLock <= 0 && dist < .9 && speed <= .3 && allowed){
+    ballVel.multiplyScalar(Math.pow(.02, dt));
+  }
+
+  // Ballphysik
+  ballVel.multiplyScalar(Math.pow(.34, dt));
+  ball.position.addScaledVector(ballVel, dt);
+  if(Math.abs(ball.position.x) > BX+.3){ ball.position.x = Math.sign(ball.position.x)*(BX+.3); ballVel.x *= -.5; }
+  if(ball.position.z > BZ+.3 && Math.abs(ball.position.x) > GOAL_HALF){ ball.position.z = BZ+.3; ballVel.z *= -.5; }
+  if(ball.position.z < -(BZ+.3) && Math.abs(ball.position.x) > GOAL_HALF){ ball.position.z = -(BZ+.3); ballVel.z *= -.5; }
+  const bs = ballVel.length();
+  if(bs > .05){
+    const axis = tmpV.set(ballVel.z, 0, -ballVel.x).normalize();
+    ball.rotateOnWorldAxis(axis, bs*dt/.24);
+  }
+  ball.userData.shadow.position.set(ball.position.x, .016, ball.position.z);
+}
+
+function ballInGoalSouth(){
+  return ballPrevZ >= GOAL_Z && ball.position.z < GOAL_Z && Math.abs(ball.position.x) < GOAL_HALF - .1;
+}
+function ballInGoalNorth(){
+  return ballPrevZ <= -GOAL_Z && ball.position.z > -GOAL_Z && Math.abs(ball.position.x) < GOAL_HALF - .1;
+}
+
+// ---------- Gemeinsame 3v3-Match-Engine (Kapitel 3 & 5) ----------
+// ch trägt den Zustand (score, owner, ownerTime, stealCool, kickoff, finish),
+// P die Tunables (oppSpeed, mateSpeed, presserSpeed, stealDist, goalsToWin).
+function run3v3(ch, dt, P){
+  physicsStep(dt);
+  if(game.finished){ updateHUD(); return; }
+
+  ch.stealCool = Math.max(0, ch.stealCool - dt);
+  ch.ownerTime += dt;
+  const slow = slowmo > 0;
+  const oppSpd = slow ? P.oppSpeed*0.5 : P.oppSpeed;
+
+  // --- Besitzverwaltung ---
+  const karlDist = ball.position.distanceTo(player.position);
+  if(ch.owner && ch.owner !== 'karl' && ch.owner.position.distanceTo(ball.position) > 1.7) ch.owner = null;
+  if(ch.owner === 'karl' && karlDist > derived().controlR + .4) ch.owner = null;
+  if(ch.owner === null && shotLock <= 0){
+    let best = null, bd = .95;
+    [...mates, ...opps].forEach(f=>{
+      const d = f.position.distanceTo(ball.position);
+      if(d < bd){ bd = d; best = f; }
+    });
+    if(karlDist < .8 && karlDist < bd){ ch.owner = 'karl'; }
+    else if(best){ ch.owner = best; ch.ownerTime = 0; }
+  }
+
+  const aiDribble = (fig, tx, tz, speed)=>{
+    const v = seek(fig, tx, tz, speed, dt);
+    const fwd = tmpB.set(Math.sin(fig.rotation.y), 0, Math.cos(fig.rotation.y));
+    const ahead = tmpC.copy(fig.position).addScaledVector(fwd, .5);
+    ahead.y = .24;
+    ball.position.lerp(ahead, Math.min(1, 8*dt));
+    ballVel.copy(fwd).multiplyScalar(v);
+    return v;
+  };
+
+  // --- Mitspieler ---
+  mates.forEach((m, i)=>{
+    if(ch.owner === m){
+      const nearestOpp = Math.min(...opps.map(o => o.position.distanceTo(m.position)));
+      if(m.position.z < -8){
+        const aimX = (Math.random()*2-1) * (GOAL_HALF - .7);
+        ballVel.set(aimX - ball.position.x, 0, GOAL_Z - ball.position.z).normalize().multiplyScalar(13);
+        ch.owner = null; shotLock = .35;
+      } else if(nearestOpp < 2.2 || ch.ownerTime > 1.6){
+        const lead = tmpB.copy(player.position).addScaledVector(playerVel, .25);
+        const dir = lead.sub(ball.position).setY(0);
+        const dl = dir.length(); dir.normalize();
+        ballVel.copy(dir).multiplyScalar(8 + dl*.35);
+        ch.owner = null; shotLock = .3;
+      } else {
+        aiDribble(m, m.position.x*.7, m.position.z - 4, P.mateSpeed);
+      }
+    } else if(opps.includes(ch.owner)){
+      const isPresser = mates[i] === mates.reduce((a,b)=>
+        a.position.distanceTo(ball.position) < b.position.distanceTo(ball.position) ? a : b);
+      if(isPresser) seek(m, ball.position.x, ball.position.z, P.mateSpeed+.2, dt);
+      else {
+        const cov = tmpB.copy(ball.position).lerp(tmpC.set(0,0,-GOAL_Z), .5);
+        seek(m, cov.x, cov.z, P.mateSpeed, dt);
+      }
+    } else {
+      const tx = clamp(player.position.x + (i === 0 ? -4.5 : 4.5), -BX+1, BX-1);
+      const tz = clamp(player.position.z - 5, -BZ+2, BZ-1);
+      seek(m, tx, tz, P.mateSpeed, dt);
+    }
+  });
+
+  // --- Gegner ---
+  const sorted = [...opps].sort((a,b)=>
+    a.position.distanceTo(ball.position) - b.position.distanceTo(ball.position));
+  const oppHas = opps.includes(ch.owner);
+  sorted.forEach((o, role)=>{
+    if(ch.owner === o){
+      if(o.position.z > 8){
+        const aimX = (Math.random()*2-1) * (GOAL_HALF - .7);
+        ballVel.set(aimX - ball.position.x, 0, -GOAL_Z - ball.position.z).normalize().multiplyScalar(12.5);
+        ch.owner = null; shotLock = .35;
+      } else {
+        aiDribble(o, o.position.x*.6, o.position.z + 4.2, oppSpd*.96);
+      }
+    } else if(role === 0){
+      seek(o, ball.position.x, ball.position.z, P.presserSpeed*(slow?.5:1), dt);
+      if(o.position.distanceTo(ball.position) < P.stealDist && ch.stealCool <= 0 && shotLock <= 0 && !opps.includes(ch.owner) && !slow){
+        const hadKarl = ch.owner === 'karl';
+        ch.owner = null; ch.stealCool = 1.1;
+        ballVel.set((Math.random()*2-1)*2, 0, 3.2);
+        if(hadKarl) flash('Ballverlust!', true);
+      }
+    } else if(role === 1){
+      if(oppHas){
+        const tx = clamp(ch.owner.position.x + (ch.owner.position.x > 0 ? -5 : 5), -BX+1, BX-1);
+        seek(o, tx, ch.owner.position.z + 4, oppSpd, dt);
+      } else {
+        const cov = tmpB.copy(ball.position).lerp(tmpC.set(0,0,GOAL_Z), .45);
+        seek(o, cov.x, cov.z, oppSpd, dt);
+      }
+    } else {
+      const cov = tmpB.copy(ball.position).lerp(tmpC.set(0,0,GOAL_Z), .68);
+      seek(o, cov.x, cov.z, oppSpd*.98, dt);
+    }
+  });
+
+  // --- Kollisionen ---
+  const everyone = [player, ...mates, ...opps];
+  for(let a=0; a<everyone.length; a++) for(let b=a+1; b<everyone.length; b++){
+    const A = everyone[a], B = everyone[b];
+    const sep = tmpV.subVectors(A.position, B.position).setY(0);
+    const sd = sep.length();
+    if(sd < .6 && sd > .001){
+      sep.normalize().multiplyScalar((.6 - sd) * .5);
+      A.position.add(sep); B.position.sub(sep);
+    }
+  }
+
+  // --- Tore & Spielende ---
+  const need = P.goalsToWin;
+  if(ballInGoalSouth()){
+    ch.score[0]++;
+    ballVel.multiplyScalar(.15);
+    addWitz(35);
+    if(ch.score[0] >= need){ ch.finish(); }
+    else { flash('TOR! ' + ch.score[0] + ' : ' + ch.score[1]); ch.kickoff('opps'); }
+  } else if(ballInGoalNorth()){
+    ch.score[1]++;
+    ballVel.multiplyScalar(.15);
+    if(ch.score[1] >= need){ ch.finish(); }
+    else { flash('Gegentor! ' + ch.score[0] + ' : ' + ch.score[1], true); ch.kickoff('karl'); }
+  } else if(game.time >= ch.limit){
+    ch.finish();
+  }
+  updateHUD();
+}
+
+// ---------- Kapitel ----------
+const CH = {};
+
+// ===== Kapitel 1: Bolzplatz =====
+CH[1] = {
+  eyebrow: 'Kapitel 1 · Frammersbach, Spessart',
+  title: 'Der Bolzplatz am Waldrand',
+  story: 'Lange bevor Scouts seinen Namen kennen, gibt es nur das hier: ein Platz zwischen den Bäumen, ein Ball – und ein Junge, der nicht aufhören will zu dribbeln. Bei Viktoria Aschaffenburg fällt er bald durch Technik und Übersicht auf. Aber alles beginnt auf diesem Rasen.',
+  aufgabe: ' Dribble den Ball der Reihe nach durch alle 8 Hütchen-Tore (der Pfeil zeigt das nächste) und schieb ihn zum Schluss ins Tor. Je schneller, desto mehr Sterne.',
+  hudLabel: 'Hütchen-Tore',
+  canShoot: false, canPass: false,
+  gateIndex: 0,
+  hudValue(){ return this.gateIndex + ' / ' + GATES.length; },
+  setup(){
+    showWorld(1);
+    setKit(player, 0xf4f1e4, 0x1d4f8c);
+    btnShoot.style.display = 'none'; btnPass.style.display = 'none';
+    defender.visible = false; playerRing.visible = false;
+    [...mates, ...opps].forEach(f => f.visible = false);
+    this.gateIndex = 0;
+    player.position.set(0, 0, 17); player.rotation.y = Math.PI;
+    playerVel.set(0,0,0);
+    ball.position.set(0, .24, 15); ballVel.set(0,0,0);
+    buildGates();
+    arrowMesh.visible = ringMesh.visible = true;
+  },
+  update(dt){
+    physicsStep(dt);
+    if(this.gateIndex < GATES.length){
+      const gm = gateMeshes[this.gateIndex];
+      const crossed = (ballPrevZ - gm.z) * (ball.position.z - gm.z) <= 0 &&
+                      Math.abs(ball.position.x - gm.x) < GATE_HALF;
+      if(crossed){
+        gm.c1.material = gm.c2.material = mat(0x57b35e);
+        this.gateIndex++;
+        flash(this.gateIndex === GATES.length ? 'Jetzt ins Tor!' : 'Tor ' + this.gateIndex + '!');
+      }
+      const g2 = gateMeshes[Math.min(this.gateIndex, GATES.length-1)];
+      arrowMesh.position.set(g2.x, 1.7 + Math.sin(performance.now()/240)*.18, g2.z);
+      arrowMesh.rotation.y += dt*2;
+      ringMesh.visible = this.gateIndex < GATES.length;
+      ringMesh.position.x = g2.x; ringMesh.position.z = g2.z;
+    }
+    if(this.gateIndex >= GATES.length){
+      arrowMesh.position.set(0, 2.9 + Math.sin(performance.now()/240)*.18, GOAL_Z);
+      if(ballInGoalSouth() && !game.finished){
+        game.finished = true;
+        ballVel.multiplyScalar(.15);
+        flash('TOOOR!');
+        setTimeout(showResult, 900);
+      }
+    }
+    updateHUD();
+  },
+  result(){
+    const t = game.time;
+    const stars = t <= 50 ? 3 : t <= 75 ? 2 : 1;
+    return { stars,
+      zeit: 'Deine Zeit: ' + t.toFixed(1) + ' Sekunden',
+      text: stars === 3 ? 'Stark! Solche Läufe sprechen sich rum – und tatsächlich: Ein paar Jahre später wird man in Frankfurt auf den Jungen aus dem Spessart aufmerksam.' :
+            stars === 2 ? 'Sauber gespielt. Die Wiederholungen auf dem Bolzplatz zahlen sich aus – bald schauen Scouts genauer hin.' :
+                          'Geschafft! Auf dem Bolzplatz zählt jede Wiederholung – und irgendwann schaut jemand zu, der wiederkommt.' };
+  },
+  next(){ openDecision('frankfurt2017'); }
+};
+
+// ===== Kapitel 2: Probetraining (1v1) =====
+CH[2] = {
+  eyebrow: 'Kapitel 2 · Frankfurt, 2017',
+  title: 'Probetraining am Riederwald',
+  story: '',
+  aufgabe: ' Gewinne 3 Duelle: Spiele den Verteidiger aus und triff ins Tor. Nimmt er dir den Ball ab, startet das Duell neu – jeder Ballverlust kostet Sterne. Neu: der SCHUSS-Button!',
+  hudLabel: 'Duell · Verluste',
+  canShoot: true, canPass: false,
+  round: 1, fails: 0,
+  lungeT: 0, lungeCool: 0,
+  lungeVel: new THREE.Vector3(),
+  hudValue(){ return this.round + ' / 3 · ' + this.fails; },
+  setup(){
+    showWorld(2);
+    setKit(player, 0xf4f1e4, 0x1d4f8c);
+    btnShoot.style.display = 'block'; btnPass.style.display = 'none';
+    defender.visible = true; playerRing.visible = false;
+    [...mates, ...opps].forEach(f => f.visible = false);
+    this.round = 1; this.fails = 0;
+    this.resetDuel();
+    clearGates();
+  },
+  resetDuel(){
+    player.position.set(0, 0, 12); player.rotation.y = Math.PI;
+    playerVel.set(0,0,0);
+    ball.position.set(0, .24, 10); ballVel.set(0,0,0);
+    defender.position.set(0, 0, 1);
+    this.lungeT = 0; this.lungeCool = 1.0;
+    shotLock = 0;
+  },
+  update(dt){
+    physicsStep(dt);
+
+    const dSpeed = [0, 4.4, 5.1, 5.8][this.round] || 5.8;
+    this.lungeCool = Math.max(0, this.lungeCool - dt);
+    let dvel = 0;
+    if(this.lungeT > 0){
+      this.lungeT -= dt;
+      defender.position.addScaledVector(this.lungeVel, dt);
+      dvel = this.lungeVel.length();
+      animateRun(defender, dvel, dt);
+    } else {
+      const dirBG = tmpB.set(0,0,GOAL_Z).sub(ball.position).setY(0).normalize();
+      const target = tmpC.copy(ball.position).addScaledVector(dirBG, 1.4);
+      dvel = seek(defender, target.x, target.z, dSpeed, dt);
+      const dDist = defender.position.distanceTo(ball.position);
+      if(dDist < 1.9 && this.lungeCool <= 0){
+        this.lungeVel.subVectors(ball.position, defender.position).setY(0).normalize().multiplyScalar(dSpeed*2.1);
+        this.lungeT = .32; this.lungeCool = 1.5;
+      }
+    }
+    defender.position.x = clamp(defender.position.x, -BX, BX);
+    defender.position.z = clamp(defender.position.z, -BZ, BZ);
+    defender.rotation.y = Math.atan2(ball.position.x - defender.position.x, ball.position.z - defender.position.z);
+
+    const sep = tmpV.subVectors(player.position, defender.position).setY(0);
+    const sd = sep.length();
+    if(sd < .62 && sd > .001){
+      sep.normalize().multiplyScalar((.62 - sd) * .5);
+      player.position.add(sep);
+      defender.position.sub(sep);
+    }
+
+    if(!game.finished && defender.position.distanceTo(ball.position) < .55){
+      this.fails++;
+      flash('Ballverlust!', true);
+      this.resetDuel();
+    }
+
+    if(ballInGoalSouth() && !game.finished){
+      if(this.round >= 3){
+        game.finished = true;
+        ballVel.multiplyScalar(.15);
+        flash('TOOOR!');
+        setTimeout(showResult, 900);
+      } else {
+        this.round++;
+        flash('TOR! Duell ' + this.round);
+        this.resetDuel();
+      }
+    }
+    updateHUD();
+  },
+  result(){
+    const f = this.fails;
+    const stars = f <= 1 ? 3 : f <= 4 ? 2 : 1;
+    return { stars,
+      zeit: 'Ballverluste: ' + f + ' · Zeit: ' + game.time.toFixed(1) + ' s',
+      text: stars === 3 ? 'Die Trainer am Riederwald tauschen Blicke: Der Junge lässt sich den Ball einfach nicht nehmen. Vier Jahre wird er hier reifen – bis ein noch größerer Verein anruft.' :
+            stars === 2 ? 'Ordentliches Probetraining! Ein paar Ballverluste, aber der Mut zum Dribbling fällt auf – genau das suchen sie hier.' :
+                          'Ein zähes Probetraining – aber Aufgeben ist keine Option. Die Trainer sehen den Willen. Nochmal versuchen?' };
+  },
+  next(){ openDecision('muenchen2022'); }
+};
+
+// ===== Kapitel 3: Bayern Campus (3v3) =====
+CH[3] = {
+  eyebrow: 'Kapitel 3 · München, 2022',
+  title: 'Der Bayern Campus',
+  story: '',
+  aufgabe: ' Trainingsspiel 3 gegen 3: Erziele zuerst 3 Tore! Du steuerst nur Karl (goldener Ring) – deine Mitspieler in Rot machen Läufe und passen dir zurück. Neu: der PASS-Button. Gegentore kosten Sterne.',
+  hudLabel: 'Spielstand · Restzeit',
+  canShoot: true, canPass: true, canTrick: true,
+  score: [0,0], limit: 120,
+  owner: null, ownerTime: 0, stealCool: 0,
+  hudValue(){
+    return this.score[0] + ' : ' + this.score[1] + ' · ' + Math.max(0, this.limit - game.time).toFixed(0) + 's';
+  },
+  // Karl darf den Ball einem dribbelnden Gegner nur abnehmen, wenn er sehr nah ist
+  allowControl(dist){
+    if(this.owner === null || this.owner === 'karl') return true;
+    if(mates.includes(this.owner)) return dist < 1.0;
+    return dist < .85;
+  },
+  onPlayerControl(){ if(this.owner !== 'karl'){ this.owner = 'karl'; this.ownerTime = 0; } },
+  onPlayerRelease(){ this.owner = null; this.ownerTime = 0; },
+  setup(){
+    showWorld(3);
+    setKit(player, 0xc4302b, 0xf4f1e4);   // Campus-Rot, weiße Hose = Karl
+    setKit(mates[0], 0xc4302b, 0x18181a); setKit(mates[1], 0xc4302b, 0x18181a);
+    opps.forEach(o => setKit(o, 0x2c4e7e, 0x18181a));
+    btnShoot.style.display = 'block'; btnPass.style.display = 'block';
+    defender.visible = false; playerRing.visible = true;
+    [...mates, ...opps].forEach(f => f.visible = true);
+    clearGates();
+    this.score = [0,0];
+    this.owner = null; this.ownerTime = 0; this.stealCool = 0;
+    this.kickoff('karl');
+  },
+  kickoff(who){
+    ball.position.set(0, .24, 0); ballVel.set(0,0,0);
+    this.owner = null; this.ownerTime = 0;
+    shotLock = 0;
+    playerVel.set(0,0,0);
+    if(who === 'karl'){
+      player.position.set(0, 0, 2.5);
+      opps[0].position.set(0, 0, -6);
+    } else {
+      player.position.set(0, 0, 6);
+      opps[0].position.set(0, 0, -2.5);
+    }
+    player.rotation.y = Math.PI;
+    mates[0].position.set(-5, 0, 5);  mates[1].position.set(5, 0, 5);
+    opps[1].position.set(-5, 0, -7);  opps[2].position.set(5, 0, -7);
+    [...mates, ...opps].forEach(f => f.rotation.y = 0);
+  },
+  update(dt){
+    run3v3(this, dt, {oppSpeed:5.0, mateSpeed:5.2, presserSpeed:5.4, stealDist:.55, goalsToWin:3});
+  },
+  finish(){
+    game.finished = true;
+    flash(this.score[0] > this.score[1] ? 'Sieg!' : (this.score[0] === this.score[1] ? 'Abpfiff' : 'Verloren'), this.score[0] <= this.score[1]);
+    setTimeout(showResult, 1000);
+  },
+  result(){
+    const [s, g] = this.score;
+    const win = s > g;
+    const stars = win && g === 0 ? 3 : win ? 2 : 1;
+    return { stars,
+      zeit: 'Endstand: ' + s + ' : ' + g + (game.time >= this.limit ? ' (Zeit abgelaufen)' : ''),
+      text: stars === 3 ? 'Zu null gewonnen – am Campus nicken die Trainer. In den Jugendteams steigt er fortan Stufe um Stufe auf, bald reden alle von der "krassen Maschine" aus dem Spessart.' :
+            stars === 2 ? 'Gewonnen! Nicht jedes Duell sitzt, aber die Richtung stimmt. Der Campus wird sein Sprungbrett.' :
+                          'Das Niveau am Campus ist brutal – heute hat es nicht gereicht. Aber genau daran wächst man. Nochmal?' };
+  },
+  next(){ openDecision('profi2025'); }
+};
+
+// ===== Kapitel 4: Die Brügge-Nacht (Champions League, 22.10.2025) =====
+CH[4] = {
+  eyebrow: 'Kapitel 4 · Brügge, 22. Oktober 2025',
+  title: 'Die Brügge-Nacht',
+  story: '',
+  aufgabe: ' Champions-League-Debütnacht: Setz dich durch die blauen Verteidiger durch und triff. Dribble, um den SPIELWITZ aufzuladen – ist er voll, löst der TRICK-Button eine Zeitlupe aus, in der du den Gegner aussteigen lässt. Triff 3-mal, um Geschichte zu schreiben.',
+  hudLabel: 'Tore · Versuche',
+  canShoot: true, canPass: false, canTrick: true, aimCorner: true,
+  goals: 0, attempts: 0,
+  defs: [], stealCool: 0,
+  hudValue(){ return this.goals + ' / 3 · ' + this.attempts; },
+  setup(){
+    showWorld(4);
+    setKit(player, 0xc4302b, 0xf4f1e4);
+    btnShoot.style.display = 'block'; btnPass.style.display = 'none';
+    defender.visible = false; playerRing.visible = true;
+    mates.forEach(f => f.visible = false);
+    this.defs = opps; this.defs.forEach(o => o.visible = true);
+    clearGates();
+    this.goals = 0; this.attempts = 0; this.stealCool = 0;
+    this.kickoff();
+  },
+  kickoff(){
+    player.position.set(0, 0, 11); player.rotation.y = Math.PI;
+    playerVel.set(0,0,0);
+    ball.position.set(0, .24, 9); ballVel.set(0,0,0);
+    this.defs[0].position.set(-2.5, 0, 3);
+    this.defs[1].position.set( 3,   0, -1);
+    this.defs[2].position.set(-1,   0, -7);   // letzter Mann
+    this.defs.forEach(o => o.rotation.y = 0);
+    shotLock = 0;
+  },
+  update(dt){
+    physicsStep(dt);
+    if(game.finished){ updateHUD(); return; }
+
+    this.stealCool = Math.max(0, this.stealCool - dt);
+    const slow = slowmo > 0;
+    const karlHasBall = ball.position.distanceTo(player.position) < 1.4;
+
+    // --- Verteidiger-KI: Mann zwischen Ball und Tor + Tackling ---
+    const sorted = [...this.defs].sort((a,b)=>
+      a.position.distanceTo(ball.position) - b.position.distanceTo(ball.position));
+    sorted.forEach((o, role)=>{
+      // im Trick sind Gegner sichtbar "ausgespielt": langsamer + weichen leicht aus
+      const spd = (slow ? 2.3 : [5.4,5.0,4.7][role]) ;
+      let tx, tz;
+      if(role === 0){
+        // presst den Ball
+        tx = ball.position.x; tz = ball.position.z - .3;
+        if(slow){ tx += (o.position.x - ball.position.x>0?1.2:-1.2); }   // Karl zieht vorbei
+      } else if(role === 1){
+        // sichert Raum zwischen Ball und Tor
+        const cov = tmpB.copy(ball.position).lerp(tmpC.set(0,0,GOAL_Z), .5);
+        tx = cov.x + (role===1?1.5:-1.5); tz = cov.z;
+      } else {
+        // letzter Mann, hält Tor-Vorfeld
+        tx = clamp(ball.position.x*.5, -GOAL_HALF-1, GOAL_HALF+1); tz = GOAL_Z + 3.2;
+      }
+      seek(o, tx, tz, spd, dt);
+      // Tackling
+      if(!slow && o.position.distanceTo(ball.position) < .58 && this.stealCool <= 0 && shotLock <= 0 && karlHasBall){
+        this.stealCool = 1.0;
+        this.attempts++;
+        ballVel.set((Math.random()*2-1)*2, 0, 4);
+        flash('Abgegrätscht!', true);
+        setTimeout(()=>{ if(!game.finished) this.kickoff(); }, 250);
+      }
+    });
+
+    // weiche Trennung Karl <-> Verteidiger
+    this.defs.forEach(o=>{
+      const sep = tmpV.subVectors(player.position, o.position).setY(0);
+      const sd = sep.length();
+      if(sd < .62 && sd > .001){
+        sep.normalize().multiplyScalar((.62 - sd) * (slow?.15:.5));
+        player.position.add(sep);
+        if(!slow) o.position.sub(sep);
+      }
+    });
+
+    // Tor?
+    if(ballInGoalSouth() && !game.finished){
+      this.goals++;
+      ballVel.multiplyScalar(.12);
+      addWitz(40);
+      if(this.goals >= 3){
+        game.finished = true;
+        flash('GESCHICHTE!');
+        setTimeout(showResult, 1100);
+      } else {
+        flash('TOOOR! ' + this.goals + ' / 3');
+        setTimeout(()=>{ if(!game.finished) this.kickoff(); }, 700);
+      }
+    }
+    // Ball klar am Tor vorbei / hinter Grundlinie ohne Treffer => Fehlversuch
+    if(!game.finished && ball.position.z < GOAL_Z - 1.5 && !karlHasBall){
+      this.attempts++;
+      flash('Vorbei!', true);
+      setTimeout(()=>{ if(!game.finished) this.kickoff(); }, 250);
+    }
+
+    // Aim-Reticle einblenden, wenn Karl im Abschlussbereich ist
+    updateAim(karlHasBall && ball.position.z < 4);
+    updateHUD();
+  },
+  result(){
+    const a = this.attempts;
+    const stars = a <= 2 ? 3 : a <= 6 ? 2 : 1;
+    return { stars,
+      zeit: 'Fehlversuche: ' + a + ' · Zeit: ' + game.time.toFixed(1) + ' s',
+      text: stars === 3 ? 'Linker Fuß, langes Eck – das Stadion explodiert. Mit diesem Tor wird Lennart Karl zum jüngsten Champions-League-Torschützen der Bayern-Geschichte. Eine Nacht, die bleibt.' :
+            stars === 2 ? 'Der Ball ist drin – und was für ein Moment! Nicht jeder Versuch saß, aber am Ende zählt nur das Tor in der größten Bühne des Vereinsfußballs.' :
+                          'Hart erkämpft, aber das Ding ist drin. In der Champions League ist jeder Treffer Gold wert – erst recht der erste. Nochmal für die Bestnote?' };
+  },
+  next(){ openDecision('dfb2026'); }
+};
+
+// ===== Kapitel 5: Der Sprung in die Nationalelf (DFB-Debüt 2026) =====
+CH[5] = {
+  eyebrow: 'Kapitel 5 · Nationalmannschaft, 2026',
+  title: 'Das große Debüt',
+  story: '',
+  aufgabe: ' Das Finale – 3 gegen 3 im DFB-Trikot. Erziele zuerst 4 Tore! Die Stärke des Gegners hängt davon ab, wie du Karl über all deine Entscheidungen geformt hast. Nutze alles: Pass, Schuss und den Spielwitz-Trick.',
+  hudLabel: 'Spielstand · Restzeit',
+  canShoot: true, canPass: true, canTrick: true,
+  score: [0,0], limit: 150,
+  owner: null, ownerTime: 0, stealCool: 0,
+  diff: 1,
+  hudValue(){
+    return this.score[0] + ' : ' + this.score[1] + ' · ' + Math.max(0, this.limit - game.time).toFixed(0) + 's';
+  },
+  allowControl(dist){
+    if(this.owner === null || this.owner === 'karl') return true;
+    if(mates.includes(this.owner)) return dist < 1.0;
+    return dist < .85;
+  },
+  onPlayerControl(){ if(this.owner !== 'karl'){ this.owner = 'karl'; this.ownerTime = 0; } },
+  onPlayerRelease(){ this.owner = null; this.ownerTime = 0; },
+  setup(){
+    showWorld(4);
+    setKit(player, 0xf4f1e4, 0x18181a);                 // DFB: weiß/schwarz = Karl
+    setKit(mates[0], 0xf4f1e4, 0x18181a); setKit(mates[1], 0xf4f1e4, 0x18181a);
+    opps.forEach(o => setKit(o, 0x0e7a6e, 0x0a3d36));    // Gegner: petrol
+    btnShoot.style.display = 'block'; btnPass.style.display = 'block';
+    defender.visible = false; playerRing.visible = true;
+    [...mates, ...opps].forEach(f => f.visible = true);
+    clearGates();
+    this.score = [0,0];
+    this.owner = null; this.ownerTime = 0; this.stealCool = 0;
+    // Gegnerstärke skaliert mit Karls Gesamtattributen (immer schlagbar, aber fordernd)
+    const total = game.attrs.tempo + game.attrs.technik + game.attrs.abschluss + game.attrs.moral;
+    this.diff = clamp((total - 240) / 120, 0, 1);        // 0 .. 1
+    this.kickoff('karl');
+  },
+  kickoff(who){
+    ball.position.set(0, .24, 0); ballVel.set(0,0,0);
+    this.owner = null; this.ownerTime = 0;
+    shotLock = 0; playerVel.set(0,0,0);
+    if(who === 'karl'){ player.position.set(0,0,2.5); opps[0].position.set(0,0,-6); }
+    else { player.position.set(0,0,6); opps[0].position.set(0,0,-2.5); }
+    player.rotation.y = Math.PI;
+    mates[0].position.set(-5,0,5); mates[1].position.set(5,0,5);
+    opps[1].position.set(-5,0,-7); opps[2].position.set(5,0,-7);
+    [...mates, ...opps].forEach(f => f.rotation.y = 0);
+  },
+  update(dt){
+    const oppSpeed = 5.0 + this.diff * 1.3;       // 5.0 .. 6.3
+    run3v3(this, dt, {
+      oppSpeed, mateSpeed: 5.3,
+      presserSpeed: 5.3 + this.diff * 1.1,
+      stealDist: .55 + this.diff * .08,
+      goalsToWin: 4
+    });
+  },
+  finish(){
+    game.finished = true;
+    flash(this.score[0] > this.score[1] ? 'DEBÜT-SIEG!' : (this.score[0] === this.score[1] ? 'Abpfiff' : 'Knapp verloren'), this.score[0] <= this.score[1]);
+    setTimeout(showResult, 1100);
+  },
+  result(){
+    const [s, g] = this.score;
+    const win = s > g;
+    const stars = win && g <= 1 ? 3 : win ? 2 : 1;
+    return { stars,
+      zeit: 'Endstand: ' + s + ' : ' + g + (game.time >= this.limit ? ' (Zeit abgelaufen)' : ''),
+      text: stars === 3 ? 'Ein Debüt wie im Traum – das DFB-Trikot, die große Bühne, und Karl spielt, als hätte er nie woanders gestanden. Vom Bolzplatz im Spessart bis in die Nationalelf: Diese Reise hast du geschrieben.' :
+            stars === 2 ? 'Debüt gewonnen! Nicht alles lief perfekt, aber der Junge aus Frammersbach steht jetzt da, wo nur wenige hinkommen – im Kreis der Besten.' :
+                          'Ein zähes Debüt gegen einen starken Gegner. Doch allein hier zu stehen, ist schon eine Geschichte für sich. Nochmal für die Bestnote?' };
+  },
+  next(){ showEnding(); }
+};
+
+// ---------- Entscheidungen ----------
+const DECISIONS = {
+  frankfurt2017: {
+    eyebrow: 'Karriereentscheidung · 2017',
+    title: 'Der Anruf aus Frankfurt',
+    text: 'Eintracht Frankfurts Nachwuchsleistungszentrum ist auf den Neunjährigen aus dem Spessart aufmerksam geworden. Profi-Training, bessere Gegner – aber auch lange Fahrten und ein neues Umfeld. Bei Viktoria Aschaffenburg wäre er weiter der Star im vertrauten Team.',
+    options: [
+      { label: 'Ab nach Frankfurt',
+        desc: 'NLZ-Training auf höchstem Jugendniveau, jeden Tag gegen die Besten.',
+        fx: { technik:+8, tempo:+5, moral:-4 },
+        set: { frankfurt: true } },
+      { label: 'Bei Viktoria bleiben',
+        desc: 'Vertrautes Umfeld, viel Spielzeit, Verantwortung als bester Spieler des Teams.',
+        fx: { moral:+8, abschluss:+5, technik:+2 },
+        set: { frankfurt: false } },
+    ],
+    after(choice){
+      CH[2].story = choice.set.frankfurt
+        ? 'Der Wechsel ist gewagt – ein Kind aus dem Spessart im NLZ einer Bundesliga-Eintracht. Heute steht das erste richtige Probetraining an: 1 gegen 1, der Klassiker. Die Trainer wollen sehen, ob das Dribbling auch unter Druck hält.'
+        : 'Er bleibt zunächst bei Viktoria – doch Frankfurt lässt nicht locker. Ein Jahr später steht er doch am Riederwald, eingeladen zum Probetraining: 1 gegen 1, der Klassiker. Jetzt erst recht.';
+      startChapter(2);
+    }
+  },
+  muenchen2022: {
+    eyebrow: 'Karriereentscheidung · 2022',
+    title: 'München ruft',
+    text: 'Fünf Jahre Riederwald haben aus dem Jungen einen der auffälligsten Techniker seines Jahrgangs gemacht. Jetzt meldet sich der FC Bayern Campus – das vielleicht beste Nachwuchszentrum des Landes. Es würde bedeuten: Umzug nach München, weit weg von der Familie. Frankfurt will ihn unbedingt halten.',
+    options: [
+      { label: 'Auf zum Campus',
+        desc: 'Die größte Bühne des deutschen Nachwuchsfußballs – und der härteste Konkurrenzkampf.',
+        fx: { technik:+6, tempo:+4, moral:-3 },
+        set: { muenchen: true } },
+      { label: 'In Frankfurt bleiben',
+        desc: 'Der sichere Weg: vertraute Trainer, klare Perspektive Richtung Profis am Riederwald.',
+        fx: { moral:+7, abschluss:+5 },
+        set: { muenchen: false } },
+    ],
+    after(choice){
+      CH[3].story = choice.set.muenchen
+        ? 'Sommer 2022: Umzug nach München, neues Leben am Bayern Campus. Schon im ersten Trainingsspiel wird klar, wie hoch hier das Tempo ist – jeder will sich beweisen, jeder will nach oben. Zeit zu zeigen, warum sie ihn geholt haben.'
+        : 'Er zögert – doch München erhöht den Einsatz, und ein halbes Jahr später führt am Campus kein Weg mehr vorbei. Erster Tag, erstes Trainingsspiel, alle Augen auf dem Neuen. Zeit zu zeigen, warum sie ihn unbedingt wollten.';
+      startChapter(3);
+    }
+  },
+  profi2025: {
+    eyebrow: 'Karriereentscheidung · Sommer 2025',
+    title: 'Klub-WM-Debüt – und jetzt?',
+    text: 'Bei der Klub-WM hat Karl mit 17 sein Profidebüt gegeben – ein Ausrufezeichen. Jetzt steht die Frage im Raum: Bei den Profis um Spielzeit kämpfen, gegen die etablierten Stars? Oder ein Leihjahr, um irgendwo Woche für Woche zu spielen und Erfahrung zu sammeln?',
+    options: [
+      { label: 'Beim FC Bayern durchsetzen',
+        desc: 'Hierbleiben, im Training überzeugen, jede Einwechslung nutzen. Der mutige Weg direkt nach oben.',
+        fx: { abschluss:+7, moral:+5, tempo:+3 },
+        set: { bleibt: true } },
+      { label: 'Auf Leihbasis spielen',
+        desc: 'Woche für Woche Spielpraxis bei einem kleineren Klub – mehr Minuten, weniger Rampenlicht.',
+        fx: { tempo:+6, technik:+5, moral:-2 },
+        set: { bleibt: false } },
+    ],
+    after(choice){
+      CH[4].story = choice.set.bleibt
+        ? 'Karl bleibt – und der Mut zahlt sich aus. Champions League, Auswärtsnacht in Brügge, das Flutlicht brennt. Als er eingewechselt wird, ahnt niemand, dass gleich Geschichte geschrieben wird. Der Ball kommt, die Verteidiger stehen. Jetzt.'
+        : 'Das Leihjahr härtet ihn ab – und macht ihn reif für den großen Moment. Zurück im Bayern-Trikot steht die Champions-League-Nacht in Brügge an. Flutlicht, gegnerische Hintermannschaft, eine Halbchance. Jetzt zeigen, was die Spielpraxis gebracht hat.';
+      startChapter(4);
+    }
+  },
+  dfb2026: {
+    eyebrow: 'Karriereentscheidung · Frühjahr 2026',
+    title: 'Der Bundestrainer ruft',
+    text: 'Nach der Brügge-Nacht überschlagen sich die Ereignisse: Erstmals flattert eine Einladung zur A-Nationalmannschaft ins Haus. Ein Debüt mit 18 – riesig. Manche raten zur Geduld, erst mit der U-Mannschaft weiterzuspielen. Doch eine solche Chance kommt selten zweimal.',
+    options: [
+      { label: 'Die Einladung annehmen',
+        desc: 'Direkt ins kalte Wasser der A-Elf. Alles oder nichts auf der größten Bühne.',
+        fx: { moral:+8, abschluss:+4, tempo:+3 },
+        set: { dfb: true } },
+      { label: 'Ruhig weiter reifen',
+        desc: 'Erst Erfahrung sammeln, Druck rausnehmen – der bedachte Weg zahlt sich oft langfristig aus.',
+        fx: { technik:+7, tempo:+5, moral:+2 },
+        set: { dfb: false } },
+    ],
+    after(choice){
+      CH[5].story = choice.set.dfb
+        ? 'Er sagt zu – mit 18 im Kreis der A-Nationalmannschaft. Das Trikot mit dem Adler, ausverkauftes Stadion, Millionen vor den Bildschirmen. Jetzt zählt alles, was diese Reise aus ihm gemacht hat.'
+        : 'Er nimmt sich die Zeit zu reifen – und kommt umso stärker zurück. Als das DFB-Debüt schließlich da ist, ist er bereit wie nie. Das Trikot mit dem Adler, die größte Bühne. Zeit, die ganze Reise auf den Platz zu bringen.';
+      startChapter(5);
+    }
+  }
+};
+
+function openDecision(key){
+  const d = DECISIONS[key];
+  game.state = 'decision';
+  document.getElementById('hud').style.display = 'none';
+  document.getElementById('dcEyebrow').textContent = d.eyebrow;
+  document.getElementById('dcTitle').textContent = d.title;
+  document.getElementById('dcText').textContent = d.text;
+  const wrap = document.getElementById('dcOpts');
+  wrap.innerHTML = '';
+  d.options.forEach(opt=>{
+    const b = document.createElement('button');
+    b.className = 'opt';
+    const fxStr = Object.entries(opt.fx).map(([k,v])=>{
+      const name = k.charAt(0).toUpperCase()+k.slice(1);
+      const cls = v>=0 ? 'plus' : 'minus';
+      return '<span class="'+cls+'">'+name+' '+(v>=0?'+':'')+v+'</span>';
+    }).join(' · ');
+    b.innerHTML = '<b>'+opt.label+'</b><p>'+opt.desc+'</p><div class="fx">'+fxStr+'</div>';
+    b.onclick = ()=>{
+      Object.entries(opt.fx).forEach(([k,v])=>{
+        game.attrs[k] = Math.max(1, Math.min(99, game.attrs[k]+v));
+      });
+      Object.assign(game.decisions, opt.set);
+      renderMenuAttrs();
+      hideAll();
+      d.after(opt);
+    };
+    wrap.appendChild(b);
+  });
+  show('ovDecision');
+}
+
+// ---------- Kapitel-Ablauf ----------
+function startChapter(n){
+  game.chapter = n;
+  const ch = CH[n];
+  document.getElementById('stEyebrow').textContent = ch.eyebrow;
+  document.getElementById('stTitle').textContent = ch.title;
+  document.getElementById('stText').textContent = ch.story;
+  document.getElementById('stAufgabe').textContent = ch.aufgabe;
+  game.state = 'story';
+  show('ovStory');
+}
+function beginPlay(){
+  hideAll();
+  game.time = 0; game.stamina = 100; game.finished = false;
+  witz = 0; slowmo = 0; timeScale = 1;
+  const ch = CH[game.chapter];
+  btnTrick.style.display = ch.canTrick ? 'block' : 'none';
+  btnTrick.classList.remove('ready');
+  document.getElementById('witzWrap').style.display = ch.canTrick ? 'block' : 'none';
+  if(elAim) elAim.style.display = 'none';
+  addWitz(0);
+  ch.setup();
+  updateHUD();
+  document.getElementById('hud').style.display = 'block';
+  game.state = 'play';
+}
+function showResult(){
+  game.state = 'result';
+  document.getElementById('hud').style.display = 'none';
+  const ch = CH[game.chapter];
+  const r = ch.result();
+  document.getElementById('resEyebrow').textContent = ch.eyebrow;
+  document.getElementById('resStars').innerHTML =
+    '★'.repeat(r.stars) + '<span class="off">' + '★'.repeat(3-r.stars) + '</span>';
+  document.getElementById('resZeit').textContent = r.zeit;
+  document.getElementById('resText').textContent = r.text;
+  show('ovResult');
+}
+
+// ---------- Overlays & Buttons ----------
+const overlays = ['ovMenu','ovStory','ovPause','ovResult','ovDecision','ovEnd'];
+function show(id){ overlays.forEach(o => document.getElementById(o).style.display = (o===id ? 'flex' : 'none')); }
+function hideAll(){ overlays.forEach(o => document.getElementById(o).style.display = 'none'); }
+
+function showEnding(){
+  game.state = 'result';
+  document.getElementById('hud').style.display = 'none';
+  if(elAim) elAim.style.display = 'none';
+  const d = game.decisions;
+  const weg = [
+    d.frankfurt ? 'Frankfurt' : 'Aschaffenburg',
+    d.muenchen ? 'Bayern Campus' : 'Frankfurt-Profis',
+    d.bleibt ? 'beim FC Bayern' : 'auf Leihbasis',
+    d.dfb ? 'sofort ins DFB-Team' : 'mit Geduld zum DFB-Team'
+  ].join(' → ');
+  document.getElementById('endText').textContent =
+    'Frammersbach, ein Bolzplatz am Waldrand – und am Ende das Trikot mit dem Adler. Dein Weg: ' + weg +
+    '. Jede Entscheidung hat Karl ein Stück weit geformt. Das hier sind seine Werte am Ende der Reise:';
+  const names = {tempo:'Tempo', technik:'Technik', abschluss:'Abschluss', moral:'Moral'};
+  document.getElementById('endAttrs').innerHTML = Object.entries(game.attrs).map(([k,v])=>
+    '<div class="attr">'+names[k]+'<span class="val">'+v+'</span><div class="bar"><i style="width:'+v+'%"></i></div></div>'
+  ).join('');
+  show('ovEnd');
+}
+
+function renderMenuAttrs(){
+  const names = {tempo:'Tempo', technik:'Technik', abschluss:'Abschluss', moral:'Moral'};
+  document.getElementById('menuAttrs').innerHTML = Object.entries(game.attrs).map(([k,v])=>
+    '<div class="attr">'+names[k]+'<span class="val">'+v+'</span><div class="bar"><i style="width:'+v+'%"></i></div></div>'
+  ).join('');
+}
+renderMenuAttrs();
+
+document.getElementById('btnStart').onclick = ()=> startChapter(1);
+document.getElementById('btnEndRestart').onclick = ()=>{
+  game.attrs = { tempo:62, technik:70, abschluss:48, moral:80 };
+  game.decisions = {};
+  renderMenuAttrs();
+  hideAll();
+  game.state = 'menu';
+};
+document.getElementById('btnPlay').onclick = beginPlay;
+document.getElementById('btnPause').onclick = ()=>{ if(game.state==='play'){ game.state='pause'; show('ovPause'); } };
+document.getElementById('btnResume').onclick = ()=>{ hideAll(); game.state='play'; };
+document.getElementById('btnRestart').onclick = beginPlay;
+document.getElementById('btnAgain').onclick = beginPlay;
+document.getElementById('btnNext').onclick = ()=> CH[game.chapter].next();
+
+// ---------- FIFA-Kamera ----------
+const camTarget = new THREE.Vector3();
+function updateCamera(dt){
+  const look = tmpV.copy(player.position).lerp(ball.position, .3);
+  camTarget.lerp(look, Math.min(1, 4*dt));
+  camera.position.set(camTarget.x*.6, 15.5, camTarget.z + 13.5);
+  camera.lookAt(camTarget.x, 0, camTarget.z - 2);
+}
+
+// ---------- Hauptschleife ----------
+showWorld(1);
+let last = performance.now();
+function loop(now){
+  requestAnimationFrame(loop);
+  const real = Math.min(.05, (now-last)/1000);
+  last = now;
+
+  // Zeitlupe für den Spielwitz-Trick
+  if(slowmo > 0){ slowmo = Math.max(0, slowmo - real); timeScale += (0.28 - timeScale) * Math.min(1, 8*real); }
+  else timeScale += (1 - timeScale) * Math.min(1, 6*real);
+  const dt = real * timeScale;
+
+  if(game.state === 'play') CH[game.chapter].update(dt);
+  if(['play','pause','result'].includes(game.state)) updateCamera(real);
+  else {
+    const t = now/9000;
+    camera.position.set(Math.sin(t)*20, 12, Math.cos(t)*20);
+    camera.lookAt(0, 0, -2);
+  }
+  if(world4.visible) animateCrowd(now/1000, game.chapter===4 ? 0.5 : 0.2);
+  renderer.render(scene, camera);
+}
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>
