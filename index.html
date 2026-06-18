@@ -1,0 +1,1580 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>LearnLab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<script data-goatcounter="https://learnlab.goatcounter.com/count" async src="//gc.zgo.at/count.js"></script>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<script type="text/babel">
+
+// tweaks-panel.jsx
+// Reusable Tweaks shell + form-control helpers.
+//
+// Owns the host protocol (listens for __activate_edit_mode / __deactivate_edit_mode,
+// posts __edit_mode_available / __edit_mode_set_keys / __edit_mode_dismissed) so
+// individual prototypes don't re-roll it. Ships a consistent set of controls so you
+// don't hand-draw <input type="range">, segmented radios, steppers, etc.
+//
+// Usage (in an HTML file that loads React + Babel):
+//
+//   const TWEAK_DEFAULTS = /*EDITMODE-BEGIN*/{
+//     "primaryColor": "#D97757",
+//     "fontSize": 16,
+//     "density": "regular",
+//     "dark": false
+//   }/*EDITMODE-END*/;
+//
+//   function App() {
+//     const [t, setTweak] = useTweaks(TWEAK_DEFAULTS);
+//     return (
+//       <div style={{ fontSize: t.fontSize, color: t.primaryColor }}>
+//         Hello
+//         <TweaksPanel>
+//           <TweakSection label="Typography" />
+//           <TweakSlider label="Font size" value={t.fontSize} min={10} max={32} unit="px"
+//                        onChange={(v) => setTweak('fontSize', v)} />
+//           <TweakRadio  label="Density" value={t.density}
+//                        options={['compact', 'regular', 'comfy']}
+//                        onChange={(v) => setTweak('density', v)} />
+//           <TweakSection label="Theme" />
+//           <TweakColor  label="Primary" value={t.primaryColor}
+//                        onChange={(v) => setTweak('primaryColor', v)} />
+//           <TweakToggle label="Dark mode" value={t.dark}
+//                        onChange={(v) => setTweak('dark', v)} />
+//         </TweaksPanel>
+//       </div>
+//     );
+//   }
+//
+// ─────────────────────────────────────────────────────────────────────────────
+
+const __TWEAKS_STYLE = `
+  .twk-panel{position:fixed;right:16px;bottom:16px;z-index:2147483646;width:280px;
+    max-height:calc(100vh - 32px);display:flex;flex-direction:column;
+    background:rgba(250,249,247,.78);color:#29261b;
+    -webkit-backdrop-filter:blur(24px) saturate(160%);backdrop-filter:blur(24px) saturate(160%);
+    border:.5px solid rgba(255,255,255,.6);border-radius:14px;
+    box-shadow:0 1px 0 rgba(255,255,255,.5) inset,0 12px 40px rgba(0,0,0,.18);
+    font:11.5px/1.4 ui-sans-serif,system-ui,-apple-system,sans-serif;overflow:hidden}
+  .twk-hd{display:flex;align-items:center;justify-content:space-between;
+    padding:10px 8px 10px 14px;cursor:move;user-select:none}
+  .twk-hd b{font-size:12px;font-weight:600;letter-spacing:.01em}
+  .twk-x{appearance:none;border:0;background:transparent;color:rgba(41,38,27,.55);
+    width:22px;height:22px;border-radius:6px;cursor:default;font-size:13px;line-height:1}
+  .twk-x:hover{background:rgba(0,0,0,.06);color:#29261b}
+  .twk-body{padding:2px 14px 14px;display:flex;flex-direction:column;gap:10px;
+    overflow-y:auto;overflow-x:hidden;min-height:0;
+    scrollbar-width:thin;scrollbar-color:rgba(0,0,0,.15) transparent}
+  .twk-body::-webkit-scrollbar{width:8px}
+  .twk-body::-webkit-scrollbar-track{background:transparent;margin:2px}
+  .twk-body::-webkit-scrollbar-thumb{background:rgba(0,0,0,.15);border-radius:4px;
+    border:2px solid transparent;background-clip:content-box}
+  .twk-body::-webkit-scrollbar-thumb:hover{background:rgba(0,0,0,.25);
+    border:2px solid transparent;background-clip:content-box}
+  .twk-row{display:flex;flex-direction:column;gap:5px}
+  .twk-row-h{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .twk-lbl{display:flex;justify-content:space-between;align-items:baseline;
+    color:rgba(41,38,27,.72)}
+  .twk-lbl>span:first-child{font-weight:500}
+  .twk-val{color:rgba(41,38,27,.5);font-variant-numeric:tabular-nums}
+
+  .twk-sect{font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:rgba(41,38,27,.45);padding:10px 0 0}
+  .twk-sect:first-child{padding-top:0}
+
+  .twk-field{appearance:none;width:100%;height:26px;padding:0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;
+    background:rgba(255,255,255,.6);color:inherit;font:inherit;outline:none}
+  .twk-field:focus{border-color:rgba(0,0,0,.25);background:rgba(255,255,255,.85)}
+  select.twk-field{padding-right:22px;
+    background-image:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'><path fill='rgba(0,0,0,.5)' d='M0 0h10L5 6z'/></svg>");
+    background-repeat:no-repeat;background-position:right 8px center}
+
+  .twk-slider{appearance:none;-webkit-appearance:none;width:100%;height:4px;margin:6px 0;
+    border-radius:999px;background:rgba(0,0,0,.12);outline:none}
+  .twk-slider::-webkit-slider-thumb{-webkit-appearance:none;appearance:none;
+    width:14px;height:14px;border-radius:50%;background:#fff;
+    border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+  .twk-slider::-moz-range-thumb{width:14px;height:14px;border-radius:50%;
+    background:#fff;border:.5px solid rgba(0,0,0,.12);box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:default}
+
+  .twk-seg{position:relative;display:flex;padding:2px;border-radius:8px;
+    background:rgba(0,0,0,.06);user-select:none}
+  .twk-seg-thumb{position:absolute;top:2px;bottom:2px;border-radius:6px;
+    background:rgba(255,255,255,.9);box-shadow:0 1px 2px rgba(0,0,0,.12);
+    transition:left .15s cubic-bezier(.3,.7,.4,1),width .15s}
+  .twk-seg.dragging .twk-seg-thumb{transition:none}
+  .twk-seg button{appearance:none;position:relative;z-index:1;flex:1;border:0;
+    background:transparent;color:inherit;font:inherit;font-weight:500;min-height:22px;
+    border-radius:6px;cursor:default;padding:4px 6px;line-height:1.2;
+    overflow-wrap:anywhere}
+
+  .twk-toggle{position:relative;width:32px;height:18px;border:0;border-radius:999px;
+    background:rgba(0,0,0,.15);transition:background .15s;cursor:default;padding:0}
+  .twk-toggle[data-on="1"]{background:#34c759}
+  .twk-toggle i{position:absolute;top:2px;left:2px;width:14px;height:14px;border-radius:50%;
+    background:#fff;box-shadow:0 1px 2px rgba(0,0,0,.25);transition:transform .15s}
+  .twk-toggle[data-on="1"] i{transform:translateX(14px)}
+
+  .twk-num{display:flex;align-items:center;height:26px;padding:0 0 0 8px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:7px;background:rgba(255,255,255,.6)}
+  .twk-num-lbl{font-weight:500;color:rgba(41,38,27,.6);cursor:ew-resize;
+    user-select:none;padding-right:8px}
+  .twk-num input{flex:1;min-width:0;height:100%;border:0;background:transparent;
+    font:inherit;font-variant-numeric:tabular-nums;text-align:right;padding:0 8px 0 0;
+    outline:none;color:inherit;-moz-appearance:textfield}
+  .twk-num input::-webkit-inner-spin-button,.twk-num input::-webkit-outer-spin-button{
+    -webkit-appearance:none;margin:0}
+  .twk-num-unit{padding-right:8px;color:rgba(41,38,27,.45)}
+
+  .twk-btn{appearance:none;height:26px;padding:0 12px;border:0;border-radius:7px;
+    background:rgba(0,0,0,.78);color:#fff;font:inherit;font-weight:500;cursor:default}
+  .twk-btn:hover{background:rgba(0,0,0,.88)}
+  .twk-btn.secondary{background:rgba(0,0,0,.06);color:inherit}
+  .twk-btn.secondary:hover{background:rgba(0,0,0,.1)}
+
+  .twk-swatch{appearance:none;-webkit-appearance:none;width:56px;height:22px;
+    border:.5px solid rgba(0,0,0,.1);border-radius:6px;padding:0;cursor:default;
+    background:transparent;flex-shrink:0}
+  .twk-swatch::-webkit-color-swatch-wrapper{padding:0}
+  .twk-swatch::-webkit-color-swatch{border:0;border-radius:5.5px}
+  .twk-swatch::-moz-color-swatch{border:0;border-radius:5.5px}
+`;
+
+// ── useTweaks ───────────────────────────────────────────────────────────────
+// Single source of truth for tweak values. setTweak persists via the host
+// (__edit_mode_set_keys → host rewrites the EDITMODE block on disk).
+function useTweaks(defaults) {
+  const [values, setValues] = React.useState(defaults);
+  // Accepts either setTweak('key', value) or setTweak({ key: value, ... }) so a
+  // useState-style call doesn't write a "[object Object]" key into the persisted
+  // JSON block.
+  const setTweak = React.useCallback((keyOrEdits, val) => {
+    const edits = typeof keyOrEdits === 'object' && keyOrEdits !== null
+      ? keyOrEdits : { [keyOrEdits]: val };
+    setValues((prev) => ({ ...prev, ...edits }));
+    window.parent.postMessage({ type: '__edit_mode_set_keys', edits }, '*');
+  }, []);
+  return [values, setTweak];
+}
+
+// ── TweaksPanel ─────────────────────────────────────────────────────────────
+// Floating shell. Registers the protocol listener BEFORE announcing
+// availability — if the announce ran first, the host's activate could land
+// before our handler exists and the toolbar toggle would silently no-op.
+// The close button posts __edit_mode_dismissed so the host's toolbar toggle
+// flips off in lockstep; the host echoes __deactivate_edit_mode back which
+// is what actually hides the panel.
+function TweaksPanel({ title = 'Tweaks', children }) {
+  const [open, setOpen] = React.useState(false);
+  const dragRef = React.useRef(null);
+  const offsetRef = React.useRef({ x: 16, y: 16 });
+  const PAD = 16;
+
+  const clampToViewport = React.useCallback(() => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const w = panel.offsetWidth, h = panel.offsetHeight;
+    const maxRight = Math.max(PAD, window.innerWidth - w - PAD);
+    const maxBottom = Math.max(PAD, window.innerHeight - h - PAD);
+    offsetRef.current = {
+      x: Math.min(maxRight, Math.max(PAD, offsetRef.current.x)),
+      y: Math.min(maxBottom, Math.max(PAD, offsetRef.current.y)),
+    };
+    panel.style.right = offsetRef.current.x + 'px';
+    panel.style.bottom = offsetRef.current.y + 'px';
+  }, []);
+
+  React.useEffect(() => {
+    if (!open) return;
+    clampToViewport();
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', clampToViewport);
+      return () => window.removeEventListener('resize', clampToViewport);
+    }
+    const ro = new ResizeObserver(clampToViewport);
+    ro.observe(document.documentElement);
+    return () => ro.disconnect();
+  }, [open, clampToViewport]);
+
+  React.useEffect(() => {
+    const onMsg = (e) => {
+      const t = e?.data?.type;
+      if (t === '__activate_edit_mode') setOpen(true);
+      else if (t === '__deactivate_edit_mode') setOpen(false);
+    };
+    window.addEventListener('message', onMsg);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', onMsg);
+  }, []);
+
+  const dismiss = () => {
+    setOpen(false);
+    window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+  };
+
+  const onDragStart = (e) => {
+    const panel = dragRef.current;
+    if (!panel) return;
+    const r = panel.getBoundingClientRect();
+    const sx = e.clientX, sy = e.clientY;
+    const startRight = window.innerWidth - r.right;
+    const startBottom = window.innerHeight - r.bottom;
+    const move = (ev) => {
+      offsetRef.current = {
+        x: startRight - (ev.clientX - sx),
+        y: startBottom - (ev.clientY - sy),
+      };
+      clampToViewport();
+    };
+    const up = () => {
+      window.removeEventListener('mousemove', move);
+      window.removeEventListener('mouseup', up);
+    };
+    window.addEventListener('mousemove', move);
+    window.addEventListener('mouseup', up);
+  };
+
+  if (!open) return null;
+  return (
+    <>
+      <style>{__TWEAKS_STYLE}</style>
+      <div ref={dragRef} className="twk-panel"
+           style={{ right: offsetRef.current.x, bottom: offsetRef.current.y }}>
+        <div className="twk-hd" onMouseDown={onDragStart}>
+          <b>{title}</b>
+          <button className="twk-x" aria-label="Close tweaks"
+                  onMouseDown={(e) => e.stopPropagation()}
+                  onClick={dismiss}>✕</button>
+        </div>
+        <div className="twk-body">{children}</div>
+      </div>
+    </>
+  );
+}
+
+// ── Layout helpers ──────────────────────────────────────────────────────────
+
+function TweakSection({ label, children }) {
+  return (
+    <>
+      <div className="twk-sect">{label}</div>
+      {children}
+    </>
+  );
+}
+
+function TweakRow({ label, value, children, inline = false }) {
+  return (
+    <div className={inline ? 'twk-row twk-row-h' : 'twk-row'}>
+      <div className="twk-lbl">
+        <span>{label}</span>
+        {value != null && <span className="twk-val">{value}</span>}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+// ── Controls ────────────────────────────────────────────────────────────────
+
+function TweakSlider({ label, value, min = 0, max = 100, step = 1, unit = '', onChange }) {
+  return (
+    <TweakRow label={label} value={`${value}${unit}`}>
+      <input type="range" className="twk-slider" min={min} max={max} step={step}
+             value={value} onChange={(e) => onChange(Number(e.target.value))} />
+    </TweakRow>
+  );
+}
+
+function TweakToggle({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <button type="button" className="twk-toggle" data-on={value ? '1' : '0'}
+              role="switch" aria-checked={!!value}
+              onClick={() => onChange(!value)}><i /></button>
+    </div>
+  );
+}
+
+function TweakRadio({ label, value, options, onChange }) {
+  const trackRef = React.useRef(null);
+  const [dragging, setDragging] = React.useState(false);
+  const opts = options.map((o) => (typeof o === 'object' ? o : { value: o, label: o }));
+  const idx = Math.max(0, opts.findIndex((o) => o.value === value));
+  const n = opts.length;
+
+  // The active value is read by pointer-move handlers attached for the lifetime
+  // of a drag — ref it so a stale closure doesn't fire onChange for every move.
+  const valueRef = React.useRef(value);
+  valueRef.current = value;
+
+  const segAt = (clientX) => {
+    const r = trackRef.current.getBoundingClientRect();
+    const inner = r.width - 4;
+    const i = Math.floor(((clientX - r.left - 2) / inner) * n);
+    return opts[Math.max(0, Math.min(n - 1, i))].value;
+  };
+
+  const onPointerDown = (e) => {
+    setDragging(true);
+    const v0 = segAt(e.clientX);
+    if (v0 !== valueRef.current) onChange(v0);
+    const move = (ev) => {
+      if (!trackRef.current) return;
+      const v = segAt(ev.clientX);
+      if (v !== valueRef.current) onChange(v);
+    };
+    const up = () => {
+      setDragging(false);
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+
+  return (
+    <TweakRow label={label}>
+      <div ref={trackRef} role="radiogroup" onPointerDown={onPointerDown}
+           className={dragging ? 'twk-seg dragging' : 'twk-seg'}>
+        <div className="twk-seg-thumb"
+             style={{ left: `calc(2px + ${idx} * (100% - 4px) / ${n})`,
+                      width: `calc((100% - 4px) / ${n})` }} />
+        {opts.map((o) => (
+          <button key={o.value} type="button" role="radio" aria-checked={o.value === value}>
+            {o.label}
+          </button>
+        ))}
+      </div>
+    </TweakRow>
+  );
+}
+
+function TweakSelect({ label, value, options, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <select className="twk-field" value={value} onChange={(e) => onChange(e.target.value)}>
+        {options.map((o) => {
+          const v = typeof o === 'object' ? o.value : o;
+          const l = typeof o === 'object' ? o.label : o;
+          return <option key={v} value={v}>{l}</option>;
+        })}
+      </select>
+    </TweakRow>
+  );
+}
+
+function TweakText({ label, value, placeholder, onChange }) {
+  return (
+    <TweakRow label={label}>
+      <input className="twk-field" type="text" value={value} placeholder={placeholder}
+             onChange={(e) => onChange(e.target.value)} />
+    </TweakRow>
+  );
+}
+
+function TweakNumber({ label, value, min, max, step = 1, unit = '', onChange }) {
+  const clamp = (n) => {
+    if (min != null && n < min) return min;
+    if (max != null && n > max) return max;
+    return n;
+  };
+  const startRef = React.useRef({ x: 0, val: 0 });
+  const onScrubStart = (e) => {
+    e.preventDefault();
+    startRef.current = { x: e.clientX, val: value };
+    const decimals = (String(step).split('.')[1] || '').length;
+    const move = (ev) => {
+      const dx = ev.clientX - startRef.current.x;
+      const raw = startRef.current.val + dx * step;
+      const snapped = Math.round(raw / step) * step;
+      onChange(clamp(Number(snapped.toFixed(decimals))));
+    };
+    const up = () => {
+      window.removeEventListener('pointermove', move);
+      window.removeEventListener('pointerup', up);
+    };
+    window.addEventListener('pointermove', move);
+    window.addEventListener('pointerup', up);
+  };
+  return (
+    <div className="twk-num">
+      <span className="twk-num-lbl" onPointerDown={onScrubStart}>{label}</span>
+      <input type="number" value={value} min={min} max={max} step={step}
+             onChange={(e) => onChange(clamp(Number(e.target.value)))} />
+      {unit && <span className="twk-num-unit">{unit}</span>}
+    </div>
+  );
+}
+
+function TweakColor({ label, value, onChange }) {
+  return (
+    <div className="twk-row twk-row-h">
+      <div className="twk-lbl"><span>{label}</span></div>
+      <input type="color" className="twk-swatch" value={value}
+             onChange={(e) => onChange(e.target.value)} />
+    </div>
+  );
+}
+
+function TweakButton({ label, onClick, secondary = false }) {
+  return (
+    <button type="button" className={secondary ? 'twk-btn secondary' : 'twk-btn'}
+            onClick={onClick}>{label}</button>
+  );
+}
+
+Object.assign(window, {
+  useTweaks, TweaksPanel, TweakSection, TweakRow,
+  TweakSlider, TweakToggle, TweakRadio, TweakSelect,
+  TweakText, TweakNumber, TweakColor, TweakButton,
+});
+
+</script>
+<script type="text/babel">
+// ─── TEACHER COMPONENTS ───────────────────────────────────────────────────────
+const DEMO_TEACHER = { name: 'Lehrkraft', email: 'schweisthal@learnlab.de', password: 'Bedaring1!2?' };
+
+const TEACHER_STATS = [
+  { label: 'Lernumgebungen', value: 21, icon: '📚' },
+  { label: 'Fächer', value: 4, icon: '🔬' },
+  { label: 'Klassenstufen', value: 5, icon: '🎓' },
+  { label: 'Aktiv diese Woche', value: 138, icon: '👥' },
+];
+
+
+
+const SUB_META = {
+  bio:  { color:'oklch(62% 0.17 145)', bg:'oklch(95% 0.06 145)', icon:'🌿', label:'Biologie' },
+  chem: { color:'oklch(60% 0.17 290)', bg:'oklch(95% 0.06 290)', icon:'⚗️', label:'Chemie'   },
+  phys: { color:'oklch(60% 0.17 230)', bg:'oklch(95% 0.06 230)', icon:'🔭', label:'Physik'   },
+  math: { color:'oklch(68% 0.18 55)',  bg:'oklch(96% 0.07 55)',  icon:'📐', label:'Mathematik'},
+};
+
+function LoginModal({ onLogin, onClose, roundness }) {
+  const [email, setEmail] = React.useState('');
+  const [pw, setPw] = React.useState('');
+  const [error, setError] = React.useState('');
+  const [loading, setLoading] = React.useState(false);
+
+  const submit = e => {
+    e.preventDefault();
+    setLoading(true);
+    setTimeout(() => {
+      if (email === DEMO_TEACHER.email && pw === DEMO_TEACHER.password) {
+        onLogin(DEMO_TEACHER);
+      } else {
+        setError('E-Mail oder Passwort falsch.');
+        setLoading(false);
+      }
+    }, 600);
+  };
+
+  return (
+    <div onClick={onClose} style={{
+      position:'fixed', inset:0, zIndex:900,
+      background:'oklch(0% 0 0 / 0.4)', backdropFilter:'blur(6px)',
+      display:'flex', alignItems:'center', justifyContent:'center', padding:24,
+    }}>
+      <div onClick={e=>e.stopPropagation()} style={{
+        background:'#fff', borderRadius:roundness+4, width:'100%', maxWidth:420,
+        boxShadow:'0 24px 64px oklch(0% 0 0 / 0.18)', overflow:'hidden',
+        animation:'loginIn 0.22s ease-out',
+      }}>
+        <style>{`@keyframes loginIn{from{opacity:0;transform:scale(0.95) translateY(10px)}to{opacity:1;transform:none}}`}</style>
+        <div style={{ height:6, background:'linear-gradient(90deg,oklch(62% 0.17 145),oklch(60% 0.17 230))' }}/>
+        <div style={{ padding:'28px 32px 32px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'center', marginBottom:24 }}>
+            <div>
+              <div style={{ fontSize:20, fontWeight:800, marginBottom:2 }}>Lehrer-Login</div>
+              <div style={{ fontSize:13, color:'oklch(55% 0.01 260)' }}>LearnLab · Lehrerzugang</div>
+            </div>
+            <button onClick={onClose} style={{ width:32, height:32, borderRadius:'50%', border:'none', background:'oklch(95% 0.005 260)', cursor:'pointer', display:'flex', alignItems:'center', justifyContent:'center', color:'oklch(55% 0.01 260)', fontSize:16 }}>✕</button>
+          </div>
+          <form onSubmit={submit} style={{ display:'flex', flexDirection:'column', gap:14 }}>
+            <div>
+              <label style={{ fontSize:12, fontWeight:700, color:'oklch(40% 0.01 260)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>E-Mail</label>
+              <input type="email" required value={email} onChange={e=>setEmail(e.target.value)} placeholder="name@schule.de"
+                style={{ width:'100%', padding:'11px 14px', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', fontFamily:'inherit', fontSize:14, outline:'none' }}
+                onFocus={e=>e.target.style.borderColor='oklch(60% 0.17 230)'}
+                onBlur={e=>e.target.style.borderColor='oklch(91% 0.005 260)'}
+              />
+            </div>
+            <div>
+              <label style={{ fontSize:12, fontWeight:700, color:'oklch(40% 0.01 260)', display:'block', marginBottom:6, textTransform:'uppercase', letterSpacing:'0.06em' }}>Passwort</label>
+              <input type="password" required value={pw} onChange={e=>setPw(e.target.value)} placeholder="••••••••"
+                style={{ width:'100%', padding:'11px 14px', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', fontFamily:'inherit', fontSize:14, outline:'none' }}
+                onFocus={e=>e.target.style.borderColor='oklch(60% 0.17 230)'}
+                onBlur={e=>e.target.style.borderColor='oklch(91% 0.005 260)'}
+              />
+            </div>
+            {error && (
+              <div style={{ padding:'10px 14px', borderRadius:roundness, background:'oklch(96% 0.04 25)', color:'oklch(45% 0.18 25)', fontSize:13 }}>{error}</div>
+            )}
+
+            <button type="submit" disabled={loading} style={{
+              padding:'13px', borderRadius:roundness, border:'none', cursor:'pointer',
+              background:'linear-gradient(135deg,oklch(62% 0.17 145),oklch(60% 0.17 230))',
+              color:'#fff', fontFamily:'inherit', fontSize:15, fontWeight:700,
+              opacity: loading ? 0.7 : 1, boxShadow:'0 4px 16px oklch(60% 0.17 230 / 0.35)',
+            }}>{loading ? 'Anmelden …' : 'Anmelden'}</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function TeacherDashboard({ user, onLogout, cards, roundness, onShowAll }) {
+  const [qrCard, setQrCard] = React.useState(null);
+  const [qrCustomUrl, setQrCustomUrl] = React.useState('');
+  const [qrMode, setQrMode] = React.useState('card');
+  const [usage, setUsage] = React.useState(null);
+  const [usageError, setUsageError] = React.useState('');
+  const liveCards = cards.filter(c => c.url);
+
+  // Lade echte Nutzungszahlen aus stats.json (von GitHub Action befüllt)
+  React.useEffect(() => {
+    fetch('stats.json', { cache: 'no-store' })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => setUsage(data))
+      .catch(() => setUsageError('Noch keine Statistik-Daten verfügbar. Siehe STATS-SETUP.md.'));
+  }, []);
+
+  // Helfer: ermittelt Hits für eine Card aus dem stats.json Pfad
+  const hitsFor = card => {
+    if (!usage || !card.url) return null;
+    try {
+      const u = new URL(card.url, 'https://example.com');
+      const path = u.pathname;
+      // exakter Match oder Match mit/ohne führendem Slash
+      return usage.paths[path] ?? usage.paths[path.replace(/^\//,'')] ?? 0;
+    } catch { return 0; }
+  };
+
+  // Sortierte Top-Liste nach Nutzung
+  const rankedCards = liveCards
+    .map(c => ({ card: c, hits: hitsFor(c) }))
+    .filter(r => r.hits !== null)
+    .sort((a,b) => (b.hits||0) - (a.hits||0));
+
+  const qrUrl = qrMode === 'custom' ? qrCustomUrl : (qrCard ? qrCard.url : '');
+  const qrSrc = qrUrl ? `https://api.qrserver.com/v1/create-qr-code/?size=260x260&data=${encodeURIComponent(qrUrl)}` : null;
+
+  return (
+    <div style={{ maxWidth:1100, margin:'0 auto', padding:'32px 40px 80px' }}>
+      <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:32 }}>
+        <div>
+          <div style={{ fontSize:13, fontWeight:700, color:'oklch(55% 0.01 260)', marginBottom:4, textTransform:'uppercase', letterSpacing:'0.07em' }}>Lehrer-Dashboard</div>
+          <h2 style={{ fontSize:28, fontWeight:900, letterSpacing:'-0.4px' }}>Willkommen, {user.name} 👋</h2>
+        </div>
+        <div style={{ display:'flex', gap:10 }}>
+          <button onClick={onShowAll} style={{ padding:'9px 18px', borderRadius:100, border:'1.5px solid oklch(91% 0.005 260)', background:'#fff', cursor:'pointer', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'oklch(40% 0.01 260)' }}>Zur Übersicht</button>
+          <button onClick={onLogout} style={{ padding:'9px 18px', borderRadius:100, border:'none', background:'oklch(97% 0.005 260)', cursor:'pointer', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'oklch(45% 0.01 260)', display:'flex', alignItems:'center', gap:6 }}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+            Abmelden
+          </button>
+        </div>
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'repeat(3,1fr)', gap:16, marginBottom:20 }}>
+        {TEACHER_STATS.slice(0,3).map((s) => (
+          <div key={s.label} style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'20px 22px' }}>
+            <div style={{ fontSize:28, marginBottom:8 }}>{s.icon}</div>
+            <div style={{ fontSize:26, fontWeight:900, letterSpacing:'-0.5px', marginBottom:2 }}>{s.value}</div>
+            <div style={{ fontSize:13, color:'oklch(55% 0.01 260)', fontWeight:500 }}>{s.label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* ── 14-TAGE-TRENDGRAPH ── */}
+      <div style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'22px 24px', marginBottom:20 }}>
+        <div style={{ display:'flex', alignItems:'baseline', justifyContent:'space-between', marginBottom:4, flexWrap:'wrap', gap:8 }}>
+          <div style={{ fontSize:15, fontWeight:800 }}>Aufrufe – letzte 14 Tage</div>
+          {usage && usage.daily14 && (
+            <div style={{ fontSize:12, color:'oklch(55% 0.01 260)' }}>
+              <span style={{ fontWeight:800, color:'oklch(18% 0.01 260)' }}>
+                {usage.daily14.reduce((s,d)=>s+(d.hits||0),0).toLocaleString('de-DE')}
+              </span> Aufrufe gesamt
+            </div>
+          )}
+        </div>
+        <div style={{ fontSize:12, color:'oklch(55% 0.01 260)', marginBottom:18 }}>
+          {usage ? `Stand ${new Date(usage.updated).toLocaleDateString('de-DE')}` : 'Tägliche Zugriffe'}
+        </div>
+        {!usage && !usageError && (
+          <div style={{ height:140, display:'flex', alignItems:'center', justifyContent:'center', color:'oklch(65% 0.01 260)', fontSize:13 }}>Lade …</div>
+        )}
+        {usage && (!usage.daily14 || usage.daily14.length === 0) && (
+          <div style={{ padding:'14px 0', fontSize:13, color:'oklch(55% 0.01 260)' }}>Noch keine Tagesreihe verfügbar – die GitHub Action liefert sie beim nächsten Lauf.</div>
+        )}
+        {usage && usage.daily14 && usage.daily14.length > 0 && (() => {
+          const series = usage.daily14;
+          const max = Math.max(...series.map(d => d.hits || 0), 1);
+          const dayNames = ['So','Mo','Di','Mi','Do','Fr','Sa'];
+          return (
+            <div style={{ display:'flex', alignItems:'flex-end', gap:6, height:160, paddingBottom:24, position:'relative' }}>
+              {series.map((d, i) => {
+                const h = (d.hits / max) * 100;
+                const date = new Date(d.day + 'T00:00:00Z');
+                const dayLabel = dayNames[date.getUTCDay()];
+                const dateLabel = `${date.getUTCDate()}.${date.getUTCMonth()+1}.`;
+                const isToday = i === series.length - 1;
+                return (
+                  <div key={d.day} style={{ flex:1, display:'flex', flexDirection:'column', alignItems:'center', gap:6, position:'relative', height:'100%' }}>
+                    <div style={{ flex:1, width:'100%', display:'flex', alignItems:'flex-end', position:'relative' }}>
+                      <div title={`${dateLabel} – ${d.hits} Aufrufe`} style={{
+                        width:'100%',
+                        height:`${Math.max(h, d.hits > 0 ? 3 : 0)}%`,
+                        background: isToday
+                          ? 'linear-gradient(180deg, oklch(70% 0.18 230), oklch(58% 0.18 230))'
+                          : 'linear-gradient(180deg, oklch(80% 0.10 230), oklch(68% 0.13 230))',
+                        borderRadius:`${Math.min(roundness/2, 6)}px ${Math.min(roundness/2, 6)}px 2px 2px`,
+                        transition:'height 0.5s ease',
+                        cursor:'default',
+                      }}>
+                        {d.hits > 0 && h > 25 && (
+                          <div style={{ color:'#fff', fontSize:10, fontWeight:800, textAlign:'center', paddingTop:4 }}>{d.hits}</div>
+                        )}
+                      </div>
+                      {d.hits > 0 && h <= 25 && (
+                        <div style={{ position:'absolute', bottom:`calc(${Math.max(h,3)}% + 2px)`, left:0, right:0, textAlign:'center', fontSize:10, fontWeight:800, color:'oklch(45% 0.01 260)' }}>{d.hits}</div>
+                      )}
+                    </div>
+                    <div style={{ position:'absolute', bottom:-22, left:0, right:0, textAlign:'center', fontSize:10, fontWeight: isToday ? 800 : 600, color: isToday ? 'oklch(58% 0.18 230)' : 'oklch(55% 0.01 260)', whiteSpace:'nowrap' }}>
+                      {dayLabel}<br/><span style={{ fontSize:9, fontWeight:500, opacity:0.7 }}>{date.getUTCDate()}.</span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          );
+        })()}
+      </div>
+      <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:20 }}>
+        {/* ── Top genutzte Lernapps ── */}
+        <div style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'22px 24px' }}>
+          <div style={{ fontSize:15, fontWeight:800, marginBottom:4 }}>Meistgenutzte Lernapps</div>
+          <div style={{ fontSize:12, color:'oklch(55% 0.01 260)', marginBottom:16 }}>
+            {usage ? `Letzte 30 Tage · Stand ${new Date(usage.updated).toLocaleDateString('de-DE')}` : 'Echte Zugriffszahlen'}
+          </div>
+          {usageError && (
+            <div style={{ padding:'12px 14px', borderRadius:roundness-4, background:'oklch(96% 0.04 80)', color:'oklch(40% 0.1 80)', fontSize:12.5, lineHeight:1.5 }}>
+              {usageError}
+            </div>
+          )}
+          {!usageError && !usage && (
+            <div style={{ height:120, display:'flex', alignItems:'center', justifyContent:'center', color:'oklch(65% 0.01 260)', fontSize:13 }}>Lade …</div>
+          )}
+          {usage && rankedCards.length === 0 && (
+            <div style={{ padding:'14px', fontSize:13, color:'oklch(55% 0.01 260)' }}>Noch keine Zugriffe in den letzten 30 Tagen.</div>
+          )}
+          {usage && rankedCards.length > 0 && (() => {
+            const max = Math.max(...rankedCards.map(r => r.hits || 0), 1);
+            return (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                {rankedCards.slice(0,8).map(({card, hits}) => {
+                  const s = SUB_META[card.subject];
+                  const pct = (hits / max) * 100;
+                  return (
+                    <div key={card.id} style={{ display:'flex', alignItems:'center', gap:10 }}>
+                      <span style={{ fontSize:18, width:24, textAlign:'center', flexShrink:0 }}>{s.icon}</span>
+                      <div style={{ flex:1, minWidth:0 }}>
+                        <div style={{ fontSize:12.5, fontWeight:700, whiteSpace:'nowrap', overflow:'hidden', textOverflow:'ellipsis', marginBottom:4 }}>{card.title}</div>
+                        <div style={{ height:6, background:'oklch(95% 0.005 260)', borderRadius:3, overflow:'hidden' }}>
+                          <div style={{ width:`${pct}%`, height:'100%', background:s.color, borderRadius:3, transition:'width 0.4s ease' }}/>
+                        </div>
+                      </div>
+                      <div style={{ fontSize:13, fontWeight:800, color:s.color, flexShrink:0, minWidth:36, textAlign:'right' }}>{hits}</div>
+                    </div>
+                  );
+                })}
+              </div>
+            );
+          })()}
+          <div style={{ marginTop:14, paddingTop:14, borderTop:'1px solid oklch(94% 0.005 260)', fontSize:11.5, color:'oklch(55% 0.01 260)' }}>
+            <a href="https://learnlab.goatcounter.com" target="_blank" rel="noopener noreferrer" style={{ color:'oklch(60% 0.17 230)', fontWeight:700, textDecoration:'none' }}>
+              Vollständiges Dashboard öffnen ↗
+            </a>
+          </div>
+        </div>
+        <div style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'22px 24px' }}>
+          <div style={{ fontSize:15, fontWeight:800, marginBottom:4 }}>Meine Fächer</div>
+          <div style={{ fontSize:12, color:'oklch(55% 0.01 260)', marginBottom:16 }}>Live-Lernumgebungen</div>
+          <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+            {Object.entries(SUB_META).map(([subId, s]) => {
+              const count = cards.filter(c=>c.subject===subId && c.url).length;
+              if (!count) return null;
+              return (
+                <div key={subId} style={{ display:'flex', alignItems:'center', gap:12, padding:'12px 14px', borderRadius:roundness, background:s.bg }}>
+                  <span style={{ fontSize:20 }}>{s.icon}</span>
+                  <div style={{ flex:1 }}>
+                    <div style={{ fontSize:13.5, fontWeight:800, color:s.color }}>{s.label}</div>
+                    <div style={{ fontSize:12, color:'oklch(45% 0.01 260)' }}>{count} live</div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* ── QR-CODE GENERATOR ── */}
+      <div style={{ background:'#fff', borderRadius:roundness, border:'1.5px solid oklch(91% 0.005 260)', padding:'28px 32px', marginTop:20 }}>
+        <div style={{ fontSize:15, fontWeight:800, marginBottom:4 }}>QR-Code Generator</div>
+        <div style={{ fontSize:13, color:'oklch(55% 0.01 260)', marginBottom:20 }}>Erstelle QR-Codes für den Unterricht – direkt ausdruckbar oder per Beamer zeigen.</div>
+
+        <div style={{ display:'grid', gridTemplateColumns:'1fr 1fr', gap:32, alignItems:'start' }}>
+          {/* Left: Controls */}
+          <div>
+            {/* Mode toggle */}
+            <div style={{ display:'flex', gap:6, marginBottom:20, background:'oklch(96% 0.004 260)', borderRadius:100, padding:4, width:'fit-content' }}>
+              {[['card','Lernumgebung wählen'],['custom','Eigene URL']].map(([m,l]) => (
+                <button key={m} onClick={()=>setQrMode(m)} style={{
+                  padding:'6px 16px', borderRadius:100, border:'none', cursor:'pointer',
+                  fontFamily:'inherit', fontSize:13, fontWeight:700,
+                  background: qrMode===m ? '#fff' : 'transparent',
+                  color: qrMode===m ? 'oklch(18% 0.01 260)' : 'oklch(55% 0.01 260)',
+                  boxShadow: qrMode===m ? '0 1px 4px oklch(0% 0 0 / 0.08)' : 'none',
+                  transition:'all 0.15s',
+                }}>{l}</button>
+              ))}
+            </div>
+
+            {qrMode === 'card' ? (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                <label style={{ fontSize:12, fontWeight:700, color:'oklch(40% 0.01 260)', textTransform:'uppercase', letterSpacing:'0.06em' }}>Lernumgebung auswählen</label>
+                <select
+                  value={qrCard ? qrCard.id : ''}
+                  onChange={e => setQrCard(liveCards.find(c=>c.id===+e.target.value) || null)}
+                  style={{
+                    width:'100%', padding:'11px 14px', borderRadius:roundness,
+                    border:'1.5px solid oklch(91% 0.005 260)',
+                    fontFamily:'inherit', fontSize:14, outline:'none',
+                    background:'oklch(98% 0.006 60)', cursor:'pointer',
+                  }}
+                >
+                  <option value="">– bitte wählen –</option>
+                  {liveCards.map(c => {
+                    const s = SUB_META[c.subject];
+                    return <option key={c.id} value={c.id}>{s.icon} {c.title} (Kl. {c.grade})</option>;
+                  })}
+                </select>
+                {qrCard && (
+                  <div style={{ padding:'10px 14px', borderRadius:roundness, background:'oklch(96% 0.005 260)', fontSize:12.5, color:'oklch(45% 0.01 260)', wordBreak:'break-all', lineHeight:1.5 }}>
+                    🔗 {qrCard.url}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div style={{ display:'flex', flexDirection:'column', gap:10 }}>
+                <label style={{ fontSize:12, fontWeight:700, color:'oklch(40% 0.01 260)', textTransform:'uppercase', letterSpacing:'0.06em' }}>URL eingeben</label>
+                <input
+                  type="url" value={qrCustomUrl}
+                  onChange={e => setQrCustomUrl(e.target.value)}
+                  placeholder="https://sevenseve727.github.io/Simulations/…"
+                  style={{
+                    width:'100%', padding:'11px 14px', borderRadius:roundness,
+                    border:'1.5px solid oklch(91% 0.005 260)',
+                    fontFamily:'inherit', fontSize:14, outline:'none',
+                    transition:'border-color 0.15s',
+                  }}
+                  onFocus={e=>e.target.style.borderColor='oklch(60% 0.17 230)'}
+                  onBlur={e=>e.target.style.borderColor='oklch(91% 0.005 260)'}
+                />
+              </div>
+            )}
+
+            {qrUrl && (
+              <a
+                href={qrSrc} download="qrcode.png" target="_blank" rel="noopener noreferrer"
+                style={{
+                  display:'inline-flex', alignItems:'center', gap:8, marginTop:20,
+                  padding:'11px 20px', borderRadius:roundness, border:'none',
+                  background:'oklch(18% 0.01 260)', color:'#fff',
+                  fontFamily:'inherit', fontSize:14, fontWeight:700,
+                  textDecoration:'none', cursor:'pointer',
+                }}
+              >
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                QR-Code herunterladen
+              </a>
+            )}
+          </div>
+
+          {/* Right: QR preview */}
+          <div style={{ display:'flex', flexDirection:'column', alignItems:'center', justifyContent:'center', minHeight:300 }}>
+            {qrSrc ? (
+              <div style={{ textAlign:'center' }}>
+                <div style={{ padding:16, background:'#fff', borderRadius:roundness, border:'2px solid oklch(91% 0.005 260)', display:'inline-block', boxShadow:'0 4px 20px oklch(0% 0 0 / 0.08)' }}>
+                  <img src={qrSrc} alt="QR-Code" width="220" height="220" style={{ display:'block' }}/>
+                </div>
+                <div style={{ fontSize:12, color:'oklch(55% 0.01 260)', marginTop:12, maxWidth:240, wordBreak:'break-all', lineHeight:1.5 }}>
+                  {(qrMode==='card' && qrCard) ? qrCard.title : qrCustomUrl}
+                </div>
+              </div>
+            ) : (
+              <div style={{ textAlign:'center', color:'oklch(70% 0.005 260)' }}>
+                <div style={{ width:120, height:120, borderRadius:16, border:'2.5px dashed oklch(85% 0.005 260)', display:'flex', alignItems:'center', justifyContent:'center', margin:'0 auto 14px', fontSize:36 }}>⬜</div>
+                <div style={{ fontSize:13, fontWeight:600 }}>QR-Code erscheint hier</div>
+                <div style={{ fontSize:12, marginTop:4 }}>Wähle eine Lernumgebung oder gib eine URL ein</div>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+</script>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { height: 100%; font-family: 'Plus Jakarta Sans', sans-serif; background: oklch(98% 0.006 60); color: oklch(18% 0.01 260); }
+  :root {
+    --bio:  oklch(62% 0.17 145);
+    --bio-light: oklch(95% 0.06 145);
+    --chem: oklch(60% 0.17 290);
+    --chem-light: oklch(95% 0.06 290);
+    --phys: oklch(60% 0.17 230);
+    --phys-light: oklch(95% 0.06 230);
+    --math: oklch(68% 0.18 55);
+    --math-light: oklch(96% 0.07 55);
+    --bg: oklch(98% 0.006 60);
+    --surface: oklch(100% 0 0);
+    --border: oklch(91% 0.005 260);
+    --muted: oklch(55% 0.01 260);
+  }
+  body { overflow-x: hidden; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="application/json" id="__tweak_defaults">
+{
+  "roundness": 16,
+  "density": "comfortable",
+  "heroStyle": "gradient",
+  "showDifficulty": false
+}
+</script>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ─── DATA ─────────────────────────────────────────────────────────────────────
+const SUBJECTS = [
+  { id: 'alle',  label: 'Alle Fächer',  color: null },
+  { id: 'bio',   label: 'Biologie',     color: 'var(--bio)',  bg: 'var(--bio-light)',  icon: '🌿' },
+  { id: 'chem',  label: 'Chemie',       color: 'var(--chem)', bg: 'var(--chem-light)', icon: '⚗️' },
+  { id: 'phys',  label: 'Physik',       color: 'var(--phys)', bg: 'var(--phys-light)', icon: '🔭' },
+  { id: 'math',  label: 'Mathematik',   color: 'var(--math)', bg: 'var(--math-light)', icon: '📐' },
+];
+
+const CARDS = [
+  // Biologie (Platzhalter – noch keine Dateien vorhanden)
+  { id:1, subject:'bio', grade:5, title:'Die Zelle – Bausteine des Lebens', desc:'Erkunde den Aufbau tierischer und pflanzlicher Zellen interaktiv.', duration:'25 min', difficulty:'Leicht', topics:['Zellkern','Mitochondrien','Zellwand'], url:null },
+  { id:2, subject:'bio', grade:6, title:'Das menschliche Skelett', desc:'Lerne alle 206 Knochen und ihre Funktionen kennen.', duration:'35 min', difficulty:'Mittel', topics:['Knochen','Gelenke','Muskulatur'], url:null },
+  { id:3, subject:'bio', grade:7, title:'Genetik: DNA & Gene', desc:'Wie wird Erbinformation weitergegeben? Simuliere Kreuzungsexperimente.', duration:'45 min', difficulty:'Mittel', topics:['DNA','Chromosomen','Mendel'], url:null },
+  // Chemie – echte Lernumgebungen
+  { id:7, subject:'chem', grade:5, title:'Brownsche Bewegung', desc:'Beobachte die zufällige Wärmebewegung von Teilchen in einer Flüssigkeit.', duration:'20 min', difficulty:'Leicht', topics:['Teilchenmodell','Diffusion','Wärmebewegung'], url:'https://sevenseve727.github.io/Simulations/brownsche-bewegung.html' },
+  { id:8, subject:'chem', grade:6, title:'Papierchromatographie', desc:'Trenne Farbstoffe durch Chromatographie – virtuelles Experiment mit echten Messwerten.', duration:'25 min', difficulty:'Leicht', topics:['Trennung','Löslichkeit','Farbstoffe'], url:'https://sevenseve727.github.io/Simulations/chromatographie_simulation.html' },
+  { id:9, subject:'chem', grade:6, title:'Destillation', desc:'Wie funktioniert Destillation? Interaktive Simulation von Siedepunkten und Trennung.', duration:'30 min', difficulty:'Leicht', topics:['Siedepunkt','Trennung','Gemische'], url:'https://sevenseve727.github.io/Simulations/destillation_lernumgebung.html' },
+  { id:10, subject:'chem', grade:10, title:'Van-der-Waals-Simulation', desc:'Erforsche intermolekulare Kräfte und ihr Verhalten bei verschiedenen Drücken und Temperaturen.', duration:'40 min', difficulty:'Fortgeschritten', topics:['Intermolekulare Kräfte','Gase','Aggregatzustände'], url:'https://sevenseve727.github.io/Simulations/vdw-simulation.html' },
+  { id:11, subject:'chem', grade:10, title:'Benennung der Alkane (IUPAC)', desc:'Lerne die systematische Nomenklatur organischer Verbindungen Schritt für Schritt.', duration:'35 min', difficulty:'Fortgeschritten', topics:['Alkane','IUPAC','Organische Chemie'], url:'https://sevenseve727.github.io/Simulations/AlkanLernumgebung.html' },
+  { id:12, subject:'chem', grade:10, title:'Fraktionierte Destillation von Erdöl', desc:'Wie wird Erdöl in seine Bestandteile aufgetrennt? Interaktive Fraktionsdarstellung.', duration:'40 min', difficulty:'Fortgeschritten', topics:['Erdöl','Fraktionen','Destillation'], url:'https://sevenseve727.github.io/Simulations/fraktionierte_destillation.html' },
+  { id:15, subject:'chem', grade:10, title:'Entstehung von Erdöl', desc:'Wie entsteht Erdöl über Millionen von Jahren? Interaktive Reise durch die Erdgeschichte.', duration:'30 min', difficulty:'Mittel', topics:['Erdöl','Geologie','Kohlenwasserstoffe'], url:'https://sevenseve727.github.io/Simulations/erdoel.html' },
+  // Physik – echte Lernumgebungen
+  { id:13, subject:'phys', grade:6, title:'Totalreflexion', desc:'Untersuche das Phänomen der Totalreflexion und seine Anwendungen in der Glasfasertechnik.', duration:'25 min', difficulty:'Mittel', topics:['Licht','Reflexion','Glasfaser'], url:'https://sevenseve727.github.io/Simulations/totalreflexion.html' },
+  { id:14, subject:'phys', grade:6, title:'Übungen Klassenarbeit Physik', desc:'Interaktive Übungsaufgaben zur Vorbereitung auf die Klassenarbeit – Optik & Licht.', duration:'30 min', difficulty:'Mittel', topics:['Optik','Licht','Reflexion'], url:'https://sevenseve727.github.io/Simulations/optik_lernapp.html' },
+  // Mathematik (Platzhalter)
+  { id:17, subject:'math', grade:5, title:'Brüche und Dezimalzahlen', desc:'Brüche addieren, subtrahieren und vergleichen – visuell.', duration:'25 min', difficulty:'Leicht', topics:['Brüche','Dezimalzahlen','Umrechnen'], url:null },
+  { id:18, subject:'math', grade:6, title:'Geometrie: Flächen', desc:'Flächeninhalt und Umfang verschiedener Formen berechnen.', duration:'30 min', difficulty:'Leicht', topics:['Rechteck','Dreieck','Kreis'], url:null },
+  { id:19, subject:'math', grade:7, title:'Lineare Gleichungen', desc:'Gleichungen lösen Schritt für Schritt – mit sofortigem Feedback.', duration:'35 min', difficulty:'Mittel', topics:['Gleichungen','Variable','Äquivalenzumformung'], url:null },
+];
+
+const SUBJECT_MAP = Object.fromEntries(SUBJECTS.filter(s=>s.id!=='alle').map(s=>[s.id,s]));
+
+const DIFF_COLOR = {
+  'Leicht': 'oklch(62% 0.17 145)',
+  'Mittel': 'oklch(68% 0.18 55)',
+  'Fortgeschritten': 'oklch(60% 0.17 290)',
+};
+
+// ─── ICONS ────────────────────────────────────────────────────────────────────
+function SearchIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>;
+}
+function CloseIcon() {
+  return <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>;
+}
+function PlayIcon() {
+  return <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor"><polygon points="5 3 19 12 5 21 5 3"/></svg>;
+}
+function ClockIcon() {
+  return <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>;
+}
+
+
+// ─── SUBJECT PILL ─────────────────────────────────────────────────────────────
+function SubjectPill({ subject, active, onClick }) {
+  const s = SUBJECTS.find(x => x.id === subject);
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '9px 18px', borderRadius: 100, border: 'none', cursor: 'pointer',
+        fontFamily: 'inherit', fontSize: 14, fontWeight: 600,
+        transition: 'all 0.2s',
+        background: active ? (s.color || 'oklch(18% 0.01 260)') : 'var(--surface)',
+        color: active ? '#fff' : 'var(--muted)',
+        boxShadow: active ? `0 2px 12px ${s.color || '#000'}44` : '0 0 0 1.5px var(--border)',
+        transform: active ? 'translateY(-1px)' : 'none',
+      }}
+    >
+      {s.icon && <span style={{fontSize:16}}>{s.icon}</span>}
+      {s.label}
+    </button>
+  );
+}
+
+// ─── GRADE PILL ───────────────────────────────────────────────────────────────
+function GradePill({ grade, active, onClick, subjectColor }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        padding: '6px 14px', borderRadius: 100, border: 'none', cursor: 'pointer',
+        fontFamily: 'inherit', fontSize: 13, fontWeight: 600,
+        transition: 'all 0.18s',
+        background: active ? subjectColor || 'oklch(18% 0.01 260)' : 'transparent',
+        color: active ? '#fff' : 'var(--muted)',
+        boxShadow: active ? 'none' : 'inset 0 0 0 1.5px var(--border)',
+      }}
+    >
+      Klasse {grade}
+    </button>
+  );
+}
+
+// ─── CARD ─────────────────────────────────────────────────────────────────────
+function LernCard({ card, roundness, showDifficulty, onClick }) {
+  const [hovered, setHovered] = useState(false);
+  const s = SUBJECT_MAP[card.subject];
+
+  return (
+    <div
+      onClick={onClick}
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        background: 'var(--surface)',
+        borderRadius: roundness,
+        border: '1.5px solid var(--border)',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        transition: 'all 0.22s',
+        transform: hovered ? 'translateY(-4px)' : 'none',
+        boxShadow: hovered ? `0 12px 32px ${s.color}22` : '0 1px 4px oklch(0% 0 0 / 0.06)',
+      }}
+    >
+      {/* Color bar */}
+      <div style={{
+        height: 6, background: s.color,
+      }}/>
+      {/* Body */}
+      <div style={{ padding: '20px 22px 22px' }}>
+        {/* Header row */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:12 }}>
+          <div style={{
+            display:'flex', alignItems:'center', gap:6,
+            padding:'4px 10px', borderRadius:100,
+            background: s.bg, color: s.color,
+            fontSize:12, fontWeight:700,
+          }}>
+            <span>{s.icon}</span> {s.label}
+          </div>
+          <div style={{
+            padding:'4px 10px', borderRadius:100,
+            background:'oklch(96% 0.005 260)',
+            color:'var(--muted)', fontSize:12, fontWeight:600,
+          }}>
+            Kl. {card.grade}
+          </div>
+          {card.url && (
+            <div style={{
+              padding:'4px 10px', borderRadius:100,
+              background:'oklch(94% 0.1 145)', color:'oklch(40% 0.17 145)',
+              fontSize:11, fontWeight:700, display:'flex', alignItems:'center', gap:4,
+            }}>
+              <span style={{ width:6, height:6, borderRadius:'50%', background:'oklch(55% 0.17 145)', display:'inline-block' }}></span>
+              Live
+            </div>
+          )}
+        </div>
+        {/* Title */}
+        <h3 style={{ fontSize:16, fontWeight:800, lineHeight:1.3, marginBottom:8, color:'oklch(15% 0.01 260)' }}>
+          {card.title}
+        </h3>
+        <p style={{ fontSize:13.5, color:'var(--muted)', lineHeight:1.55, marginBottom:16 }}>
+          {card.desc}
+        </p>
+        {/* Topics */}
+        <div style={{ display:'flex', flexWrap:'wrap', gap:6, marginBottom:16 }}>
+          {card.topics.map(t => (
+            <span key={t} style={{
+              fontSize:11.5, fontWeight:600,
+              padding:'3px 9px', borderRadius:100,
+              background: s.bg, color: s.color,
+            }}>{t}</span>
+          ))}
+        </div>
+        {/* Footer */}
+        <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between' }}>
+          <div style={{ display:'flex', alignItems:'center', gap:5, color:'var(--muted)', fontSize:12.5 }}>
+            <ClockIcon/> {card.duration}
+          </div>
+          <div style={{ display:'flex', alignItems:'center', gap:8 }}>
+            {showDifficulty && (
+              <span style={{
+                fontSize:11.5, fontWeight:700,
+                color: DIFF_COLOR[card.difficulty],
+              }}>{card.difficulty}</span>
+            )}
+            <div style={{
+              width:32, height:32, borderRadius:'50%',
+              background: s.color,
+              display:'flex', alignItems:'center', justifyContent:'center',
+              color:'#fff',
+              opacity: hovered ? 1 : 0.7,
+              transition:'opacity 0.2s',
+            }}>
+              <PlayIcon/>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── MODAL ────────────────────────────────────────────────────────────────────
+function Modal({ card, onClose, roundness }) {
+  const s = SUBJECT_MAP[card.subject];
+  useEffect(() => {
+    const handler = e => { if(e.key === 'Escape') onClose(); };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [onClose]);
+
+  return (
+    <div
+      onClick={onClose}
+      style={{
+        position:'fixed', inset:0, background:'oklch(0% 0 0 / 0.45)',
+        display:'flex', alignItems:'center', justifyContent:'center',
+        zIndex:1000, backdropFilter:'blur(4px)', padding:24,
+      }}
+    >
+      <div
+        onClick={e => e.stopPropagation()}
+        style={{
+          background:'var(--surface)', borderRadius:roundness+4,
+          width:'100%', maxWidth:520, overflow:'hidden',
+          boxShadow:'0 24px 64px oklch(0% 0 0 / 0.2)',
+          animation:'modalIn 0.22s ease-out',
+        }}
+      >
+        <style>{`@keyframes modalIn { from { opacity:0; transform:scale(0.96) translateY(8px); } to { opacity:1; transform:none; } }`}</style>
+        <div style={{ height:8, background:s.color }}/>
+        <div style={{ padding:'28px 32px 32px' }}>
+          <div style={{ display:'flex', justifyContent:'space-between', alignItems:'flex-start', marginBottom:20 }}>
+            <div style={{
+              display:'flex', alignItems:'center', gap:8,
+              padding:'5px 12px', borderRadius:100,
+              background:s.bg, color:s.color, fontSize:13, fontWeight:700,
+            }}>
+              {s.icon} {s.label} · Klasse {card.grade}
+            </div>
+            <button onClick={onClose} style={{ background:'var(--border)', border:'none', borderRadius:'50%', width:32, height:32, display:'flex', alignItems:'center', justifyContent:'center', cursor:'pointer', color:'var(--muted)' }}>
+              <CloseIcon/>
+            </button>
+          </div>
+          <h2 style={{ fontSize:22, fontWeight:800, lineHeight:1.25, marginBottom:10 }}>{card.title}</h2>
+          <p style={{ fontSize:15, color:'var(--muted)', lineHeight:1.6, marginBottom:20 }}>{card.desc}</p>
+          <div style={{ display:'flex', gap:10, flexWrap:'wrap', marginBottom:24 }}>
+            {card.topics.map(t => (
+              <span key={t} style={{ padding:'6px 14px', borderRadius:100, background:s.bg, color:s.color, fontSize:13, fontWeight:600 }}>{t}</span>
+            ))}
+          </div>
+          <div style={{ display:'flex', gap:16, marginBottom:24, padding:'16px 20px', borderRadius:roundness, background:'oklch(98% 0.005 260)' }}>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:11, color:'var(--muted)', fontWeight:600, marginBottom:2 }}>DAUER</div>
+              <div style={{ fontSize:15, fontWeight:700 }}>{card.duration}</div>
+            </div>
+            <div style={{ width:1, background:'var(--border)' }}/>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:11, color:'var(--muted)', fontWeight:600, marginBottom:2 }}>NIVEAU</div>
+              <div style={{ fontSize:15, fontWeight:700, color:DIFF_COLOR[card.difficulty] }}>{card.difficulty}</div>
+            </div>
+            <div style={{ width:1, background:'var(--border)' }}/>
+            <div style={{ textAlign:'center' }}>
+              <div style={{ fontSize:11, color:'var(--muted)', fontWeight:600, marginBottom:2 }}>KLASSE</div>
+              <div style={{ fontSize:15, fontWeight:700 }}>{card.grade}</div>
+            </div>
+          </div>
+          {/* Embed placeholder or real link */}
+          <div style={{
+            borderRadius:roundness, background:`linear-gradient(135deg, ${s.bg}, oklch(98% 0 0))`,
+            border:`1.5px dashed ${s.color}55`, padding:'28px 24px', textAlign:'center', marginBottom:20,
+            color:'var(--muted)', fontSize:13, lineHeight:1.6,
+          }}>
+            <div style={{ fontSize:32, marginBottom:8 }}>{s.icon}</div>
+            {card.url ? (
+              <>
+                <div style={{ fontWeight:600, color:'oklch(30% 0.01 260)', marginBottom:4 }}>Lernumgebung bereit</div>
+                <div style={{ fontSize:12, color:'var(--muted)', wordBreak:'break-all' }}>{card.url}</div>
+              </>
+            ) : (
+              <>
+                <div style={{ fontWeight:600, color:'oklch(30% 0.01 260)' }}>Lernumgebung in Vorbereitung</div>
+                <div>Diese Umgebung wird bald verfügbar sein.</div>
+              </>
+            )}
+          </div>
+          {card.url ? (
+            <a href={card.url} target="_blank" rel="noopener noreferrer"
+              onClick={() => { if(window.goatcounter) window.goatcounter.count({ path: 'lernumgebung/' + card.subject + '/' + card.id, title: card.title, event: true }); }}
+              style={{
+              display:'flex', alignItems:'center', justifyContent:'center', gap:8,
+              width:'100%', padding:'14px', borderRadius:roundness, border:'none',
+              background:s.color, color:'#fff', fontFamily:'inherit',
+              fontSize:15, fontWeight:700, cursor:'pointer', textDecoration:'none',
+              boxShadow:`0 4px 16px ${s.color}44`,
+            }}>
+              <PlayIcon/> Jetzt starten
+            </a>
+          ) : (
+            <button disabled style={{
+              width:'100%', padding:'14px', borderRadius:roundness, border:'none',
+              background:'oklch(91% 0.005 260)', color:'var(--muted)', fontFamily:'inherit',
+              fontSize:15, fontWeight:700, cursor:'not-allowed',
+            }}>Noch nicht verfügbar</button>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── EMPTY STATE ──────────────────────────────────────────────────────────────
+function EmptyState({ query }) {
+  return (
+    <div style={{ gridColumn:'1/-1', textAlign:'center', padding:'64px 24px', color:'var(--muted)' }}>
+      <div style={{ fontSize:48, marginBottom:12 }}>🔍</div>
+      <div style={{ fontSize:18, fontWeight:700, color:'oklch(30% 0.01 260)', marginBottom:6 }}>Keine Ergebnisse</div>
+      <div style={{ fontSize:14 }}>Keine Lernumgebungen für „{query}" gefunden.</div>
+    </div>
+  );
+}
+
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
+function App() {
+  const [tweaks, setTweakState] = useState(() => {
+    try {
+      return JSON.parse(document.getElementById('__tweak_defaults').textContent);
+    } catch { return { roundness:16, density:'comfortable', heroStyle:'gradient', showDifficulty:true }; }
+  });
+  const setTweak = (key, val) => setTweakState(p => ({...p, [key]:val}));
+
+  const [activeSubject, setActiveSubject] = useState(null); // null = Fach-Übersicht
+  const [activeGrade, setActiveGrade] = useState(null);
+  const [query, setQuery] = useState('');
+  const [modal, setModal] = useState(null);
+  const [showTweaks, setShowTweaks] = useState(false);
+  const [showLogin, setShowLogin] = useState(false);
+  const [teacher, setTeacher] = useState(null);
+  const [view, setView] = useState('students'); // 'students' | 'teacher'
+
+  // Tweaks host protocol
+  useEffect(() => {
+    const handler = e => {
+      if (e.data?.type === '__activate_edit_mode') setShowTweaks(true);
+      if (e.data?.type === '__deactivate_edit_mode') setShowTweaks(false);
+    };
+    window.addEventListener('message', handler);
+    window.parent.postMessage({ type: '__edit_mode_available' }, '*');
+    return () => window.removeEventListener('message', handler);
+  }, []);
+
+  // Geheime Tippfolge "lks" → öffnet die Lennart-Karl-Story
+  useEffect(() => {
+    let buffer = '';
+    let timer = null;
+    const SECRET = 'lks';
+    const onKeyDown = e => {
+      const tag = (e.target.tagName || '').toLowerCase();
+      if (tag === 'input' || tag === 'textarea' || e.target.isContentEditable) return;
+      if (e.key.length !== 1) return;
+      buffer = (buffer + e.key.toLowerCase()).slice(-SECRET.length);
+      clearTimeout(timer);
+      timer = setTimeout(() => { buffer = ''; }, 1200);
+      if (buffer === SECRET) {
+        window.open('lennart-karl-story.html', '_blank', 'noopener');
+        buffer = '';
+      }
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => { window.removeEventListener('keydown', onKeyDown); clearTimeout(timer); };
+  }, []);
+
+  const subjectColor = activeSubject && activeSubject !== 'alle' ? SUBJECT_MAP[activeSubject]?.color : null;
+  const grades = [5,6,7,8,9,10];
+
+  // Filter logic — nur Live-Karten für Schüler sichtbar
+  const filtered = CARDS.filter(c => {
+    if (!c.url) return false;
+    if (activeSubject && activeSubject !== 'alle' && c.subject !== activeSubject) return false;
+    if (activeGrade && c.grade !== activeGrade) return false;
+    if (query) {
+      const q = query.toLowerCase();
+      return c.title.toLowerCase().includes(q) || c.desc.toLowerCase().includes(q) || c.topics.some(t=>t.toLowerCase().includes(q));
+    }
+    return true;
+  });
+
+  // Subject overview data
+  const subjectOverview = SUBJECTS.filter(s => s.id !== 'alle').map(s => ({
+    ...s,
+    liveCount: CARDS.filter(c => c.subject === s.id && c.url).length,
+    gradeList: [...new Set(CARDS.filter(c => c.subject === s.id && c.url).map(c => c.grade))].sort((a,b)=>a-b),
+  }));
+
+  const gap = tweaks.density === 'compact' ? 14 : tweaks.density === 'spacious' ? 28 : 20;
+
+  // Hero background
+  const heroGradient = tweaks.heroStyle === 'gradient'
+    ? `linear-gradient(135deg, oklch(97% 0.015 240) 0%, oklch(97% 0.015 145) 50%, oklch(97% 0.02 55) 100%)`
+    : tweaks.heroStyle === 'dark'
+    ? `linear-gradient(135deg, oklch(20% 0.03 260) 0%, oklch(22% 0.04 290) 100%)`
+    : 'oklch(98% 0.006 60)';
+  const heroColor = tweaks.heroStyle === 'dark' ? '#fff' : 'oklch(18% 0.01 260)';
+  const heroMuted = tweaks.heroStyle === 'dark' ? 'oklch(75% 0.01 260)' : 'var(--muted)';
+
+  return (
+    <div style={{ minHeight:'100vh', background:'var(--bg)' }}>
+      {/* ── NAV ── */}
+      <nav style={{
+        position:'sticky', top:0, zIndex:100,
+        background:'oklch(100% 0 0 / 0.88)', backdropFilter:'blur(12px)',
+        borderBottom:'1.5px solid var(--border)',
+        display:'flex', alignItems:'center', justifyContent:'space-between',
+        padding:'0 40px', height:64,
+      }}>
+        <div style={{ display:'flex', alignItems:'center', gap:10 }}>
+          <div style={{
+            width:34, height:34, borderRadius:10,
+            background:'linear-gradient(135deg, var(--bio) 0%, var(--phys) 100%)',
+            display:'flex', alignItems:'center', justifyContent:'center',
+            color:'#fff', fontWeight:900, fontSize:14,
+          }}>LL</div>
+          <span style={{ fontWeight:800, fontSize:18, letterSpacing:'-0.3px' }}>LearnLab</span>
+        </div>
+        {/* Search */}
+        <div style={{ position:'relative', width:300 }}>
+          <div style={{ position:'absolute', left:12, top:'50%', transform:'translateY(-50%)', color:'var(--muted)', pointerEvents:'none' }}>
+            <SearchIcon/>
+          </div>
+          <input
+            value={query}
+            onChange={e=>{setQuery(e.target.value); if(e.target.value) setActiveSubject('alle');}}
+            placeholder="Suchen …"
+            style={{
+              width:'100%', padding:'9px 12px 9px 40px',
+              border:'1.5px solid var(--border)', borderRadius:100,
+              fontFamily:'inherit', fontSize:14, background:'var(--bg)',
+              outline:'none', color:'inherit',
+              transition:'border-color 0.15s',
+            }}
+            onFocus={e=>e.target.style.borderColor='oklch(60% 0.17 230)'}
+            onBlur={e=>e.target.style.borderColor='var(--border)'}
+          />
+          {query && (
+            <button onClick={()=>setQuery('')} style={{ position:'absolute', right:10, top:'50%', transform:'translateY(-50%)', background:'none', border:'none', cursor:'pointer', color:'var(--muted)', display:'flex' }}>
+              <CloseIcon/>
+            </button>
+          )}
+        </div>
+        {/* Lehrer-Login Button */}
+        {teacher ? (
+          <button onClick={() => setView(v => v === 'teacher' ? 'students' : 'teacher')} style={{
+            display:'flex', alignItems:'center', gap:8,
+            padding:'7px 14px 7px 10px', borderRadius:100, border:'none', cursor:'pointer',
+            fontFamily:'inherit', fontSize:13, fontWeight:700,
+            background: view === 'teacher' ? 'oklch(18% 0.01 260)' : 'oklch(95% 0.005 260)',
+            color: view === 'teacher' ? '#fff' : 'oklch(30% 0.01 260)',
+            transition:'all 0.18s',
+          }}>
+            <div style={{
+              width:26, height:26, borderRadius:'50%',
+              background:'linear-gradient(135deg,oklch(62% 0.17 145),oklch(60% 0.17 230))',
+              display:'flex', alignItems:'center', justifyContent:'center',
+              color:'#fff', fontSize:11, fontWeight:900,
+            }}>
+              {teacher.name.split(' ')[1]?.[0]}{teacher.name.split(' ')[0]?.[0]}
+            </div>
+            {view === 'teacher' ? 'Dashboard' : teacher.name.split(' ')[0]}
+          </button>
+        ) : (
+          <button onClick={() => setShowLogin(true)} style={{
+            display:'flex', alignItems:'center', gap:7,
+            padding:'8px 16px', borderRadius:100, border:'1.5px solid oklch(91% 0.005 260)',
+            background:'#fff', cursor:'pointer',
+            fontFamily:'inherit', fontSize:13, fontWeight:600, color:'oklch(35% 0.01 260)',
+            transition:'all 0.15s',
+          }}>
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Lehrerbereich
+          </button>
+        )}
+        {/* Klassen-Schnellzugriff */}
+        <div style={{ display:'flex', gap:6, alignItems:'center', color:'var(--muted)', fontSize:13, fontWeight:600 }}>
+          {grades.map(g => (
+            <button key={g} onClick={() => { setActiveGrade(activeGrade===g?null:g); }}
+              style={{
+                padding:'5px 11px', borderRadius:100, border:'none', cursor:'pointer',
+                fontFamily:'inherit', fontSize:13, fontWeight:600,
+                background: activeGrade===g ? 'oklch(18% 0.01 260)' : 'transparent',
+                color: activeGrade===g ? '#fff' : 'var(--muted)',
+                transition:'all 0.15s',
+              }}>
+              {g}
+            </button>
+          ))}
+          <span style={{ fontSize:12, marginLeft:2 }}>Klasse</span>
+        </div>
+      </nav>
+
+      {/* ── HERO ── */}
+      {!query && (
+        <div style={{
+          background: heroGradient,
+          padding:'56px 40px 48px',
+          borderBottom: '1.5px solid var(--border)',
+        }}>
+          <div style={{ maxWidth:900, margin:'0 auto' }}>
+            <div style={{ fontSize:13, fontWeight:700, color: subjectColor || 'oklch(60% 0.17 230)', marginBottom:8, textTransform:'uppercase', letterSpacing:'0.08em' }}>
+              Realschule · Klasse 5–10
+            </div>
+            <h1 style={{ fontSize:40, fontWeight:900, lineHeight:1.1, marginBottom:14, color:heroColor, letterSpacing:'-0.5px' }}>
+              Interaktiv lernen.<br/>Wirklich verstehen.
+            </h1>
+            <p style={{ fontSize:16, color:heroMuted, maxWidth:520, lineHeight:1.65, marginBottom:28 }}>
+              Entdecke über 20 interaktive Lernumgebungen in Biologie, Chemie, Physik und Mathematik – designed für deinen Unterricht.
+            </p>
+            {/* Subject cards */}
+            <div style={{ display:'flex', gap:12, flexWrap:'wrap' }}>
+              {SUBJECTS.map(s => (
+                <SubjectPill
+                  key={s.id}
+                  subject={s.id}
+                  active={activeSubject === s.id || (s.id === 'alle' && !activeSubject)}
+                  onClick={() => { setActiveSubject(s.id === 'alle' ? null : s.id); setActiveGrade(null); }}
+                />
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
+      <main style={{ maxWidth:1100, margin:'0 auto', padding:`${gap+16}px 40px 80px` }}>
+
+        {/* ── FACH-ÜBERSICHT (Startseite) ── */}
+        {!activeSubject && !query && (
+          <div>
+            <div style={{ fontSize:13, fontWeight:700, color:'var(--muted)', textTransform:'uppercase', letterSpacing:'0.07em', marginBottom:20 }}>
+              Alle Fächer
+            </div>
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(240px, 1fr))', gap }}>
+              {subjectOverview.map(s => (
+                <div
+                  key={s.id}
+                  onClick={() => setActiveSubject(s.id)}
+                  style={{
+                    background:'var(--surface)', borderRadius:tweaks.roundness+4,
+                    border:`1.5px solid ${s.color}33`, overflow:'hidden',
+                    cursor:'pointer', transition:'all 0.22s',
+                  }}
+                  onMouseEnter={e => { e.currentTarget.style.transform='translateY(-4px)'; e.currentTarget.style.boxShadow=`0 12px 32px ${s.color}22`; }}
+                  onMouseLeave={e => { e.currentTarget.style.transform='none'; e.currentTarget.style.boxShadow='none'; }}
+                >
+                  {/* Color header */}
+                  <div style={{ background:s.bg, padding:'28px 24px 20px' }}>
+                    <div style={{ fontSize:38, marginBottom:10 }}>{s.icon}</div>
+                    <div style={{ fontSize:20, fontWeight:900, color:s.color, letterSpacing:'-0.3px' }}>{s.label}</div>
+                  </div>
+                  {/* Body */}
+                  <div style={{ padding:'16px 24px 20px' }}>
+                    <div style={{ display:'flex', alignItems:'center', justifyContent:'space-between', marginBottom:10 }}>
+                      <span style={{ fontSize:13, color:'var(--muted)', fontWeight:500 }}>Lernumgebungen</span>
+                      <span style={{
+                        fontSize:22, fontWeight:900, color:s.color,
+                      }}>{s.liveCount}</span>
+                    </div>
+                    {s.liveCount > 0 && (
+                      <div style={{ display:'flex', gap:6, flexWrap:'wrap' }}>
+                        {s.gradeList.map(g => (
+                          <span key={g} style={{
+                            padding:'3px 10px', borderRadius:100,
+                            background:s.bg, color:s.color,
+                            fontSize:12, fontWeight:700,
+                          }}>Kl. {g}</span>
+                        ))}
+                      </div>
+                    )}
+                    {s.liveCount === 0 && (
+                      <div style={{ fontSize:12.5, color:'var(--muted)' }}>Demnächst verfügbar</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* ── FACH-DETAIL (nach Klick auf Fach-Card) ── */}
+        {(activeSubject || query) && (
+          <div>
+            {/* Back + filter bar */}
+            {!query && (
+              <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:28, flexWrap:'wrap' }}>
+                <button onClick={() => { setActiveSubject(null); setActiveGrade(null); }} style={{
+                  display:'flex', alignItems:'center', gap:6,
+                  padding:'7px 14px', borderRadius:100, border:'1.5px solid var(--border)',
+                  background:'var(--surface)', cursor:'pointer',
+                  fontFamily:'inherit', fontSize:13, fontWeight:700, color:'var(--muted)',
+                }}>
+                  ← Alle Fächer
+                </button>
+                {activeSubject && (() => {
+                  const s = SUBJECT_MAP[activeSubject];
+                  return (
+                    <div style={{ display:'flex', alignItems:'center', gap:8, padding:'7px 16px', borderRadius:100, background:s.bg, color:s.color, fontSize:14, fontWeight:800 }}>
+                      {s.icon} {s.label}
+                    </div>
+                  );
+                })()}
+                <div style={{ display:'flex', gap:6, marginLeft:'auto', flexWrap:'wrap' }}>
+                  <button onClick={()=>setActiveGrade(null)} style={{
+                    padding:'6px 12px', borderRadius:100, border:'none', cursor:'pointer',
+                    fontFamily:'inherit', fontSize:13, fontWeight:600,
+                    background: !activeGrade ? 'oklch(18% 0.01 260)' : 'transparent',
+                    color: !activeGrade ? '#fff' : 'var(--muted)',
+                    boxShadow: !activeGrade ? 'none' : 'inset 0 0 0 1.5px var(--border)',
+                    transition:'all 0.15s',
+                  }}>Alle Klassen</button>
+                  {grades.map(g => (
+                    <GradePill key={g} grade={g} active={activeGrade===g}
+                      subjectColor={subjectColor}
+                      onClick={()=>setActiveGrade(activeGrade===g?null:g)}/>
+                  ))}
+                </div>
+                <span style={{ fontSize:13, color:'var(--muted)' }}>{filtered.length} Lernumgebung{filtered.length !== 1 ? 'en' : ''}</span>
+              </div>
+            )}
+
+            {/* Query header */}
+            {query && (
+              <div style={{ marginBottom:24, display:'flex', alignItems:'center', gap:10 }}>
+                <span style={{ fontSize:20, fontWeight:800 }}>Suchergebnisse für „{query}"</span>
+                <span style={{ fontSize:14, color:'var(--muted)' }}>({filtered.length})</span>
+                <button onClick={()=>setQuery('')} style={{ marginLeft:'auto', padding:'6px 14px', borderRadius:100, border:'1.5px solid var(--border)', background:'none', cursor:'pointer', fontFamily:'inherit', fontSize:13, fontWeight:600, color:'var(--muted)' }}>
+                  Zurücksetzen
+                </button>
+              </div>
+            )}
+
+            {/* Card grid */}
+            <div style={{ display:'grid', gridTemplateColumns:'repeat(auto-fill, minmax(300px, 1fr))', gap }}>
+              {filtered.length === 0
+                ? <EmptyState query={query}/>
+                : filtered.map(card => (
+                  <LernCard
+                    key={card.id}
+                    card={card}
+                    roundness={tweaks.roundness}
+                    showDifficulty={tweaks.showDifficulty}
+                    onClick={() => setModal(card)}
+                  />
+                ))
+              }
+            </div>
+          </div>
+        )}
+      </main>
+
+      {/* ── MODAL ── */}
+      {modal && <Modal card={modal} onClose={()=>setModal(null)} roundness={tweaks.roundness}/>}
+
+      {/* ── LOGIN MODAL ── */}
+      {showLogin && (
+        <LoginModal
+          roundness={tweaks.roundness}
+          onClose={() => setShowLogin(false)}
+          onLogin={user => { setTeacher(user); setShowLogin(false); setView('teacher'); }}
+        />
+      )}
+
+      {/* ── TEACHER DASHBOARD ── */}
+      {view === 'teacher' && teacher && (
+        <div style={{ position:'fixed', inset:0, top:64, background:'oklch(98% 0.006 60)', zIndex:50, overflowY:'auto' }}>
+          <TeacherDashboard
+            user={teacher}
+            cards={CARDS}
+            roundness={tweaks.roundness}
+            onLogout={() => { setTeacher(null); setView('students'); }}
+            onShowAll={() => setView('students')}
+          />
+        </div>
+      )}
+
+      {/* ── TWEAKS ── */}
+      {showTweaks && (
+        <TweaksPanel
+          onClose={() => {
+            setShowTweaks(false);
+            window.parent.postMessage({ type: '__edit_mode_dismissed' }, '*');
+          }}
+        >
+          <TweakSection title="Layout">
+            <TweakSlider label="Abrundung" value={tweaks.roundness} min={0} max={28} step={2}
+              onChange={v => setTweak('roundness', v)}/>
+            <TweakRadio label="Dichte" value={tweaks.density}
+              options={[{value:'compact',label:'Kompakt'},{value:'comfortable',label:'Normal'},{value:'spacious',label:'Luftig'}]}
+              onChange={v => setTweak('density', v)}/>
+          </TweakSection>
+          <TweakSection title="Hero">
+            <TweakRadio label="Hero-Stil" value={tweaks.heroStyle}
+              options={[{value:'plain',label:'Weiß'},{value:'gradient',label:'Bunt'},{value:'dark',label:'Dunkel'}]}
+              onChange={v => setTweak('heroStyle', v)}/>
+          </TweakSection>
+          <TweakSection title="Karten">
+            <TweakToggle label="Schwierigkeit anzeigen" value={tweaks.showDifficulty}
+              onChange={v => setTweak('showDifficulty', v)}/>
+          </TweakSection>
+        </TweaksPanel>
+      )}
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
