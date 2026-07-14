@@ -1,16 +1,12 @@
 {
-  "updated": "2026-07-13T06:50:30.191Z",
+  "updated": "2026-07-14T06:08:21.944Z",
   "paths": {
-    "/Simulations": 9,
+    "/Simulations": 6,
     "lernumgebung/chem/7": 1,
     "lernumgebung/chem/12": 1
   },
-  "total": 11,
+  "total": 8,
   "daily14": [
-    {
-      "day": "2026-06-30",
-      "hits": 0
-    },
     {
       "day": "2026-07-01",
       "hits": 0
@@ -61,6 +57,10 @@
     },
     {
       "day": "2026-07-13",
+      "hits": 0
+    },
+    {
+      "day": "2026-07-14",
       "hits": 0
     }
   ]
