@@ -1,15 +1,11 @@
 {
-  "updated": "2026-11-24T14:31:18.980Z",
+  "updated": "2026-11-25T13:51:59.929Z",
   "paths": {
-    "/Simulations": 6,
+    "/Simulations": 5,
     "lernumgebung/phys/14": 1
   },
-  "total": 7,
+  "total": 6,
   "daily14": [
-    {
-      "day": "2026-11-11",
-      "hits": 0
-    },
     {
       "day": "2026-11-12",
       "hits": 0
@@ -60,6 +56,10 @@
     },
     {
       "day": "2026-11-24",
+      "hits": 0
+    },
+    {
+      "day": "2026-11-25",
       "hits": 0
     }
   ]
